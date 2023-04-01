@@ -14,3 +14,9 @@ circuit/circuit_js
 build/
 circuit/circuit_cpp/
 example-emails/
+
+artifacts/
+cache/
+
+.env
+yarn-error.log
