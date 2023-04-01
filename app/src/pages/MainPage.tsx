@@ -19,6 +19,7 @@ import { Button } from "../components/Button";
 import { Col, Row } from "../components/Layout";
 import { NumberedStep } from "../components/NumberedStep";
 import { TopBanner } from "../components/TopBanner";
+import { CustomTable } from '../components/CustomTable';
 import { useAccount, useContractWrite, usePrepareContractWrite } from "wagmi";
 import { ProgressBar } from "../components/ProgressBar";
 import { abi } from "../helpers/twitterEmailHandler.abi";
@@ -57,6 +58,13 @@ export const MainPage: React.FC<{}> = (props) => {
   const [lastAction, setLastAction] = useState<"" | "sign" | "verify" | "send">("");
   const [showBrowserWarning, setShowBrowserWarning] = useState<boolean>(false);
   const [downloadProgress, setDownloadProgress] = useState<number>(0);
+
+  const headers = ['Header 1', 'Header 2', 'Header 3', 'Header 4'];
+  const tableFixtureData = [
+    ['Row 1 Cell 1', 'Row 1 Cell 2', 'Row 1 Cell 3', 'Row 1 Cell 4'],
+    ['Row 2 Cell 1', 'Row 2 Cell 2', 'Row 2 Cell 3', 'Row 2 Cell 4'],
+    ['Row 3 Cell 1', 'Row 3 Cell 2', 'Row 3 Cell 3', 'Row 3 Cell 4'],
+  ];
 
   useEffect(() => {
     const userAgent = navigator.userAgent;
@@ -301,6 +309,13 @@ export const MainPage: React.FC<{}> = (props) => {
             )}
             <TimerDisplay timers={stopwatch} />
           </ProcessStatus>
+        </Column>
+
+        <Column>
+          <div>
+            <SubHeader>Orders</SubHeader>
+            <CustomTable headers={headers} data={tableFixtureData} />
+          </div>
         </Column>
 
         {/* <Column>
