@@ -1,7 +1,7 @@
 const hre = require("hardhat");
 const chai = require("chai");
 const { solidity } = require("ethereum-waffle");
-const { increase } = require("@nomicfoundation/hardhat-network-helpers");
+const { time } = require("@nomicfoundation/hardhat-network-helpers");
 
 chai.use(solidity);
 
@@ -148,6 +148,28 @@ describe("Ramp", function () {
             expect(postOffRampBalance).to.equal(preOffRampBalance.sub(amount));
             expect(postRampBalance).to.equal(preRampBalance.add(amount));
         });
+
+        describe("when the order is in Unopened state", function () {
+            it("reverts", async function () {
+                await expect(ramp.connect(offRamper).claimOrder(orderId.add(1))).to.be.revertedWith("Order has already been filled, canceled, or doesn't exist");
+            });
+        });
+
+        describe("when the caller has already submitted a claim (OrderClaim is Submitted status)", function () {
+            beforeEach(async function () {
+                await ramp.connect(offRamper).claimOrder(orderId);
+            });
+
+            it("reverts", async function () {
+                await expect(ramp.connect(offRamper).claimOrder(orderId)).to.be.revertedWith("Order has already been claimed by caller");
+            });
+        });
+
+        describe("when the caller tries to claim their own order", function () {
+            it("reverts", async function () {
+                await expect(ramp.connect(onRamper).claimOrder(orderId)).to.be.revertedWith("Can't claim your own order");
+            });
+        });
     });
 
     describe("cancelOrder", function () {
@@ -173,7 +195,7 @@ describe("Ramp", function () {
         });
     });
 
-    describe.only("clawback", function () {
+    describe("clawback", function () {
         let amount = BigNumber.from(100000000); // $100
         let maxAmountToPay = BigNumber.from(101000000); // $101
         let onRamperVenmoId = BigNumber.from(1234567890);
@@ -191,11 +213,28 @@ describe("Ramp", function () {
             await fakeUSDC.connect(offRamper).approve(ramp.address, amount);
             await ramp.connect(offRamper).claimOrder(orderId);
 
-            await increase(timeSkip);
+            await time.increase(timeSkip);
         });
 
         it("set order claim status to clawback", async function () {
             await ramp.connect(offRamper).clawback(orderId);
+
+            const orderClaim = await ramp.orderClaims(orderId, offRamper.address);
+
+            expect(orderClaim.status).to.equal(3);
+        });
+
+        it("transfers USDC from the contract to the offRamper", async function () {
+            const preOffRampBalance = await fakeUSDC.balanceOf(offRamper.address);
+            const preRampBalance = await fakeUSDC.balanceOf(ramp.address);
+
+            await ramp.connect(offRamper).clawback(orderId);
+
+            const postOffRampBalance = await fakeUSDC.balanceOf(offRamper.address);
+            const postRampBalance = await fakeUSDC.balanceOf(ramp.address);
+
+            expect(postOffRampBalance).to.equal(preOffRampBalance.add(amount));
+            expect(postRampBalance).to.equal(preRampBalance.sub(amount));
         });
     });
 });

@@ -57,7 +57,9 @@ contract Ramp is Verifier {
     /* ============ Public Variables ============ */
 
     uint256 public constant rsaModulusChunksLen = 17;
-    uint16 public constant msgLen = 27;
+    uint16 public constant bodyLen = 9;
+    uint16 public constant msgLen = 26;
+    uint16 public constant bytesInPackedBytes = 7;  // 7 bytes in a packed item returned from circom
 
     /* ============ Public Variables ============ */
 
@@ -216,14 +218,69 @@ contract Ramp is Verifier {
     )
         internal
         view
+        returns (uint256 onRamperVenmoId, uint256 offRamperVenmoId, uint256 orderId)
     {
-        require(signals[0] == 0, "Invalid starting message character");
+        // 3 public signals are the masked packed message bytes, 17 are the modulus.
+        uint256[3][3] memory bodySignals;
+        // bodySignals[0] = onRamperVenmoId, bodySignals[1] = offRamperVenmoId, bodySignals[2] = orderId
+        for (uint256 i = 0; i < 3; i++) {
+            for (uint256 j = 0; j < 3; j++) {
+                bodySignals[i][j] = signals[i * 3 + j];
+            }
+        }
+
         // msg_len-17 public signals are the masked message bytes, 17 are the modulus.
-        // uint8[] memory message = convert7PackedBytesToDupedBytes(signals);
-        for (uint32 i = msgLen - 17; i < msgLen; i++) {
-            require(signals[i] == venmoMailserverKeys[i], "Invalid modulus not matched");
+        // Signals: [9:26] -> Modulus, 
+        for (uint i = 0; i < rsaModulusChunksLen; i++) {
+            require(signals[i] == venmoMailserverKeys[i], "Invalid: RSA modulus not matched");
         }
 
         require(verifyProof(a, b, c, signals), "Invalid Proof"); // checks effects iteractions, this should come first
+
+        onRamperVenmoId = uint256(_convertPackedBytesToBytes(bodySignals[0], bytesInPackedBytes * 3));
+        offRamperVenmoId = uint256(_convertPackedBytesToBytes(bodySignals[1], bytesInPackedBytes * 3));
+        orderId = uint256(_convertPackedBytesToBytes(bodySignals[2], bytesInPackedBytes * 3));
+    }
+
+    // Unpacks uint256s into bytes and then extracts the non-zero characters
+    // Only extracts contiguous non-zero characters and ensures theres only 1 such state
+    // Note that unpackedLen may be more than packedBytes.length * 8 since there may be 0s
+    // TODO: Remove console.logs and define this as a pure function instead of a view
+    function _convertPackedBytesToBytes(uint256[3] memory packedBytes, uint256 maxBytes) public pure returns (string memory extractedString) {
+        uint8 state = 0;
+        // bytes: 0 0 0 0 y u s h _ g 0 0 0
+        // state: 0 0 0 0 1 1 1 1 1 1 2 2 2
+        bytes memory nonzeroBytesArray = new bytes(packedBytes.length * 7);
+        uint256 nonzeroBytesArrayIndex = 0;
+        for (uint16 i = 0; i < packedBytes.length; i++) {
+            uint256 packedByte = packedBytes[i];
+            uint8[] memory unpackedBytes = new uint8[](bytesInPackedBytes);
+            for (uint j = 0; j < bytesInPackedBytes; j++) {
+                unpackedBytes[j] = uint8(packedByte >> (j * 8));
+            }
+
+            for (uint256 j = 0; j < bytesInPackedBytes; j++) {
+                uint256 unpackedByte = unpackedBytes[j]; //unpackedBytes[j];
+                if (unpackedByte != 0) {
+                    nonzeroBytesArray[nonzeroBytesArrayIndex] = bytes1(uint8(unpackedByte));
+                    nonzeroBytesArrayIndex++;
+                    if (state % 2 == 0) {
+                        state += 1;
+                    }
+                } else {
+                    if (state % 2 == 1) {
+                        state += 1;
+                    }
+                }
+                packedByte = packedByte >> 8;
+            }
+        }
+
+        string memory returnValue = string(nonzeroBytesArray);
+        require(state == 2, "Invalid final state of packed bytes in email");
+        // console.log("Characters in username: ", nonzeroBytesArrayIndex);
+        require(nonzeroBytesArrayIndex <= maxBytes, "Venmo id too long");
+        return returnValue;
+        // Have to end at the end of the email -- state cannot be 1 since there should be an email footer
     }
 }
