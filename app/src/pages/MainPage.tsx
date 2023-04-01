@@ -172,9 +172,9 @@ export const MainPage: React.FC<{}> = (props) => {
 
   return (
     <Container>
-      {showBrowserWarning && <TopBanner message={"ZK Email only works on Chrome or Chromium-based browsers."} />}
+      {showBrowserWarning && <TopBanner message={"ZK P2P On-Ramp only works on Chrome or Chromium-based browsers."} />}
       <div className="title">
-        <Header>ZK Email Ownership Proof Generator From Header</Header>
+        <Header>ZK P2P On-Ramp From Venmo Header</Header>
       </div>
 
       <Col
@@ -185,36 +185,10 @@ export const MainPage: React.FC<{}> = (props) => {
           marginBottom: "2rem",
         }}
       >
-        <span style={{ color: "rgba(255, 255, 255, 0.7)" }}>
-          Note that we are <a href="https://github.com/zk-email-verify/zk-email-verify/">actively developing</a> and debugging this page, it is likely unstable. Due to download
-          limits of incognito mode and non-chrome browsers, you must use Chrome to generate proofs right now. Our goal for March 2023 is to make this process 10x faster and
-          smaller. If you wish to generate a ZK proof of Twitter badge, you must do these:
-        </span>
-        <NumberedStep step={1}>
-          Send yourself a{" "}
-          <a href="https://twitter.com/i/flow/password_reset" target="_blank" rel="noreferrer">
-            password reset email
-          </a>{" "}
-          from Twitter.
-        </NumberedStep>
-        <NumberedStep step={2}>
-          In your inbox, find the email from Twitter and click the three dot menu, then "Show original" then "Copy to clipboard". If on Outlook, download the original email as .eml
-          and copy it instead.
-        </NumberedStep>
-        <NumberedStep step={3}>
-          Copy paste that into the box below. Note that we cannot use this to phish you: we do not know your password, and we never get this email info because we have no server at
-          all. We are actively searching for a less sketchy email.
-        </NumberedStep>
-        <NumberedStep step={4}>
-          Paste in your sending Ethereum address. This ensures that no one else can "steal" your proof for another account (frontrunning protection!).
-        </NumberedStep>
-        <NumberedStep step={5}>
-          Click <b>"Generate Proof"</b>. Since it is completely client side and open source, and you are not trusting us with any private information.
-        </NumberedStep>
-        <NumberedStep step={6}>
+        {/* <NumberedStep step={6}>
           Click <b>"Verify"</b> and then <b>"Mint Twitter Badge On-Chain"</b>, and approve to mint the NFT badge that proves Twitter ownership! Note that it is 700K gas right now
           so only feasible on Goerli, though we intend to reduce this soon.
-        </NumberedStep>
+        </NumberedStep> */}
       </Col>
       <Main>
         <Column>
@@ -328,7 +302,8 @@ export const MainPage: React.FC<{}> = (props) => {
             <TimerDisplay timers={stopwatch} />
           </ProcessStatus>
         </Column>
-        <Column>
+
+        {/* <Column>
           <SubHeader>Output</SubHeader>
           <LabeledTextArea
             label="Proof Output"
@@ -388,7 +363,7 @@ export const MainPage: React.FC<{}> = (props) => {
               Transaction: <a href={"https://goerli.etherscan.io/tx/" + data?.hash}>{data?.hash}</a>
             </div>
           )}
-        </Column>
+        </Column> */}
       </Main>
     </Container>
   );

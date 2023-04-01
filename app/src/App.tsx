@@ -42,7 +42,7 @@ const NavSection: React.FC = () => {
   return (
     <Nav>
       <Logo className={pathname === "/" ? "current_page" : "off"} to={"/"}>
-        ZK-Email
+        ZK-P2P-On-Ramp
       </Logo>
       <div
         style={{
@@ -51,7 +51,6 @@ const NavSection: React.FC = () => {
           gap: "1rem",
         }}
       >
-        <DocsLink href="/docs">Docs</DocsLink>
         <ConnectButton />
       </div>
     </Nav>
@@ -71,14 +70,4 @@ const Nav = styled.nav`
   align-items: center;
   justify-content: space-between;
   margin: 12px;
-`;
-
-const DocsLink = styled.a`
-  color: rgba(255, 255, 255, 0.8);
-  text-decoration: none;
-  underline: none;
-  transition: all 0.2s ease-in-out;
-  &:hover {
-    color: rgba(255, 255, 255, 1);
-  }
 `;
