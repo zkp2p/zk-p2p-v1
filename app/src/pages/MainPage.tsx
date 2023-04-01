@@ -88,11 +88,11 @@ export const MainPage: React.FC<{}> = (props) => {
 
   // ----- new state -----
   const [lastAction, setLastAction] = useState<"" | "new" | "create" | "claim" | "cancel" | "complete">("");
-  const [newOrderAmount, setNewOrderAmount] = useState<number>(null);
-  const [newOrderMaxAmount, setNewOrderMaxAmount] = useState<number>(null);
+  const [newOrderAmount, setNewOrderAmount] = useState<number>(0);
+  const [newOrderMaxAmount, setNewOrderMaxAmount] = useState<number>(0);
   const [actionState, setActionState] = useState<FormState>(FormState.DEFAULT);
-  const [selectedOrder, setSelectedOrder] = useState<OnRampOrder>(null);
-  const [selectedOrderClaim, setSelectedOrderClaim] = useState<OnRampOrderClaim>(null);
+  const [selectedOrder, setSelectedOrder] = useState<OnRampOrder>({});
+  const [selectedOrderClaim, setSelectedOrderClaim] = useState<OnRampOrderClaim>({});
 
   // fetched state
   const [orders, setOrders] = useState<OnRampOrder[]>([]);
