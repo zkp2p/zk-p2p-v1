@@ -56,9 +56,6 @@ template P2POnrampVerify(max_header_bytes, max_body_bytes, n, k) {
     signal reveal_message[max_venmo_len][max_body_bytes];
     signal output reveal_message_packed[max_venmo_packed_bytes];
 
-    signal input address;
-    signal input address_plus_one;
-
     var LEN_SHA_B64 = 44;     // ceil(32/3) * 4, should be automatically calculated.
     signal input body_hash_idx;
     signal body_hash[LEN_SHA_B64][max_header_bytes];
@@ -191,6 +188,7 @@ template P2POnrampVerify(max_header_bytes, max_body_bytes, n, k) {
             // [5][k5] = g, where k5 >= venmo_user_id_idx + 5
             reveal_venmo_user[j][i] <== reveal_venmo_user[j][i - 1] + venmo_user_id_eq[i-j].out * venmo_user_regex.reveal[i];
         }
+        log(venmo_user_regex.reveal[j]);
     }
     // USER ID PACKING: 16,800 constraints
     // Pack output for solidity verifier to be < 24kb size limit
@@ -232,6 +230,7 @@ template P2POnrampVerify(max_header_bytes, max_body_bytes, n, k) {
         for (var i = j + 1; i < max_body_bytes; i++) {
             reveal_venmo_mm[j][i] <== reveal_venmo_mm[j][i - 1] + venmo_mm_id_eq[i-j].out * venmo_mm_regex.reveal[i];
         }
+        log(venmo_mm_regex.reveal[j]);
     }
     // MM ID PACKING: 16,800 constraints
     component packed_venmo_mm_id_output[max_venmo_packed_bytes];
@@ -270,6 +269,7 @@ template P2POnrampVerify(max_header_bytes, max_body_bytes, n, k) {
         for (var i = j + 1; i < max_body_bytes; i++) {
             reveal_message[j][i] <== reveal_message[j][i - 1] + venmo_message_eq[i-j].out * venmo_message_regex.reveal[i];
         }
+        log(venmo_message_regex.reveal[j]);
     }
     // MESSAGE PACKING: 16,800 constraints
     component packed_message_output[max_venmo_packed_bytes];
@@ -302,9 +302,10 @@ template P2POnrampVerify(max_header_bytes, max_body_bytes, n, k) {
     }
 
     // TOTAL CONSTRAINTS: 3,331,114
+    // 26 total signals
 }
 
 // In circom, all output signals of the main component are public (and cannot be made private), the input signals of the main component are private if not stated otherwise using the keyword public as above. The rest of signals are all private and cannot be made public.
 // This makes modulus and reveal_venmo_user_packed public. hash(signature) can optionally be made public, but is not recommended since it allows the mailserver to trace who the offender is.
 
-component main { public [ modulus, address ] } = P2POnrampVerify(1024, 1536, 121, 17);
+component main { public [ modulus, address ] } = P2POnrampVerify(1024, 6464, 121, 17);
