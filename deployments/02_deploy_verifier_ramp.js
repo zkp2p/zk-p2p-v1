@@ -6,14 +6,6 @@ async function main() {
   // Retrieve the saved contract address from the previous deployment script
   const { usdcAddress } = await deployments.get("FakeUSDC");
 
-  console.log("Deploying Verifier contract with the account:", deployer.address);
-
-//   const Verifier = await ethers.getContractFactory("Verifier");
-//   const verifier = await Verifier.deploy();
-
-  // console.log("Verifier contract deployed to address:", verifier.address);
-
-  const verifier = "";
   const venmoRsaKey = [
     "683441457792668103047675496834917209",
     "1011953822609495209329257792734700899",
@@ -37,7 +29,7 @@ async function main() {
   console.log("Deploying Ramp contract with the account:", deployer.address);
 
   const Ramp = await ethers.getContractFactory("Ramp");
-  const ramp = await Ramp.deploy(venmoRsaKey, verifier, usdcAddress);
+  const ramp = await Ramp.deploy(venmoRsaKey, usdcAddress);
 
   console.log("Ramp contract deployed to address:", ramp.address);
 }

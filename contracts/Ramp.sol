@@ -2,8 +2,6 @@ pragma solidity ^0.8.12;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol"; 
 
-import { IVerifier } from "./interfaces/IVerifier.sol";
-
 contract Ramp {
     
     /* ============ Enums ============ */
@@ -52,7 +50,6 @@ contract Ramp {
 
     /* ============ Public Variables ============ */
 
-    IVerifier public immutable verifier;
     IERC20 public immutable usdc;
     uint256[rsaModulusChunksLen] public venmoMailserverKeys;
 
@@ -64,9 +61,8 @@ contract Ramp {
 
     /* ============ External Functions ============ */
 
-    constructor(uint256[rsaModulusChunksLen] memory _venmoMailserverKeys, IVerifier _verifier, IERC20 _usdc) {
+    constructor(uint256[rsaModulusChunksLen] memory _venmoMailserverKeys, IERC20 _usdc) {
         venmoMailserverKeys = _venmoMailserverKeys;
-        verifier = _verifier;
         usdc = _usdc;
 
         orderNonce = 1;                     // start at 1 so that 0 can be used as a null value
