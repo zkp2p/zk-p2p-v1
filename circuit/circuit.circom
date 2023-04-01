@@ -1,5 +1,6 @@
 
 pragma circom 2.1.0;
+include "./Message_regex.circom";
 
 template Factors() {
     signal input x;
@@ -9,4 +10,4 @@ template Factors() {
     z <== x * y;
 }
 
-component main = Factors();
+component main = MessageRegex(100);
