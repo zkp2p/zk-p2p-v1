@@ -4,50 +4,63 @@ import styled from 'styled-components';
 interface CustomTableProps {
   headers: string[];
   data: any[][];
+  onRowClick?: (rowData: any[]) => void;
 }
 
-export const CustomTable: React.FC<CustomTableProps> = ({ headers, data }) => {
+export const CustomTable: React.FC<CustomTableProps> = ({ headers, data, onRowClick }) => {
   return (
-    <Table>
-      <thead>
-        <TableRow>
-          {headers.map((header, index) => (
-            <TableHeader key={index}>{header}</TableHeader>
-          ))}
-        </TableRow>
-      </thead>
-      <tbody>
-        {data.map((row, rowIndex) => (
-          <TableRow key={rowIndex}>
-            {row.map((cell, cellIndex) => (
-              <TableCell key={cellIndex}>{cell}</TableCell>
+    <TableContainer>
+      <StyledTable>
+        <thead>
+          <tr>
+            {headers.map((header, index) => (
+              <TableHeader key={index}>{header}</TableHeader>
             ))}
-          </TableRow>
-        ))}
-      </tbody>
-    </Table>
+          </tr>
+        </thead>
+        <tbody>
+          {data.map((row, rowIndex) => (
+            <TableRow key={rowIndex} onClick={() => onRowClick && onRowClick([rowIndex])}>
+              {row.map((cell, cellIndex) => (
+                <TableCell key={cellIndex}>{cell}</TableCell>
+              ))}
+            </TableRow>
+          ))}
+        </tbody>
+      </StyledTable>
+    </TableContainer>
   );
 };
 
-const Table = styled.table`
+const TableContainer = styled.div`
+  width: 100%;
+  overflow-x: auto;
+`;
+
+const StyledTable = styled.table`
   width: 100%;
   border-collapse: collapse;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
 `;
 
 const TableHeader = styled.th`
-  border: 1px solid #ddd;
-  padding: 8px;
+  color: rgba(255, 255, 255, 0.8);
+  padding: 16px;
   text-align: left;
-  background-color: #f2f2f2;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
 `;
 
 const TableRow = styled.tr`
   &:nth-child(even) {
-    background-color: #f2f2f2;
+    background-color: rgba(0, 0, 0, 0.1);
+  }
+  &:hover {
+    border: 1px solid rgba(255, 255, 255, 0.8);
   }
 `;
 
 const TableCell = styled.td`
-  border: 1px solid #ddd;
-  padding: 8px;
+  padding: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 `;

@@ -5,7 +5,8 @@ export const SingleLineInput: React.FC<{
   label: string;
   value: any;
   onChange: (e: any) => void;
-}> = ({ label, onChange, value }) => {
+  readOnly?: boolean;
+}> = ({ label, onChange, value, readOnly = false }) => {
   return (
     <InputContainer>
       <label
@@ -15,7 +16,7 @@ export const SingleLineInput: React.FC<{
       >
         {label}
       </label>
-      <Input onChange={onChange} value={value} placeholder={label} />
+      <Input onChange={onChange} value={value} placeholder={label} readOnly={readOnly} />
     </InputContainer>
   );
 };
