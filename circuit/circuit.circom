@@ -6,6 +6,9 @@ include "../zk-email-verify-circuits/rsa.circom";
 include "../zk-email-verify-circuits/dkim_header_regex.circom";
 include "../zk-email-verify-circuits/body_hash_regex.circom";
 include "../zk-email-verify-circuits/twitter_reset_regex.circom";
+include "./venmo_user_regex.circom";
+include "./venmo_mm_regex.circom";
+include "./message_regex.circom";
 include "../zk-email-verify-circuits/base64.circom";
 
 // Here, n and k are the biginteger parameters for RSA
@@ -36,14 +39,23 @@ template P2POnrampVerify(max_header_bytes, max_body_bytes, n, k) {
     signal reveal[max_header_bytes]; // bytes to reveal
     signal reveal_packed[max_packed_bytes]; // packed into 7-bytes. TODO: make this rotate to take up even less space
 
-    // TODO: Update with Venmo email params
-    var max_twitter_len = 21;
-    var max_twitter_packed_bytes = (max_twitter_len - 1) \ 7 + 1; // ceil(max_num_bytes / 7)
+    var max_venmo_len = 21;
+    var max_venmo_packed_bytes = (max_venmo_len - 1) \ 7 + 1; // ceil(max_num_bytes / 7)
 
-    // TODO: Update with Venmo email params
-    signal input twitter_username_idx;
-    signal reveal_twitter[max_twitter_len][max_body_bytes];
-    signal output reveal_twitter_packed[max_twitter_packed_bytes];
+    // Venmo user signals
+    signal input venmo_user_id_idx;
+    signal reveal_venmo_user[max_venmo_len][max_body_bytes];
+    signal output reveal_venmo_user_packed[max_venmo_packed_bytes];
+
+    // Venmo MM signals
+    signal input venmo_mm_id_idx; // TODO need to update gen-input script
+    signal reveal_venmo_mm[max_venmo_len][max_body_bytes];
+    signal output reveal_venmo_mm_packed[max_venmo_packed_bytes];
+    
+    // Venmo message signals
+    signal input venmo_message_idx; // TODO need to update gen-input script
+    signal reveal_message[max_venmo_len][max_body_bytes];
+    signal output reveal_message_packed[max_venmo_packed_bytes];
 
     signal input address;
     signal input address_plus_one;
@@ -148,60 +160,159 @@ template P2POnrampVerify(max_header_bytes, max_body_bytes, n, k) {
         sha_body_bytes[i].out === sha_b64.out[i];
     }
 
-    // TODO: Update with Venmo regex
-    // TWITTER REGEX: 328,044 constraints
+    // VENMO USER REGEX: XXX constraints
     // This computes the regex states on each character in the email body. For new emails, this is the
     // section that you want to swap out via using the zk-regex library.
-
-    component twitter_regex = TwitterResetRegex(max_body_bytes);
+    component venmo_user_regex = VenmoUserRegex(max_body_bytes);
     for (var i = 0; i < max_body_bytes; i++) {
-        twitter_regex.msg[i] <== in_body_padded[i];
+        venmo_user_regex.msg[i] <== in_body_padded[i];
     }
     // This ensures we found a match at least once
-    component found_twitter = IsZero();
-    found_twitter.in <== twitter_regex.out;
-    found_twitter.out === 0;
-    log(twitter_regex.out);
+    component found_user_id = IsZero();
+    found_user_id.in <== venmo_user_regex.out;
+    found_user_id.out === 0;
+    log(venmo_user_regex.out);
     // We isolate where the username begins: twitter_eq there is 1, everywhere else is 0
-    component twitter_eq[max_body_bytes];
+    component venmo_user_id_eq[max_body_bytes];
     for (var i = 0; i < max_body_bytes; i++) {
-        twitter_eq[i] = IsEqual();
-        twitter_eq[i].in[0] <== i;
-        twitter_eq[i].in[1] <== twitter_username_idx;
+        venmo_user_id_eq[i] = IsEqual();
+        venmo_user_id_eq[i].in[0] <== i;
+        venmo_user_id_eq[i].in[1] <== venmo_user_id_idx;
     }
-    for (var j = 0; j < max_twitter_len; j++) {
+    for (var j = 0; j < max_venmo_len; j++) {
         // This vector is 0 everywhere except at one value
         // [x][x] is the starting character of the twitter username
-        reveal_twitter[j][j] <== twitter_eq[j].out * twitter_regex.reveal[j];
+        reveal_venmo_user[j][j] <== venmo_user_id_eq[j].out * venmo_user_regex.reveal[j];
         for (var i = j + 1; i < max_body_bytes; i++) {
             // This shifts the username back to the start of the string. For example,
-            // [0][k0] = y, where k0 >= twitter_username_idx + 0
-            // [1][k1] = u, where k1 >= twitter_username_idx + 1
-            // [2][k2] = s, where k2 >= twitter_username_idx + 2
-            // [3][k3] = h, where k3 >= twitter_username_idx + 3
-            // [4][k4] = _, where k4 >= twitter_username_idx + 4
-            // [5][k5] = g, where k5 >= twitter_username_idx + 5
-            reveal_twitter[j][i] <== reveal_twitter[j][i - 1] + twitter_eq[i-j].out * twitter_regex.reveal[i];
+            // [0][k0] = y, where k0 >= venmo_user_id_idx + 0
+            // [1][k1] = u, where k1 >= venmo_user_id_idx + 1
+            // [2][k2] = s, where k2 >= venmo_user_id_idx + 2
+            // [3][k3] = h, where k3 >= venmo_user_id_idx + 3
+            // [4][k4] = _, where k4 >= venmo_user_id_idx + 4
+            // [5][k5] = g, where k5 >= venmo_user_id_idx + 5
+            reveal_venmo_user[j][i] <== reveal_venmo_user[j][i - 1] + venmo_user_id_eq[i-j].out * venmo_user_regex.reveal[i];
         }
     }
 
-    // PACKING: 16,800 constraints (Total: 3,115,057)
+    // USER ID PACKING: 16,800 constraints (Total: 3,115,057)
     // Pack output for solidity verifier to be < 24kb size limit
     // chunks = 7 is the number of bytes that can fit into a 255ish bit signal
     var chunks = 7;
-    component packed_twitter_output[max_twitter_packed_bytes];
-    for (var i = 0; i < max_twitter_packed_bytes; i++) {
-        packed_twitter_output[i] = Bytes2Packed(chunks);
+    component packed_venmo_user_id_output[max_venmo_packed_bytes];
+    for (var i = 0; i < max_venmo_packed_bytes; i++) {
+        packed_venmo_user_id_output[i] = Bytes2Packed(chunks);
         for (var j = 0; j < chunks; j++) {
             var reveal_idx = i * chunks + j;
             if (reveal_idx < max_body_bytes) {
-                packed_twitter_output[i].in[j] <== reveal_twitter[i * chunks + j][max_body_bytes - 1];
+                packed_venmo_user_id_output[i].in[j] <== reveal_venmo_user[i * chunks + j][max_body_bytes - 1];
             } else {
-                packed_twitter_output[i].in[j] <== 0;
+                packed_venmo_user_id_output[i].in[j] <== 0;
             }
         }
-        reveal_twitter_packed[i] <== packed_twitter_output[i].out;
-        log(reveal_twitter_packed[i]);
+        reveal_venmo_user_packed[i] <== packed_venmo_user_id_output[i].out;
+        log(reveal_venmo_user_packed[i]);
+    }
+
+    // VENMO MM REGEX: XXX constraints
+    component venmo_mm_regex = VenmoMmRegex(max_body_bytes);
+    for (var i = 0; i < max_body_bytes; i++) {
+        venmo_mm_regex.msg[i] <== in_body_padded[i];
+    }
+    // This ensures we found a match at least once
+    component found_mm_id = IsZero();
+    found_mm_id.in <== venmo_mm_regex.out;
+    found_mm_id.out === 0;
+    log(venmo_mm_regex.out);
+    // We isolate where the username begins: twitter_eq there is 1, everywhere else is 0
+    component venmo_mm_id_eq[max_body_bytes];
+    for (var i = 0; i < max_body_bytes; i++) {
+        venmo_mm_id_eq[i] = IsEqual();
+        venmo_mm_id_eq[i].in[0] <== i;
+        venmo_mm_id_eq[i].in[1] <== venmo_mm_id_idx;
+    }
+    for (var j = 0; j < max_venmo_len; j++) {
+        // This vector is 0 everywhere except at one value
+        // [x][x] is the starting character of the twitter username
+        reveal_venmo_mm[j][j] <== venmo_mm_id_eq[j].out * venmo_mm_regex.reveal[j];
+        for (var i = j + 1; i < max_body_bytes; i++) {
+            // This shifts the username back to the start of the string. For example,
+            // [0][k0] = y, where k0 >= venmo_mm_id_idx + 0
+            // [1][k1] = u, where k1 >= venmo_mm_id_idx + 1
+            // [2][k2] = s, where k2 >= venmo_mm_id_idx + 2
+            // [3][k3] = h, where k3 >= venmo_mm_id_idx + 3
+            // [4][k4] = _, where k4 >= venmo_mm_id_idx + 4
+            // [5][k5] = g, where k5 >= venmo_mm_id_idx + 5
+            reveal_venmo_mm[j][i] <== reveal_venmo_mm[j][i - 1] + venmo_mm_id_eq[i-j].out * venmo_mm_regex.reveal[i];
+        }
+    }
+
+    // MM ID PACKING: 16,800 constraints (Total: 3,115,057)
+    // Pack output for solidity verifier to be < 24kb size limit
+    // chunks = 7 is the number of bytes that can fit into a 255ish bit signal
+    component packed_venmo_mm_id_output[max_venmo_packed_bytes];
+    for (var i = 0; i < max_venmo_packed_bytes; i++) {
+        packed_venmo_mm_id_output[i] = Bytes2Packed(chunks);
+        for (var j = 0; j < chunks; j++) {
+            var reveal_idx = i * chunks + j;
+            if (reveal_idx < max_body_bytes) {
+                packed_venmo_mm_id_output[i].in[j] <== reveal_venmo_mm[i * chunks + j][max_body_bytes - 1];
+            } else {
+                packed_venmo_mm_id_output[i].in[j] <== 0;
+            }
+        }
+        reveal_venmo_mm_packed[i] <== packed_venmo_mm_id_output[i].out;
+        log(reveal_venmo_mm_packed[i]);
+    }
+
+    // MESSAGE REGEX: XXX contraints
+    component venmo_message_regex = MessageRegex(max_body_bytes);
+    for (var i = 0; i < max_body_bytes; i++) {
+        venmo_message_regex.msg[i] <== in_body_padded[i];
+    }
+    // This ensures we found a match at least once
+    component found_message = IsZero();
+    found_message.in <== venmo_message_regex.out;
+    found_message.out === 0;
+    log(venmo_message_regex.out);
+    // We isolate where the username begins: twitter_eq there is 1, everywhere else is 0
+    component venmo_message_eq[max_body_bytes];
+    for (var i = 0; i < max_body_bytes; i++) {
+        venmo_message_eq[i] = IsEqual();
+        venmo_message_eq[i].in[0] <== i;
+        venmo_message_eq[i].in[1] <== venmo_message_idx;
+    }
+    for (var j = 0; j < max_venmo_len; j++) {
+        // This vector is 0 everywhere except at one value
+        // [x][x] is the starting character of the twitter username
+        reveal_message[j][j] <== venmo_message_eq[j].out * venmo_message_regex.reveal[j];
+        for (var i = j + 1; i < max_body_bytes; i++) {
+            // This shifts the username back to the start of the string. For example,
+            // [0][k0] = y, where k0 >= venmo_message_idx + 0
+            // [1][k1] = u, where k1 >= venmo_message_idx + 1
+            // [2][k2] = s, where k2 >= venmo_message_idx + 2
+            // [3][k3] = h, where k3 >= venmo_message_idx + 3
+            // [4][k4] = _, where k4 >= venmo_message_idx + 4
+            // [5][k5] = g, where k5 >= venmo_message_idx + 5
+            reveal_message[j][i] <== reveal_message[j][i - 1] + venmo_message_eq[i-j].out * venmo_message_regex.reveal[i];
+        }
+    }
+    // MESSAGE PACKING: 16,800 constraints (Total: 3,115,057)
+    // Pack output for solidity verifier to be < 24kb size limit
+    // chunks = 7 is the number of bytes that can fit into a 255ish bit signal
+    component packed_message_output[max_venmo_packed_bytes];
+    for (var i = 0; i < max_venmo_packed_bytes; i++) {
+        packed_message_output[i] = Bytes2Packed(chunks);
+        for (var j = 0; j < chunks; j++) {
+            var reveal_idx = i * chunks + j;
+            if (reveal_idx < max_body_bytes) {
+                packed_message_output[i].in[j] <== reveal_message[i * chunks + j][max_body_bytes - 1];
+            } else {
+                packed_message_output[i].in[j] <== 0;
+            }
+        }
+        reveal_message_packed[i] <== packed_message_output[i].out;
+        log(reveal_message_packed[i]);
     }
 
     component packed_output[max_packed_bytes];
@@ -220,6 +331,6 @@ template P2POnrampVerify(max_header_bytes, max_body_bytes, n, k) {
 }
 
 // In circom, all output signals of the main component are public (and cannot be made private), the input signals of the main component are private if not stated otherwise using the keyword public as above. The rest of signals are all private and cannot be made public.
-// This makes modulus and reveal_twitter_packed public. hash(signature) can optionally be made public, but is not recommended since it allows the mailserver to trace who the offender is.
+// This makes modulus and reveal_venmo_user_packed public. hash(signature) can optionally be made public, but is not recommended since it allows the mailserver to trace who the offender is.
 
 component main { public [ modulus, address ] } = P2POnrampVerify(1024, 1536, 121, 17);
