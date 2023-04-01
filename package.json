@@ -1,0 +1,33 @@
+{
+  "name": "zk-starter",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "compile": "bash ./circuit/scripts/compile_circuit.sh",
+    "test": "./node_modules/.bin/mocha tests/*.js",
+    "genKeyPhase1": "bash ./circuit/scripts/generate_keys_phase1.sh",
+    "genKeyPhase2Plonk": "bash ./circuit/scripts/generate_keys_phase2_plonk.sh",
+    "genKeyPhase2Groth": "bash ./circuit/scripts/generate_keys_phase2_groth16.sh",
+    "genProofPlonk": "bash ./circuit/scripts/generate_proof_plonk.sh",
+    "genProofGroth": "bash ./circuit/scripts/generate_proof_groth16.sh",
+    "verifyProofPlonk": "bash ./circuit/scripts/verify_proof_plonk.sh",
+    "verifyProofGroth": "bash ./circuit/scripts/verify_proof_groth16.sh",
+    "bumpSolidity": "node scripts/bump-solidity.js",
+    "genContract": "bash ./circuit/scripts/generate_contract.sh && yarn bumpSolidity",
+    "genCalldata": "bash ./circuit/scripts/generate_calldata.sh"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "chai": "^4.3.7",
+    "circom_tester": "^0.0.19",
+    "circomlib": "^2.0.5",
+    "mocha": "^10.2.0",
+    "snarkjs": "0.4.22"
+  },
+  "devDependencies": {
+    "hardhat": "^2.12.2"
+  }
+}

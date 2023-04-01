@@ -1,0 +1,15 @@
+node_modules/
+circuit.sym 
+circuit/proof.json
+# circuit/input.json
+circuit/public.json
+circuit/*.ptau
+
+# Remove these once the circuits have been finalized
+# The following files will be required for verification on other clients like frontend
+circuit/verification_key.json
+circuit/circuit_final.zkey
+circuit/circuit_js
+
+build/
+circuit/circuit_cpp/
