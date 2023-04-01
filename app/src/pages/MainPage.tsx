@@ -60,7 +60,7 @@ enum OrderClaimStatus {
 }
 
 interface OnRampOrderClaim {
-  venmoId: number;
+  venmoId: string;
   status: OrderClaimStatus;
   expirationTimestamp: number;
 }
@@ -93,8 +93,8 @@ export const MainPage: React.FC<{}> = (props) => {
   const [newOrderAmount, setNewOrderAmount] = useState<number>(0);
   const [newOrderMaxAmount, setNewOrderMaxAmount] = useState<number>(0);
   const [actionState, setActionState] = useState<FormState>(FormState.DEFAULT);
-  const [selectedOrder, setSelectedOrder] = useState<OnRampOrder>({});
-  const [selectedOrderClaim, setSelectedOrderClaim] = useState<OnRampOrderClaim >({});
+  const [selectedOrder, setSelectedOrder] = useState<OnRampOrder>({} as OnRampOrder);
+  const [selectedOrderClaim, setSelectedOrderClaim] = useState<OnRampOrderClaim >({} as OnRampOrderClaim);
 
   // fetched state
   const [orders, setOrders] = useState<OnRampOrder[]>([]);
@@ -127,6 +127,11 @@ export const MainPage: React.FC<{}> = (props) => {
 
   const formatAmountsForUSDC = (tokenAmount: number) => {
     const adjustedAmount = tokenAmount / (10 ** 6);
+    return adjustedAmount;
+  };
+
+  const formatAmountsForTransactionParameter = (tokenAmount: number) => {
+    const adjustedAmount = tokenAmount * (10 ** 6);
     return adjustedAmount;
   };
 
@@ -165,10 +170,14 @@ export const MainPage: React.FC<{}> = (props) => {
       formHeaderText = "Create or Select an Order";
   }
 
-  function formatAddressForTable(inputString: string) {
-    const prefix = inputString.substring(0, 4);
-    const suffix = inputString.substring(inputString.length - 4);
-    return `${prefix}...${suffix}`;
+  function formatAddressForTable(addressToFormat: string) {
+    if (addressToFormat == address) {
+      return "You";
+    } else {
+      const prefix = addressToFormat.substring(0, 4);
+      const suffix = addressToFormat.substring(addressToFormat.length - 4);
+      return `${prefix}...${suffix}`;
+    }
   }
 
   function getIndexForSelectedClaim(claim: OnRampOrderClaim): number {
@@ -213,7 +222,7 @@ export const MainPage: React.FC<{}> = (props) => {
     addressOrName: '0xfC5D59a09397e4979812F0da631e0cE8cbAce6D3',
     contractInterface: abi,
     functionName: 'postOrder',
-    args: [newOrderAmount, newOrderMaxAmount],
+    args: [formatAmountsForTransactionParameter(newOrderAmount), formatAmountsForTransactionParameter(newOrderMaxAmount)],
     onError: (error: { message: any }) => {
       console.error(error.message);
     },
@@ -539,6 +548,8 @@ export const MainPage: React.FC<{}> = (props) => {
           <Button
             onClick={async () => {
               setLastAction("new");
+              setSelectedOrderClaim({} as OnRampOrderClaim);
+              setSelectedOrder({} as OnRampOrder);
               setActionState(FormState.NEW);
             }}
           >
@@ -564,6 +575,7 @@ export const MainPage: React.FC<{}> = (props) => {
                 }}
               />
               <Button
+                disabled={isWriteNewOrderLoading}
                 onClick={async () => {
                   setLastAction("create");
                   setActionState(FormState.NEW);
@@ -589,10 +601,11 @@ export const MainPage: React.FC<{}> = (props) => {
                 value={formatAmountsForUSDC(selectedOrder.maxAmount)}
               />
               <ReadOnlyInput
-                label="Venmo Handle"
+                label="Venmo Handle (Send Request for Amount Here)"
                 value={selectedOrder.sender}
               />
                 <Button
+                  disabled={isWriteClaimOrderLoading}
                   onClick={async () => {
                     setLastAction("claim");
                     // write txn
@@ -643,6 +656,7 @@ export const MainPage: React.FC<{}> = (props) => {
               />
               <ButtonContainer>
                 <Button
+                  disabled={isWriteCompleteOrderLoading}
                   onClick={async () => {
                     setLastAction("complete");
                     writeCompleteOrder?.();
