@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "compile": "bash ./circuit/scripts/compile_circuit.sh",
+    "compileContracts": "npx hardhat compile",
     "test": "./node_modules/.bin/mocha tests/*.js",
     "genKeyPhase1": "bash ./circuit/scripts/generate_keys_phase1.sh",
     "genKeyPhase2Plonk": "bash ./circuit/scripts/generate_keys_phase2_plonk.sh",
@@ -21,6 +22,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@openzeppelin/contracts": "^4.8.1",
     "chai": "^4.3.7",
     "circom_tester": "^0.0.19",
     "circomlib": "^2.0.5",
