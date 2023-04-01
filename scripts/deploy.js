@@ -1,10 +1,14 @@
-const { ethers } = require("hardhat");
+const hre = require("hardhat");
 
 async function main() {
-  const [deployer] = await ethers.getSigners();
+  const [deployer] = await hre.ethers.getSigners();
 
-  // Retrieve the saved contract address from the previous deployment script
-  const { usdcAddress } = await deployments.get("FakeUSDC");
+  console.log("Deploying Fake USDC contract with the account:", deployer.address);
+
+  const FakeUSDC = await hre.ethers.getContractFactory("FakeUSDC");
+  const fakeUSDC = await FakeUSDC.deploy("Fake USDC", "fUSDC", 10000000000000);
+
+  console.log("FakeUSDC contract deployed to address:", fakeUSDC.address);
 
   const venmoRsaKey = [
     "683441457792668103047675496834917209",
@@ -28,8 +32,8 @@ async function main() {
 
   console.log("Deploying Ramp contract with the account:", deployer.address);
 
-  const Ramp = await ethers.getContractFactory("Ramp");
-  const ramp = await Ramp.deploy(venmoRsaKey, usdcAddress);
+  const Ramp = await hre.ethers.getContractFactory("Ramp");
+  const ramp = await Ramp.deploy(venmoRsaKey, fakeUSDC.address);
 
   console.log("Ramp contract deployed to address:", ramp.address);
 }
