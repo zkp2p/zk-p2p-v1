@@ -17,3 +17,5 @@ example-emails/
 
 artifacts/
 cache/
+
+.env
