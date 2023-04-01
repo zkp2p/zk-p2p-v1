@@ -12,20 +12,20 @@ template MessageRegex (msg_bytes) {
     for (var i = 0; i < msg_bytes; i++) {
         in[i] <== msg[i];
     }
-	
+
 	component eq[15][num_bytes];
 	component lt[4][num_bytes];
 	component and[7][num_bytes];
 	component multi_or[3][num_bytes];
 	signal states[num_bytes+1][5];
-	
+
 	for (var i = 0; i < num_bytes; i++) {
 		states[i][0] <== 1;
 	}
 	for (var i = 1; i < 5; i++) {
 		states[0][i] <== 0;
 	}
-	
+
 	for (var i = 0; i < num_bytes; i++) {
 		lt[0][i] = LessThan(8);
 		lt[0][i].in[0] <== 47;
@@ -129,7 +129,7 @@ template MessageRegex (msg_bytes) {
 		and[6][i].b <== eq[14][i].out;
 		states[i+1][4] <== and[6][i].out;
 	}
-	
+
 	signal final_state_sum[num_bytes+1];
 	final_state_sum[0] <== states[0][1];
 	for (var i = 1; i <= num_bytes; i++) {

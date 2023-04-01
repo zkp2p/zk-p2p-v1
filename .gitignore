@@ -1,5 +1,6 @@
 node_modules/
 circuit.sym 
+circuit.r1cs
 circuit/proof.json
 # circuit/input.json
 circuit/public.json
