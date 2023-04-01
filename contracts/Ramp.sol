@@ -1,8 +1,10 @@
 pragma solidity ^0.8.12;
 
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol"; 
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract Ramp {
+import { Verifier } from "./Verifier.sol";
+
+contract Ramp is Verifier {
     
     /* ============ Enums ============ */
 
@@ -36,6 +38,15 @@ contract Ramp {
         uint256 claimExpirationTime;
     }
 
+    struct OrderWithId {
+        uint256 id;
+        address onRamper;
+        uint256 amountToReceive;
+        uint256 maxAmountToPay;
+        OrderStatus status;
+        address[] claimers;  
+    }
+
     /* ============ Modifiers ============ */
 
     modifier onlyRegisteredUser() {
@@ -46,7 +57,7 @@ contract Ramp {
     /* ============ Public Variables ============ */
 
     uint256 public constant rsaModulusChunksLen = 17;
-    uint16 public constant msgLen = 21;
+    uint16 public constant msgLen = 27;
 
     /* ============ Public Variables ============ */
 
@@ -98,9 +109,9 @@ contract Ramp {
         external 
         onlyRegisteredUser()
     {
-        require(orders[orderNonce].status == OrderStatus.Open, "Order has already been filled, canceled, or doesn't exist");
+        require(orders[_orderNonce].status == OrderStatus.Open, "Order has already been filled, canceled, or doesn't exist");
         require(orderClaims[_orderNonce][msg.sender].status == ClaimStatus.Unsubmitted, "Order has already been claimed by caller");
-        require(msg.sender != orders[orderNonce].onRamper, "Can't claim your own order");
+        require(msg.sender != orders[_orderNonce].onRamper, "Can't claim your own order");
 
         orderClaims[_orderNonce][msg.sender] = OrderClaim({
             venmoId: userToVenmoId[msg.sender],
@@ -109,7 +120,7 @@ contract Ramp {
         });
         orders[_orderNonce].claimers.push(msg.sender);
 
-        usdc.transferFrom(msg.sender, address(this), orders[orderNonce].amountToReceive);
+        usdc.transferFrom(msg.sender, address(this), orders[_orderNonce].amountToReceive);
     }
 
     function onRamp(
@@ -179,10 +190,17 @@ contract Ramp {
         return orderClaimsArray;
     }
 
-    function getAllOrders() external view returns (Order[] memory) {
-        Order[] memory ordersArray = new Order[](orderNonce - 1);
+    function getAllOrders() external view returns (OrderWithId[] memory) {
+        OrderWithId[] memory ordersArray = new OrderWithId[](orderNonce - 1);
         for (uint256 i = 1; i < orderNonce; i++) {
-            ordersArray[i - 1] = orders[i];
+            ordersArray[i - 1] = OrderWithId({
+                id: i,
+                onRamper: orders[i].onRamper,
+                amountToReceive: orders[i].amountToReceive,
+                maxAmountToPay: orders[i].maxAmountToPay,
+                status: orders[i].status,
+                claimers: orders[i].claimers
+            });
         }
 
         return ordersArray;
@@ -190,22 +208,22 @@ contract Ramp {
 
     /* ============ Internal Functions ============ */
 
-    // function _verifyOnRampProof(
-    //     uint256[2] memory a,
-    //     uint256[2][2] memory b,
-    //     uint256[2] memory c,
-    //     uint256[msgLen] memory signals
-    // )
-    //     internal
-    //     view
-    // {
-    //     require(signals[0] == 0, "Invalid starting message character");
-    //     // msg_len-17 public signals are the masked message bytes, 17 are the modulus.
-    //     // uint8[] memory message = convert7PackedBytesToDupedBytes(signals);
-    //     for (uint32 i = msgLen - 17; i < msgLen; i++) {
-    //         require(signals[i] == venmoMailserverKeys[i], "Invalid modulus not matched");
-    //     }
+    function _verifyOnRampProof(
+        uint256[2] memory a,
+        uint256[2][2] memory b,
+        uint256[2] memory c,
+        uint256[msgLen] memory signals
+    )
+        internal
+        view
+    {
+        require(signals[0] == 0, "Invalid starting message character");
+        // msg_len-17 public signals are the masked message bytes, 17 are the modulus.
+        // uint8[] memory message = convert7PackedBytesToDupedBytes(signals);
+        for (uint32 i = msgLen - 17; i < msgLen; i++) {
+            require(signals[i] == venmoMailserverKeys[i], "Invalid modulus not matched");
+        }
 
-    //     require(verifyProof(a, b, c, signals), "Invalid Proof"); // checks effects iteractions, this should come first
-    // }
+        require(verifyProof(a, b, c, signals), "Invalid Proof"); // checks effects iteractions, this should come first
+    }
 }

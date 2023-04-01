@@ -7,6 +7,7 @@
     "chain": "npx hardhat node",
     "compile": "bash ./circuit/scripts/compile_circuit.sh",
     "compileContracts": "npx hardhat compile",
+    "testContracts": "npx hardhat test",
     "deploy:localhost": "npx hardhat run scripts/deploy.js --network localhost",
     "deploy:goerli": "npx hardhat run scripts/deploy.js --network goerli",
     "test": "./node_modules/.bin/mocha tests/*.js",
@@ -34,7 +35,10 @@
     "snarkjs": "0.4.22"
   },
   "devDependencies": {
+    "@nomicfoundation/hardhat-network-helpers": "^1.0.8",
     "@nomiclabs/hardhat-ethers": "^2.2.2",
+    "@nomiclabs/hardhat-etherscan": "^3.1.7",
+    "ethereum-waffle": "^4.0.10",
     "ethers": "^5.0.0",
     "hardhat": "^2.12.2",
     "hardhat-deploy": "^0.11.25"

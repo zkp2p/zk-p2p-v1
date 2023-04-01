@@ -1,12 +1,21 @@
 const hre = require("hardhat");
+const { BigNumber } = hre.ethers;
+
+const ONE_GWEI = BigNumber.from(1000000000);
 
 async function main() {
+  const feeData = await hre.ethers.provider.getFeeData();
+  const deployGasConfig = {
+    gasPrice: feeData.gasPrice.add(ONE_GWEI.mul(3)),
+  }
+
+  console.log(feeData, deployGasConfig);
   const [deployer] = await hre.ethers.getSigners();
 
   console.log("Deploying Fake USDC contract with the account:", deployer.address);
 
   const FakeUSDC = await hre.ethers.getContractFactory("FakeUSDC");
-  const fakeUSDC = await FakeUSDC.deploy("Fake USDC", "fUSDC", 10000000000000);
+  const fakeUSDC = await FakeUSDC.deploy("Fake USDC", "fUSDC", 10000000000000, deployGasConfig);
 
   console.log("FakeUSDC contract deployed to address:", fakeUSDC.address);
 
@@ -33,7 +42,7 @@ async function main() {
   console.log("Deploying Ramp contract with the account:", deployer.address);
 
   const Ramp = await hre.ethers.getContractFactory("Ramp");
-  const ramp = await Ramp.deploy(venmoRsaKey, fakeUSDC.address);
+  const ramp = await Ramp.deploy(venmoRsaKey, fakeUSDC.address, deployGasConfig);
 
   console.log("Ramp contract deployed to address:", ramp.address);
 }
