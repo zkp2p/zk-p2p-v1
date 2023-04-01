@@ -21,7 +21,8 @@ var Cryo = require("cryo");
 const pki = require("node-forge").pki;
 
 // const email_file = "monia_email.eml"; // "./test_email.txt", "./twitter_msg.eml", kaylee_phone_number_email_twitter
-const email_file = "zktestemail.eml";
+const email_file = "venmo_email_2.eml";
+
 export interface ICircuitInputs {
   modulus?: string[];
   signature?: string[];
@@ -34,11 +35,9 @@ export interface ICircuitInputs {
   in_body_hash?: string[];
   precomputed_sha?: string[];
   body_hash_idx?: string;
-  addressParts?: string[];
-  address?: string;
-  address_plus_one?: string;
-  twitter_username_idx?: string;
-  email_from_idx?: string;
+  venmo_user_id_idx?: string;
+  venmo_mm_id_idx?: string;
+  venmo_message_idx?: string;
 }
 
 enum CircuitType {
@@ -100,12 +99,8 @@ export async function getCircuitInputs(
   const [messagePadded, messagePaddedLen] = await sha256Pad(prehashBytesUnpadded, MAX_HEADER_PADDED_BYTES);
   const [bodyPadded, bodyPaddedLen] = await sha256Pad(body, Math.max(MAX_BODY_PADDED_BYTES, calc_length));
 
-  // Convet messagePadded to string to print the specific header data that is signed
-  // console.log(message.toString());
-
   // Ensure SHA manual unpadded is running the correct function
   const shaOut = await partialSha(messagePadded, messagePaddedLen);
-
   assert((await Uint8ArrayToString(shaOut)) === (await Uint8ArrayToString(Uint8Array.from(await shaHash(prehashBytesUnpadded)))), "SHA256 calculation did not match!");
 
   // Precompute SHA prefix
@@ -140,10 +135,18 @@ export async function getCircuitInputs(
   const address = bytesToBigInt(fromHex(eth_address)).toString();
   const address_plus_one = (bytesToBigInt(fromHex(eth_address)) + 1n).toString();
 
-  const USERNAME_SELECTOR = Buffer.from(STRING_PRESELECTOR);
-  const email_from_idx = Buffer.from(prehash_message_string).indexOf("From: ").toString();
-  const twitter_username_idx = (Buffer.from(bodyRemaining).indexOf(USERNAME_SELECTOR) + USERNAME_SELECTOR.length).toString();
-  console.log("Twitter Username idx: ", twitter_username_idx);
+  // const SELECTOR = Buffer.from(STRING_PRESELECTOR);
+  const venmo_mm_id_idx = (Buffer.from(bodyRemaining).indexOf(Buffer.from("user_id=3D")) + Buffer.from("user_id=3D").length).toString();
+  
+  const first_actor_id_idx = Buffer.from(bodyRemaining).indexOf(Buffer.from("actor_id=3D"));
+  const second_actor_id_idx = Buffer.from(bodyRemaining).indexOf(Buffer.from("actor_id=3D"), first_actor_id_idx + 1);
+  const venmo_user_id_idx = (second_actor_id_idx + Buffer.from("actor_id=3D").length).toString();
+  
+  const venmo_message_idx = (Buffer.from(bodyRemaining).indexOf(Buffer.from("<p>")) + Buffer.from("<p>").length).toString();
+
+  console.log("Venmo MM Id idx: ", venmo_mm_id_idx);
+  console.log("Venmo User Id idx: ", venmo_user_id_idx);
+  console.log("Venmo Message idx: ", venmo_message_idx);
 
   if (circuit === CircuitType.RSA) {
     circuitInputs = {
@@ -160,9 +163,9 @@ export async function getCircuitInputs(
       precomputed_sha,
       in_body_padded,
       in_body_len_padded_bytes,
-      twitter_username_idx,
-      address,
-      address_plus_one,
+      venmo_user_id_idx,
+      venmo_mm_id_idx,
+      venmo_message_idx,
       body_hash_idx,
       // email_from_idx,
     };
