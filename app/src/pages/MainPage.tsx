@@ -15,6 +15,7 @@ import { downloadProofFiles, generateProof, verifyProof } from "../helpers/zkp";
 import { packedNBytesToString } from "../helpers/binaryFormat";
 import { LabeledTextArea } from "../components/LabeledTextArea";
 import { SingleLineInput } from "../components/SingleLineInput";
+import { ReadOnlyInput } from "../components/ReadOnlyInput";
 import { Button } from "../components/Button";
 import { Col, Row } from "../components/Layout";
 // import { NumberedStep } from "../components/NumberedStep";
@@ -523,7 +524,6 @@ export const MainPage: React.FC<{}> = (props) => {
                 }}
               />
               <Button
-                // disabled={lastAction != "new"} // TODO: add some other validation for complete text fields
                 onClick={async () => {
                   setLastAction("create");
                   setActionState(FormState.NEW);
@@ -536,37 +536,21 @@ export const MainPage: React.FC<{}> = (props) => {
           )}
           {actionState === FormState.CLAIM && (
             <ConditionalContainer>
-              <SingleLineInput
+              <ReadOnlyInput
                 label="Sender"
                 value={selectedOrder.sender}
-                onChange={(e) => {
-                  // No-op
-                }}
-                readOnly={true}
               />
-              <SingleLineInput
+              <ReadOnlyInput
                 label="Amount"
                 value={selectedOrder.amount}
-                onChange={(e) => {
-                  // No-op
-                }}
-                readOnly={true}
               />
-              <SingleLineInput
+              <ReadOnlyInput
                 label="Max Amount"
                 value={selectedOrder.maxAmount}
-                onChange={(e) => {
-                  // No-op
-                }}
-                readOnly={true}
               />
-              <SingleLineInput
+              <ReadOnlyInput
                 label="Venmo Handle"
                 value={newOrderMaxAmount}
-                onChange={(e) => {
-                  // No-op
-                }}
-                readOnly={true}
               />
                 <Button
                   // disabled={emailFull.trim().length === 0 || proof.length === 0}
@@ -581,15 +565,13 @@ export const MainPage: React.FC<{}> = (props) => {
           )}
           {actionState === FormState.UPDATE && (
             <ConditionalContainer>
-              <SingleLineInput
+              <ReadOnlyInput
                 label="Amount"
                 value={selectedOrder.amount}
-                onChange={(e) => {
-                  setNewOrderAmount(e.currentTarget.value);
-                }}
-                readOnly={true}
               />
-              <SubHeader>Select Claim and Complete</SubHeader>
+              <H3>
+                Select Claim and Complete
+              </H3>
               <CustomTable headers={orderClaimsTableHeaders} data={orderClaimsTableData} onRowClick={handleOrderClaimRowClick}/>
               <LabeledTextArea
                 label="Full Email with Headers"
@@ -685,6 +667,11 @@ const SubHeader = styled(Header)`
   font-size: 1.7em;
   margin-bottom: 16px;
   color: rgba(255, 255, 255, 0.9);
+`;
+
+const H3 = styled(SubHeader)`
+  font-size: 1.4em;
+  margin-bottom: -8px;
 `;
 
 const Main = styled(Row)`

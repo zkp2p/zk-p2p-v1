@@ -1,12 +1,10 @@
 import styled from "styled-components";
 import { Col } from "./Layout";
 
-export const SingleLineInput: React.FC<{
+export const ReadOnlyInput: React.FC<{
   label: string;
   value: any;
-  onChange: (e: any) => void;
-  readOnly?: boolean;
-}> = ({ label, onChange, value, readOnly = false }) => {
+}> = ({ label, value }) => {
   return (
     <InputContainer>
       <label
@@ -16,7 +14,7 @@ export const SingleLineInput: React.FC<{
       >
         {label}
       </label>
-      <Input onChange={onChange} value={value} placeholder={label} readOnly={readOnly} />
+      <Input value={value} placeholder={label} readOnly={true} />
     </InputContainer>
   );
 };
@@ -35,8 +33,4 @@ const Input = styled.input`
   align-items: center;
   color: #fff;
   font-size: 16px;
-  transition: all 0.2s ease-in-out;
-  &:hover {
-    border: 1px solid rgba(255, 255, 255, 0.8);
-  }
 `;
