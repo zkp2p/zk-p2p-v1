@@ -156,7 +156,7 @@ template P2POnrampVerify(max_header_bytes, max_body_bytes, n, k) {
         sha_body_bytes[i].out === sha_b64.out[i];
     }
 
-    // VENMO USER REGEX: TODO XXX constraints
+    // VENMO USER REGEX
     // This computes the regex states on each character in the email body
     component venmo_user_regex = VenmoUserRegex(max_body_bytes);
     for (var i = 0; i < max_body_bytes; i++) {
@@ -189,7 +189,7 @@ template P2POnrampVerify(max_header_bytes, max_body_bytes, n, k) {
             reveal_venmo_user[j][i] <== reveal_venmo_user[j][i - 1] + venmo_user_id_eq[i-j].out * venmo_user_regex.reveal[i];
         }
     }
-    // USER ID PACKING: 16,800 constraints
+    // USER ID PACKING
     // Pack output for solidity verifier to be < 24kb size limit
     // chunks = 7 is the number of bytes that can fit into a 255ish bit signal
     var chunks = 7;
@@ -213,7 +213,7 @@ template P2POnrampVerify(max_header_bytes, max_body_bytes, n, k) {
     }
     log("venmo message reveal end");
 
-    // VENMO MM REGEX: TODO XXX constraints
+    // VENMO MM REGEX
     // This is the same flow as the above using a different regex circuit to extract the MM ID
     component venmo_mm_regex = VenmoMmRegex(max_body_bytes);
     for (var i = 0; i < max_body_bytes; i++) {
@@ -235,7 +235,7 @@ template P2POnrampVerify(max_header_bytes, max_body_bytes, n, k) {
             reveal_venmo_mm[j][i] <== reveal_venmo_mm[j][i - 1] + venmo_mm_id_eq[i-j].out * venmo_mm_regex.reveal[i];
         }
     }
-    // MM ID PACKING: 16,800 constraints
+    // MM ID PACKING
     component packed_venmo_mm_id_output[max_venmo_packed_bytes];
     for (var i = 0; i < max_venmo_packed_bytes; i++) {
         packed_venmo_mm_id_output[i] = Bytes2Packed(chunks);
@@ -256,7 +256,7 @@ template P2POnrampVerify(max_header_bytes, max_body_bytes, n, k) {
     }
     log("venmo message reveal end");
 
-    // MESSAGE REGEX: TODO XXX contraints
+    // MESSAGE REGEX
     // This is the same flow as the above using a different regex circuit to extract the message
     component venmo_message_regex = MessageRegex(max_body_bytes);
     for (var i = 0; i < max_body_bytes; i++) {
@@ -278,7 +278,7 @@ template P2POnrampVerify(max_header_bytes, max_body_bytes, n, k) {
             reveal_message[j][i] <== reveal_message[j][i - 1] + venmo_message_eq[i-j].out * venmo_message_regex.reveal[i];
         }
     }
-    // MESSAGE PACKING: 16,800 constraints
+    // MESSAGE PACKING
     component packed_message_output[max_venmo_packed_bytes];
     for (var i = 0; i < max_venmo_packed_bytes; i++) {
         packed_message_output[i] = Bytes2Packed(chunks);
@@ -313,7 +313,7 @@ template P2POnrampVerify(max_header_bytes, max_body_bytes, n, k) {
         reveal_packed[i] <== packed_output[i].out;
     }
 
-    // TOTAL CONSTRAINTS: 3,331,114
+    // TOTAL CONSTRAINTS: 8M+
     // 26 total signals
 }
 
