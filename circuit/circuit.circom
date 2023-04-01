@@ -6,7 +6,7 @@ include "../zk-email-verify-circuits/rsa.circom";
 include "../zk-email-verify-circuits/dkim_header_regex.circom";
 include "../zk-email-verify-circuits/body_hash_regex.circom";
 include "../zk-email-verify-circuits/base64.circom";
-include "./message_regex.circom";
+include "./venmo_message_regex.circom";
 include "./venmo_user_regex.circom";
 include "./venmo_mm_regex.circom";
 
