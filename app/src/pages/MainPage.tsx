@@ -23,7 +23,7 @@ import { TopBanner } from "../components/TopBanner";
 import { CustomTable } from '../components/CustomTable';
 import { useAccount, useContractWrite, useContractRead, usePrepareContractWrite } from "wagmi";
 import { ProgressBar } from "../components/ProgressBar";
-import { abi } from "../helpers/comp.abi";
+import { abi } from "../helpers/ramp.abi";
 import { isSetIterator } from "util/types";
 var Buffer = require("buffer/").Buffer; // note: the trailing slash is important!
 
@@ -97,7 +97,7 @@ export const MainPage: React.FC<{}> = (props) => {
 
   // fetched state
   const [orders, setOrders] = useState<OnRampOrder[]>([]);
-  // const [orderClaims, setOrderClaims] = useState<string[]>([]); // TODO: populate with order claim structs
+  const [orderClaims, setOrderClaims] = useState<OnRampOrderClaim[]>([]);
 
   // computed state
   const { value, error } = useAsync(async () => {
@@ -112,17 +112,17 @@ export const MainPage: React.FC<{}> = (props) => {
   const circuitInputs = value || {};
   console.log("Circuit inputs:", circuitInputs);
 
-  // const formatExpiration = (expirationTimestamp: number) => {
-  //   const expirationDate = new Date(expirationTimestamp);
-  //   const now = new Date();
+  const formatExpiration = (expirationTimestamp: number) => {
+    const expirationDate = new Date(expirationTimestamp);
+    const now = new Date();
     
-  //   if (expirationDate < now) {
-  //     return "Expired";
-  //   } else {
-  //     const formattedDate = expirationDate.toLocaleString();
-  //     return formattedDate;
-  //   }
-  // };
+    if (expirationDate < now) {
+      return "Expired";
+    } else {
+      const formattedDate = expirationDate.toLocaleString();
+      return formattedDate;
+    }
+  };
 
   // table state
   const orderTableHeaders = ['Sender', 'Token Amount', 'Max', 'Status'];
@@ -133,12 +133,12 @@ export const MainPage: React.FC<{}> = (props) => {
     order.status,
   ]);
 
-  const orderClaimsTableHeaders = ['Taker', 'Venmo Handle', 'Expiration'];
-  const orderClaimsTableData = orders.slice(0, 2).map((order) => [
-    formatAddressForTable(order.sender),
-    "Richard-Liang-2",
-    new Date().toLocaleString(),
-  ]);
+  // const orderClaimsTableHeaders = ['Taker', 'Venmo Handle', 'Expiration'];
+  // const orderClaimsTableData = orders.slice(0, 2).map((order) => [
+  //   formatAddressForTable(order.sender),
+  //   fetchVenmoHandleForId(order.venmoId),
+  //   formatExpiration(orderClaim.expirationTimestamp),
+  // ]);
 
   /*
     Misc Helpers
@@ -178,52 +178,41 @@ export const MainPage: React.FC<{}> = (props) => {
   }
 
   /*
-    Read transactions
+    Contract Reads
   */
 
-  // TODO: remove gibberish COMP total supply read, making sure wagmi is working
+  // getAllOrders() external view returns (Order[] memory) {
   const {
-    data: fetchedOrders,
+    data: allOrders,
     isLoading: isReadAllOrdersLoading,
     isError: isReadAllOrdersError,
-    refetch,
+    refetch: refetchAllOrders,
   } = useContractRead({
-    addressOrName: '0x3587b2F7E0E2D6166d6C14230e7Fe160252B0ba4', // TODO: Update with proper escrow contract address
+    addressOrName: '0xfC5D59a09397e4979812F0da631e0cE8cbAce6D3',
     contractInterface: abi,
-    functionName: 'totalSupply', // TODO: Update with proper function name when deployed
+    functionName: 'getAllOrders',
   });
 
-  // function getAllOrders() external view returns (Order[] memory) {
-  // const {
-  //   data: allOrders,
-  //   isLoading: isReadAllOrdersLoading,
-  //   isError: isReadAllOrdersError,
-  //   refetch,
-  // } = useContractRead({
-  //   addressOrName: '', // TODO: Update with proper escrow contract address
-  //   contractInterface: abi,
-  //   functionName: 'getAllOrders',
-  // });
-
-  // function getClaimsForOrder(uint256 _orderId) external view returns (OrderClaim[] memory) {
-  // const {
-  //   data: claimedOrders,
-  //   isLoading: claimedOrdersLoading,
-  //   isError: claimedOrdersError,
-  // } = useContractRead({
-  //   addressOrName: '', // TODO: Update with proper escrow contract address
-  //   contractInterface: abi,
-  //   functionName: 'getAllOrders',
-  //   args: [selectedOrder.orderId],
-  // });
+  // getClaimsForOrder(uint256 _orderId) external view returns (OrderClaim[] memory) {
+  const {
+    data: orderClaimsData,
+    isLoading: isReadOrderClaimsLoading,
+    isError: isReadOrderClaimsError,
+    refetch: refetchClaimedOrders,
+  } = useContractRead({
+    addressOrName: '0xfC5D59a09397e4979812F0da631e0cE8cbAce6D3',
+    contractInterface: abi,
+    functionName: 'getAllOrders',
+    args: [selectedOrder.orderId],
+  });
 
   /*
-    Write transactions
+    Contract Writes
   */
 
-  // function postOrder(uint256 _amount, uint256 _maxAmountToPay) external onlyRegisteredUser() 
+  // postOrder(uint256 _amount, uint256 _maxAmountToPay) external onlyRegisteredUser() 
   const { config: writeCreateOrderConfig } = usePrepareContractWrite({
-    addressOrName: '0x3587b2F7E0E2D6166d6C14230e7Fe160252B0ba4', // TODO: Update with proper escrow contract address
+    addressOrName: '0xfC5D59a09397e4979812F0da631e0cE8cbAce6D3',
     contractInterface: abi,
     functionName: 'postOrder',
     args: [newOrderAmount, newOrderMaxAmount],
@@ -247,9 +236,9 @@ export const MainPage: React.FC<{}> = (props) => {
     writeCreateOrderConfig
   );
 
-  // function claimOrder(uint256 _orderNonce) external  onlyRegisteredUser()
+  // claimOrder(uint256 _orderNonce) external  onlyRegisteredUser()
   const { config: writeClaimOrderConfig } = usePrepareContractWrite({
-    addressOrName: '0x3587b2F7E0E2D6166d6C14230e7Fe160252B0ba4', // TODO: Update with proper escrow contract address
+    addressOrName: '0xfC5D59a09397e4979812F0da631e0cE8cbAce6D3',
     contractInterface: abi,
     functionName: 'claimOrder',
     args: [selectedOrder?.orderId],
@@ -273,9 +262,9 @@ export const MainPage: React.FC<{}> = (props) => {
     writeClaimOrderConfig
   );
 
-  // function onRamp( uint256 _orderId, uint256 _offRamper, VenmoId, bytes calldata _proof) external onlyRegisteredUser()
+  // onRamp( uint256 _orderId, uint256 _offRamper, VenmoId, bytes calldata _proof) external onlyRegisteredUser()
   const { config: writeCompleteOrderConfig } = usePrepareContractWrite({
-    addressOrName: '0x3587b2F7E0E2D6166d6C14230e7Fe160252B0ba4', // TODO: Update with proper escrow contract address
+    addressOrName: '0xfC5D59a09397e4979812F0da631e0cE8cbAce6D3',
     contractInterface: abi,
     functionName: 'onRamp',
     args: [selectedOrder?.orderId], // TODO: pass in the completed proof
@@ -310,48 +299,97 @@ export const MainPage: React.FC<{}> = (props) => {
     Hooks
   */
 
+  // Fetch Orders
   useEffect(() => {
     console.log('Attempting to set orders...');
-    console.log(Date.now().toLocaleString());
 
-    if (!isReadAllOrdersLoading && !isReadAllOrdersError && fetchedOrders) {
-      // Process fetched orders and update the state
-      // Format the fetched order status as needed
-
-      // TODO: Remove this once orders are fetched, currently fetching Comp total supply on goerli
-      console.log('Fetched orders:', fetchedOrders);
-      console.log(Date.now().toLocaleString());
-      console.log(fetchedOrders.toString());
+    if (!isReadAllOrdersLoading && !isReadAllOrdersError && allOrders) {
+      console.log('Fetched orders:', allOrders);
+      // console.log(allOrders.toString());
       
-      // TODO: Replace with conversion logic once orders are fetched from contract
       const sanitizedOrders: OnRampOrder[] = [];
-      for (let i = 0; i < 5; i++) {
+      for (let i = 0; i < allOrders.length; i++) {
+        const orderContractData = allOrders[i];
+
+        const orderId = orderContractData[0];
+        const sender = orderContractData[1];
+        const amount = orderContractData[2];
+        const maxAmount = orderContractData[3];
+        const status = orderContractData[4];
+
         const order: OnRampOrder = {
-          orderId: i,
-          sender: "0x24506DC1918183960Ac04dB859EB293B115952af",
-          amount: i * 100,
-          maxAmount: i * 101,
-          status: OrderStatus.OPEN,
+          orderId,
+          sender,
+          amount,
+          maxAmount,
+          status,
         };
+
+        console.log('Adding order to sanitizedOrders:', order);
+
         sanitizedOrders.push(order);
       }
 
       // Update orders state
       setOrders(sanitizedOrders);
     }
-  }, [fetchedOrders, isReadAllOrdersLoading, isReadAllOrdersError]);
+  }, [allOrders, isReadAllOrdersLoading, isReadAllOrdersError]);
 
   useEffect(() => {
     const intervalId = setInterval(() => {
       console.log('Refetching orders...');
 
-      refetch();
+      refetchAllOrders();
     }, 15000); // Refetch every 15 seconds
 
     return () => {
       clearInterval(intervalId);
     };
-  }, [refetch]);
+  }, [refetchAllOrders]);
+
+  // Fetch Order Claims
+  useEffect(() => {
+    if (!isReadOrderClaimsLoading && !isReadOrderClaimsError && orderClaimsData) {
+      console.log('Fetched order claims:', orderClaims);
+      // console.log(orderClaims.toString());
+      
+      const sanitizedOrderClaims: OnRampOrderClaim[] = [];
+      for (let i = 0; i < orderClaimsData.length; i++) {
+        const claimsData = orderClaimsData[i];
+
+        const venmoId = claimsData[0];
+        const status = claimsData[1];
+        const expirationTimestamp = claimsData[2];
+        
+        const orderClaim: OnRampOrderClaim = {
+          venmoId,
+          status,
+          expirationTimestamp
+        };
+
+        console.log('Adding order claims to sanitizedOrderClaims:', orderClaim);
+
+        sanitizedOrderClaims.push(orderClaim);
+      }
+
+      // Update order claims state
+      setOrderClaims(sanitizedOrderClaims);
+    }
+  }, [orderClaimsData, isReadOrderClaimsLoading, isReadOrderClaimsError]);
+
+  useEffect(() => {
+    if (selectedOrder) {
+      const intervalId = setInterval(() => {
+        console.log('Refetching order claims...');
+
+        refetchClaimedOrders();
+      }, 15000); // Refetch every 15 seconds
+  
+      return () => {
+        clearInterval(intervalId);
+      };
+    }
+  }, [selectedOrder, refetchClaimedOrders]);
 
   useEffect(() => {
     const userAgent = navigator.userAgent;
