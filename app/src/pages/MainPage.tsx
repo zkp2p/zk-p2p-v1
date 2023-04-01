@@ -459,6 +459,8 @@ export const MainPage: React.FC<{}> = (props) => {
     const orderToSelect = orders[rowIndex];
 
     console.log("Selected order: ", orderToSelect)
+    console.log(orders)
+
     if (orderToSelect.sender === address) {
       setActionState(FormState.UPDATE);
     } else {
@@ -495,7 +497,7 @@ export const MainPage: React.FC<{}> = (props) => {
       <Main>
         <Column>
           <SubHeader>Orders</SubHeader>
-          <CustomTable headers={orderTableHeaders} data={orderTableData} onRowClick={handleOrderRowClick}/>
+          <CustomTable headers={orderTableHeaders} data={orderTableData} onRowClick={handleOrderRowClick} selectedRow={selectedOrder.orderId}/>
           <Button
             onClick={async () => {
               setLastAction("new");
@@ -553,7 +555,6 @@ export const MainPage: React.FC<{}> = (props) => {
                 value={newOrderMaxAmount}
               />
                 <Button
-                  // disabled={emailFull.trim().length === 0 || proof.length === 0}
                   onClick={async () => {
                     setLastAction("claim");
                     // write txn
