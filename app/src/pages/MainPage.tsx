@@ -8,6 +8,7 @@ import _, { add } from "lodash";
 import { generate_inputs, insert13Before10 } from "../scripts/generate_input";
 import styled, { CSSProperties } from "styled-components";
 import { sshSignatureToPubKey } from "../helpers/sshFormat";
+import { getIdFromHandle, getHandleFromId } from "../helpers/handleToVId";
 import { Link, useSearchParams } from "react-router-dom";
 import { dkimVerify } from "../helpers/dkim";
 import atob from "atob";
@@ -93,7 +94,7 @@ export const MainPage: React.FC<{}> = (props) => {
   const [newOrderMaxAmount, setNewOrderMaxAmount] = useState<number>(0);
   const [actionState, setActionState] = useState<FormState>(FormState.DEFAULT);
   const [selectedOrder, setSelectedOrder] = useState<OnRampOrder>({});
-  const [selectedOrderClaim, setSelectedOrderClaim] = useState<OnRampOrderClaim>({});
+  const [selectedOrderClaim, setSelectedOrderClaim] = useState<OnRampOrderClaim >({});
 
   // fetched state
   const [orders, setOrders] = useState<OnRampOrder[]>([]);
@@ -112,33 +113,38 @@ export const MainPage: React.FC<{}> = (props) => {
   const circuitInputs = value || {};
   console.log("Circuit inputs:", circuitInputs);
 
-  const formatExpiration = (expirationTimestamp: number) => {
-    const expirationDate = new Date(expirationTimestamp);
-    const now = new Date();
-    
-    if (expirationDate < now) {
+  function formattedExpiration(unixTimestamp: number): string {
+    const currentTimestamp = Math.floor(Date.now() / 1000);
+  
+    if (currentTimestamp > unixTimestamp) {
       return "Expired";
     } else {
-      const formattedDate = expirationDate.toLocaleString();
+      const date = new Date(unixTimestamp * 1000);
+      const formattedDate = date.toLocaleString();
       return formattedDate;
     }
+  }
+
+  const formatAmountsForUSDC = (tokenAmount: number) => {
+    const adjustedAmount = tokenAmount / (10 ** 6);
+    return adjustedAmount;
   };
 
   // table state
   const orderTableHeaders = ['Sender', 'Token Amount', 'Max', 'Status'];
   const orderTableData = orders.map((order) => [
     formatAddressForTable(order.sender),
-    order.amount,
-    order.maxAmount,
+    formatAmountsForUSDC(order.amount),
+    formatAmountsForUSDC(order.maxAmount),
     order.status,
   ]);
 
-  // const orderClaimsTableHeaders = ['Taker', 'Venmo Handle', 'Expiration'];
-  // const orderClaimsTableData = orders.slice(0, 2).map((order) => [
-  //   formatAddressForTable(order.sender),
-  //   fetchVenmoHandleForId(order.venmoId),
-  //   formatExpiration(orderClaim.expirationTimestamp),
-  // ]);
+  const orderClaimsTableHeaders = ['Taker', 'Venmo Handle', 'Expiration'];
+  const orderClaimsTableData = orderClaims.map((orderClaim) => [
+    formatAddressForTable('0xfC5D59a09397e4979812F0da631e0cE8cbAce6D3'), // TODO: should we return the claimer address?
+    getHandleFromId(orderClaim.venmoId),
+    formattedExpiration(orderClaim.expirationTimestamp),
+  ]);
 
   /*
     Misc Helpers
@@ -153,28 +159,20 @@ export const MainPage: React.FC<{}> = (props) => {
       formHeaderText = "Claim Order";
       break;
     case FormState.UPDATE: // Maker selects their order to cancel or complete it
-      formHeaderText = "Cancel or Complete Order";
+      formHeaderText = "Complete or Cancel Order";
       break;
     default: // Form loads with no order selected
       formHeaderText = "Create or Select an Order";
   }
 
-  // const formatExpiration = (expirationTimestamp: number) => {
-  //   const expirationDate = new Date(expirationTimestamp);
-  //   const now = new Date();
-    
-  //   if (expirationDate < now) {
-  //     return "Expired";
-  //   } else {
-  //     const formattedDate = expirationDate.toLocaleString();
-  //     return formattedDate;
-  //   }
-  // };
-
-  function formatAddressForTable(inputString) {
+  function formatAddressForTable(inputString: string) {
     const prefix = inputString.substring(0, 4);
     const suffix = inputString.substring(inputString.length - 4);
     return `${prefix}...${suffix}`;
+  }
+
+  function getIndexForSelectedClaim(claim: OnRampOrderClaim): number {
+    return orderClaims.findIndex((orderClaim) => orderClaim.venmoId === claim.venmoId);
   }
 
   /*
@@ -202,7 +200,7 @@ export const MainPage: React.FC<{}> = (props) => {
   } = useContractRead({
     addressOrName: '0xfC5D59a09397e4979812F0da631e0cE8cbAce6D3',
     contractInterface: abi,
-    functionName: 'getAllOrders',
+    functionName: 'getClaimsForOrder',
     args: [selectedOrder.orderId],
   });
 
@@ -281,7 +279,7 @@ export const MainPage: React.FC<{}> = (props) => {
     write: writeCompleteOrder
   } = useContractWrite(writeCompleteOrderConfig);
   console.log(
-    "Create claim order txn details:",
+    "Create complete order txn details:",
     proof,
     publicSignals,
     writeCompleteOrder,
@@ -304,17 +302,18 @@ export const MainPage: React.FC<{}> = (props) => {
     console.log('Attempting to set orders...');
 
     if (!isReadAllOrdersLoading && !isReadAllOrdersError && allOrders) {
-      console.log('Fetched orders:', allOrders);
-      // console.log(allOrders.toString());
+      // console.log('Fetched orders...');
       
       const sanitizedOrders: OnRampOrder[] = [];
       for (let i = 0; i < allOrders.length; i++) {
         const orderContractData = allOrders[i];
 
+        // console.log('Fetched order data:', orderContractData);
+
         const orderId = orderContractData[0];
         const sender = orderContractData[1];
-        const amount = orderContractData[2];
-        const maxAmount = orderContractData[3];
+        const amount = orderContractData[2].toString();
+        const maxAmount = orderContractData[3].toString();
         const status = orderContractData[4];
 
         const order: OnRampOrder = {
@@ -325,7 +324,7 @@ export const MainPage: React.FC<{}> = (props) => {
           status,
         };
 
-        console.log('Adding order to sanitizedOrders:', order);
+        // console.log('Adding order to sanitizedOrders:', order);
 
         sanitizedOrders.push(order);
       }
@@ -350,16 +349,20 @@ export const MainPage: React.FC<{}> = (props) => {
   // Fetch Order Claims
   useEffect(() => {
     if (!isReadOrderClaimsLoading && !isReadOrderClaimsError && orderClaimsData) {
-      console.log('Fetched order claims:', orderClaims);
-      // console.log(orderClaims.toString());
+      // console.log('Fetched order claims');
       
       const sanitizedOrderClaims: OnRampOrderClaim[] = [];
       for (let i = 0; i < orderClaimsData.length; i++) {
         const claimsData = orderClaimsData[i];
 
-        const venmoId = claimsData[0];
+        // console.log('Fetched order claim data:', claimsData);
+
+        const venmoId = claimsData[0].toString();
+        console.log(venmoId);
         const status = claimsData[1];
-        const expirationTimestamp = claimsData[2];
+        console.log(status);
+        const expirationTimestamp = claimsData[2].toString();
+        console.log(expirationTimestamp);
         
         const orderClaim: OnRampOrderClaim = {
           venmoId,
@@ -380,7 +383,7 @@ export const MainPage: React.FC<{}> = (props) => {
   useEffect(() => {
     if (selectedOrder) {
       const intervalId = setInterval(() => {
-        console.log('Refetching order claims...');
+        // console.log('Refetching order claims...');
 
         refetchClaimedOrders();
       }, 15000); // Refetch every 15 seconds
@@ -496,8 +499,8 @@ export const MainPage: React.FC<{}> = (props) => {
     const [rowIndex] = rowData;
     const orderToSelect = orders[rowIndex];
 
-    console.log("Selected order: ", orderToSelect)
-    console.log(orders)
+    // console.log("Selected order: ", orderToSelect)
+    // console.log(orders)
 
     if (orderToSelect.sender === address) {
       setActionState(FormState.UPDATE);
@@ -505,21 +508,18 @@ export const MainPage: React.FC<{}> = (props) => {
       setActionState(FormState.CLAIM);
     }
 
+    setSelectedOrderClaim({});
     setSelectedOrder(orderToSelect);
   };
 
   const handleOrderClaimRowClick = (rowData: any[]) => {
-    // const [rowIndex] = rowData;
-    // const orderToSelect = orders[rowIndex];
+    const [rowIndex] = rowData;
+    const orderClaimToSelect = orderClaims[rowIndex];
 
-    // console.log("Selected order: ", orderToSelect)
-    // if (orderToSelect.sender === address) {
-    //   setActionState(FormState.UPDATE);
-    // } else {
-    //   setActionState(FormState.CLAIM);
-    // }
+    // This does nothing for now, we are recording the selected row to pass the order id into proving
+    console.log("Selected order claim: ", orderClaimToSelect)
 
-    // setSelectedOrder(orderToSelect);
+    setSelectedOrderClaim(orderClaimToSelect);
   };
 
   /*
@@ -535,7 +535,7 @@ export const MainPage: React.FC<{}> = (props) => {
       <Main>
         <Column>
           <SubHeader>Orders</SubHeader>
-          <CustomTable headers={orderTableHeaders} data={orderTableData} onRowClick={handleOrderRowClick} selectedRow={selectedOrder.orderId}/>
+          <CustomTable headers={orderTableHeaders} data={orderTableData} onRowClick={handleOrderRowClick} selectedRow={selectedOrder.orderId - 1}/>
           <Button
             onClick={async () => {
               setLastAction("new");
@@ -582,15 +582,15 @@ export const MainPage: React.FC<{}> = (props) => {
               />
               <ReadOnlyInput
                 label="Amount"
-                value={selectedOrder.amount}
+                value={formatAmountsForUSDC(selectedOrder.amount)}
               />
               <ReadOnlyInput
                 label="Max Amount"
-                value={selectedOrder.maxAmount}
+                value={formatAmountsForUSDC(selectedOrder.maxAmount)}
               />
               <ReadOnlyInput
                 label="Venmo Handle"
-                value={newOrderMaxAmount}
+                value={selectedOrder.sender}
               />
                 <Button
                   onClick={async () => {
@@ -605,19 +605,41 @@ export const MainPage: React.FC<{}> = (props) => {
           {actionState === FormState.UPDATE && (
             <ConditionalContainer>
               <ReadOnlyInput
-                label="Amount"
-                value={selectedOrder.amount}
+                label="Amount (USDC)"
+                value={formatAmountsForUSDC(selectedOrder.amount)}
               />
               <H3>
                 Select Claim and Complete
               </H3>
-              <CustomTable headers={orderClaimsTableHeaders} data={orderClaimsTableData} onRowClick={handleOrderClaimRowClick}/>
+              <CustomTable headers={orderClaimsTableHeaders} data={orderClaimsTableData} onRowClick={handleOrderClaimRowClick} selectedRow={getIndexForSelectedClaim(selectedOrderClaim)}/>
               <LabeledTextArea
                 label="Full Email with Headers"
                 value={emailFull}
                 onChange={(e) => {
                   setEmailFull(e.currentTarget.value);
                 }}
+              />
+              <H3>
+                Proof
+              </H3>
+              <LabeledTextArea
+                label="Proof Output"
+                value={proof}
+                onChange={(e) => {
+                  setProof(e.currentTarget.value);
+                }}
+                warning={verificationMessage}
+                warningColor={verificationPassed ? "green" : "red"}
+              />
+              <LabeledTextArea
+                label="..."
+                value={publicSignals}
+                secret
+                onChange={(e) => {
+                  setPublicSignals(e.currentTarget.value);
+                }}
+                // warning={
+                // }
               />
               <ButtonContainer>
                 <Button
@@ -627,7 +649,7 @@ export const MainPage: React.FC<{}> = (props) => {
                   }}
                   style={{ marginRight: "16px" }}
                 >
-                  Complete Order with Proof
+                  Prove and Complete
                 </Button>
                 <Button
                   onClick={async () => {

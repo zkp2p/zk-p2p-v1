@@ -33,4 +33,7 @@ const Input = styled.input`
   align-items: center;
   color: #fff;
   font-size: 16px;
+  user-select: none;
+  -webkit-user-select: none;
+  pointer-events: none;
 `;
