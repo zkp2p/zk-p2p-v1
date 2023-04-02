@@ -1,8 +1,8 @@
 ## ZKP2P
 
-<img width="1706" alt="Screenshot 2023-04-02 at 1 26 33 PM" src="https://user-images.githubusercontent.com/6797244/229352750-d7d2568b-1713-42d1-8f25-15e2779eebdf.png">
-
 A trustless P2P fiat onramp powered by ZK proofs and Venmo
+
+<img width="1719" alt="Screenshot 2023-04-02 at 1 37 38 PM" src="https://user-images.githubusercontent.com/6797244/229353220-f54e9d54-b097-41f3-9778-2000cfa1ddb0.png">
 
 ## Problem
 
