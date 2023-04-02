@@ -131,16 +131,12 @@ export const MainPage: React.FC<{}> = (props) => {
   }
 
   const getOrderStatusString = (order: OnRampOrder) => {
-    console.log(order.status);
-    
-    switch (order.status.toString()) {
-      case "1":
+    switch (Number(order.status)) {
+      case 1:
         return "Open";
-      case "2":
-        return "Open";
-      case "3":
+      case 2:
         return "Filled";
-      case "4":
+      case 3:
         return "Cancelled";
       default:
         return "The order has an invalid status.";
