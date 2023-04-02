@@ -22,11 +22,12 @@ import { Col, Row } from "../components/Layout";
 // import { NumberedStep } from "../components/NumberedStep";
 import { TopBanner } from "../components/TopBanner";
 import { CustomTable } from '../components/CustomTable';
-import { useAccount, useContractWrite, useContractRead, usePrepareContractWrite } from "wagmi";
+import { useAccount, useContractWrite, useContractRead, useNetwork, usePrepareContractWrite } from "wagmi";
 import { ProgressBar } from "../components/ProgressBar";
 import { abi } from "../helpers/ramp.abi";
 import { inputBuffer } from "../helpers/inputBuffer";
 import { isSetIterator } from "util/types";
+import { contractAddresses } from "../helpers/deployed_addresses";
 var Buffer = require("buffer/").Buffer; // note: the trailing slash is important!
 
 const generate_input = require("../scripts/generate_input");
@@ -115,6 +116,9 @@ export const MainPage: React.FC<{}> = (props) => {
     }
   }, [emailFull, ethereumAddress]);
 
+  const { chain, chains } = useNetwork()
+  console.log("Chain: ", chain);
+
   const circuitInputs = value || {};
   console.log("Circuit inputs:", circuitInputs);
 
@@ -164,7 +168,7 @@ export const MainPage: React.FC<{}> = (props) => {
 
   const orderClaimsTableHeaders = ['Taker', 'Venmo Handle', 'Expiration'];
   const orderClaimsTableData = orderClaims.map((orderClaim) => [
-    formatAddressForTable('0x805a3Ae6495Be653dE460685D5FFDD5A538550f1'), // TODO: should we return the claimer address?
+    formatAddressForTable(contractAddresses[chain.network]["ramp"]), // TODO: should we return the claimer address?
     getHandleFromId(orderClaim.venmoId),
     formattedExpiration(orderClaim.expirationTimestamp),
   ]);
@@ -213,7 +217,7 @@ export const MainPage: React.FC<{}> = (props) => {
     isError: isReadAllOrdersError,
     refetch: refetchAllOrders,
   } = useContractRead({
-    addressOrName: '0x805a3Ae6495Be653dE460685D5FFDD5A538550f1',
+    addressOrName: contractAddresses[chain.network]["ramp"],
     contractInterface: abi,
     functionName: 'getAllOrders',
   });
@@ -225,7 +229,7 @@ export const MainPage: React.FC<{}> = (props) => {
     isError: isReadOrderClaimsError,
     refetch: refetchClaimedOrders,
   } = useContractRead({
-    addressOrName: '0x805a3Ae6495Be653dE460685D5FFDD5A538550f1',
+    addressOrName: contractAddresses[chain.network]["ramp"],
     contractInterface: abi,
     functionName: 'getClaimsForOrder',
     args: [selectedOrder.orderId],
@@ -237,7 +241,7 @@ export const MainPage: React.FC<{}> = (props) => {
 
   // register(uint256 _venmoId) external
   const { config: writeRegisterOrderConfig } = usePrepareContractWrite({
-    addressOrName: '0x805a3Ae6495Be653dE460685D5FFDD5A538550f1',
+    addressOrName: contractAddresses[chain.network]["ramp"],
     contractInterface: abi,
     functionName: 'register',
     args: ['645716473020416186'],
@@ -263,7 +267,7 @@ export const MainPage: React.FC<{}> = (props) => {
 
   // postOrder(uint256 _amount, uint256 _maxAmountToPay) external onlyRegisteredUser() 
   const { config: writeCreateOrderConfig } = usePrepareContractWrite({
-    addressOrName: '0x805a3Ae6495Be653dE460685D5FFDD5A538550f1',
+    addressOrName: contractAddresses[chain.network]["ramp"],
     contractInterface: abi,
     functionName: 'postOrder',
     args: [formatAmountsForTransactionParameter(newOrderAmount), formatAmountsForTransactionParameter(newOrderMaxAmount)],
@@ -289,7 +293,7 @@ export const MainPage: React.FC<{}> = (props) => {
 
   // claimOrder(uint256 _orderNonce) external  onlyRegisteredUser()
   const { config: writeClaimOrderConfig } = usePrepareContractWrite({
-    addressOrName: '0x805a3Ae6495Be653dE460685D5FFDD5A538550f1',
+    addressOrName: contractAddresses[chain.network]["ramp"],
     contractInterface: abi,
     functionName: 'claimOrder',
     args: [selectedOrder.orderId],
@@ -327,7 +331,7 @@ export const MainPage: React.FC<{}> = (props) => {
 
   // onRamp( uint256 _orderId, uint256 _offRamper, VenmoId, bytes calldata _proof) external onlyRegisteredUser()
   const { config: writeCompleteOrderConfig } = usePrepareContractWrite({
-    addressOrName: '0x805a3Ae6495Be653dE460685D5FFDD5A538550f1',
+    addressOrName: contractAddresses[chain.network]["ramp"],
     contractInterface: abi,
     functionName: 'onRamp',
     args: [
