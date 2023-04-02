@@ -96,6 +96,10 @@ export const MainPage: React.FC<{}> = (props) => {
   const [selectedOrderClaim, setSelectedOrderClaim] = useState<OnRampOrderClaim >({} as OnRampOrderClaim);
   const [emailFull, setEmailFull] = useState<string>(localStorage.emailFull || "");
   const [proof, setProof] = useState<string>(localStorage.proof || "");
+
+  // ----- temporary hackathon state -----
+  const [inputProof, setInputProof] = useState<string>(localStorage.inputProof || "");
+  const [inputPublicSignals, setInputPublicSignals] = useState<string>(localStorage.publicSignals || "");
   
   // fetched state
   const [orders, setOrders] = useState<OnRampOrder[]>([]);
@@ -127,16 +131,12 @@ export const MainPage: React.FC<{}> = (props) => {
   }
 
   const getOrderStatusString = (order: OnRampOrder) => {
-    console.log(order.status);
-    
-    switch (order.status.toString()) {
-      case "1":
+    switch (Number(order.status)) {
+      case 1:
         return "Open";
-      case "2":
-        return "Open";
-      case "3":
+      case 2:
         return "Filled";
-      case "4":
+      case 3:
         return "Cancelled";
       default:
         return "The order has an invalid status.";
@@ -402,8 +402,10 @@ export const MainPage: React.FC<{}> = (props) => {
   }, [allOrders, isReadAllOrdersLoading, isReadAllOrdersError]);
 
   useEffect(() => {
+    console.log('Refetching orders... 1');
+
     const intervalId = setInterval(() => {
-      console.log('Refetching orders...');
+      console.log('Refetching orders...2');
 
       refetchAllOrders();
     }, 10000); // Refetch every 10 seconds
@@ -687,19 +689,21 @@ export const MainPage: React.FC<{}> = (props) => {
               </H3>
               <LabeledTextArea
                 label="Proof Output"
-                value={proof}
+                value={inputProof}
                 onChange={(e) => {
-                  setProof(e.currentTarget.value);
+                  // setProof(e.currentTarget.value);
+                  setInputProof(e.currentTarget.value);
                 }}
                 warning={verificationMessage}
                 warningColor={verificationPassed ? "green" : "red"}
               />
               <LabeledTextArea
-                label="..."
-                value={publicSignals}
+                label="Public Signals"
+                value={inputPublicSignals}
                 secret
                 onChange={(e) => {
-                  setPublicSignals(e.currentTarget.value);
+                  // setPublicSignals(e.currentTarget.value);
+                  setInputPublicSignals(e.currentTarget.value);
                 }}
                 // warning={
                 // }
@@ -759,9 +763,12 @@ export const MainPage: React.FC<{}> = (props) => {
                     // alert("Generating proof, will fail due to input");
 
                     // const { proof, publicSignals } = await generateProof(input, "circuit"); 
-                    const proof = JSON.parse(`{"pi_a":["11085549688134726611150668540316880174659412339988080564703955228381423383254","10764560936774569561507953473055258281269875641315110458189885027430599227931","1"],"pi_b":[["1652351732733835594290426025273481121922973119332515211203377506562979313179","3331499860590706998327509944446821922577464202175999797314203077137501408618"],["5458914108714346890570069128843899252513570499415944280659595267796268262091","16984180778412929730507913588139847520925451119909239694733069369857547223112"],["1","0"]],"pi_c":["10563739695688687522984101191441695778164716170984181738506960046076767863468","19062263244482863555090591167988832524860354662683990422026033566204064004079","1"],"protocol":"groth16"}`);
-                    const publicSignals = JSON.parse(`["16103688761651505","14979992155926838","232837953586","14696283796485174","13849655463916343","909652278","12852","0","0","683441457792668103047675496834917209","1011953822609495209329257792734700899","1263501452160533074361275552572837806","2083482795601873989011209904125056704","642486996853901942772546774764252018","1463330014555221455251438998802111943","2411895850618892594706497264082911185","520305634984671803945830034917965905","47421696716332554","0","0","0","0","0","0","0","0"]`);
-                    
+                    // const proof = JSON.parse(`{"pi_a":["11085549688134726611150668540316880174659412339988080564703955228381423383254","10764560936774569561507953473055258281269875641315110458189885027430599227931","1"],"pi_b":[["1652351732733835594290426025273481121922973119332515211203377506562979313179","3331499860590706998327509944446821922577464202175999797314203077137501408618"],["5458914108714346890570069128843899252513570499415944280659595267796268262091","16984180778412929730507913588139847520925451119909239694733069369857547223112"],["1","0"]],"pi_c":["10563739695688687522984101191441695778164716170984181738506960046076767863468","19062263244482863555090591167988832524860354662683990422026033566204064004079","1"],"protocol":"groth16"}`);
+                    // const publicSignals = JSON.parse(`["16103688761651505","14979992155926838","232837953586","14696283796485174","13849655463916343","909652278","12852","0","0","683441457792668103047675496834917209","1011953822609495209329257792734700899","1263501452160533074361275552572837806","2083482795601873989011209904125056704","642486996853901942772546774764252018","1463330014555221455251438998802111943","2411895850618892594706497264082911185","520305634984671803945830034917965905","47421696716332554","0","0","0","0","0","0","0","0"]`);            
+
+                    const proof = JSON.parse(inputProof);
+                    const publicSignals = JSON.parse(inputPublicSignals);
+
                     console.log("Finished proof generation");
                     console.timeEnd("zk-gen");
                     recordTimeForActivity("finishedProving");

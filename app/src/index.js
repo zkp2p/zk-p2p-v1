@@ -12,8 +12,23 @@ import {
 import "./index.css";
 import "@rainbow-me/rainbowkit/styles.css";
 
+export const scrollAlpha = {
+  id: 534353,
+  name: 'Scroll Alpha',
+  network: 'scrollalpha',
+  nativeCurrency: {
+    decimals: 18,
+    name: 'Ethereum',
+    symbol: 'ETH',
+  },
+  rpcUrls: {
+    public: { http: ["https://alpha-rpc.scroll.io/l2"] },
+    default: { http: ["https://alpha-rpc.scroll.io/l2"] },
+  },
+}
+
 const { chains, provider, webSocketProvider } = configureChains(
-  [chain.goerli],
+  [chain.goerli, scrollAlpha],
   [publicProvider()]
 );
 
