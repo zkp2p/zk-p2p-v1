@@ -70,7 +70,6 @@ export async function getCircuitInputs(
   message: Buffer,
   body: Buffer,
   body_hash: string,
-  eth_address: string,
   circuit: CircuitType
 ): Promise<{
   valid: {
@@ -132,9 +131,6 @@ export async function getCircuitInputs(
   const precomputed_sha = await Uint8ArrayToCharArray(bodyShaPrecompute);
   const body_hash_idx = bufferToString(message).indexOf(body_hash).toString();
 
-  const address = bytesToBigInt(fromHex(eth_address)).toString();
-  const address_plus_one = (bytesToBigInt(fromHex(eth_address)) + 1n).toString();
-
   // const SELECTOR = Buffer.from(STRING_PRESELECTOR);
   const venmo_mm_id_idx = (Buffer.from(bodyRemaining).indexOf(Buffer.from("user_id=3D")) + Buffer.from("user_id=3D").length).toString();
   
@@ -183,7 +179,7 @@ export async function getCircuitInputs(
   };
 }
 
-export async function generate_inputs(email: Buffer, eth_address: string): Promise<ICircuitInputs> {
+export async function generate_inputs(email: Buffer): Promise<ICircuitInputs> {
   var result;
   console.log("DKIM verification starting");
   result = await dkimVerify(email);
@@ -218,14 +214,14 @@ export async function generate_inputs(email: Buffer, eth_address: string): Promi
   let pubkey = result.results[0].publicKey;
   const pubKeyData = pki.publicKeyFromPem(pubkey.toString());
   let modulus = BigInt(pubKeyData.n.toString());
-  let fin_result = await getCircuitInputs(sig, modulus, message, body, body_hash, eth_address, circuitType);
+  let fin_result = await getCircuitInputs(sig, modulus, message, body, body_hash, circuitType);
   return fin_result.circuitInputs;
 }
 
 async function do_generate() {
   const email = fs.readFileSync(email_file);
   console.log(email);
-  const gen_inputs = await generate_inputs(email, "0x0000000000000000000000000000000000000000");
+  const gen_inputs = await generate_inputs(email);
   console.log(JSON.stringify(gen_inputs));
   return gen_inputs;
 }
