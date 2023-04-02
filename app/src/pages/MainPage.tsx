@@ -126,6 +126,23 @@ export const MainPage: React.FC<{}> = (props) => {
     }
   }
 
+  const getOrderStatusString = (order: { status: OrderStatus }) => {
+    console.log(order.status);
+
+    switch (order.status) {
+      case OrderStatus.UNOPENED:
+        return "Unopened";
+      case OrderStatus.OPEN:
+        return "Open";
+      case OrderStatus.FILLED:
+        return "Filled";
+      case OrderStatus.CANCELLED:
+        return "Cancelled";
+      default:
+        return "The order has an invalid status.";
+    }
+  }
+
   const formatAmountsForUSDC = (tokenAmount: number) => {
     const adjustedAmount = tokenAmount / (10 ** 6);
     return adjustedAmount;
@@ -142,7 +159,7 @@ export const MainPage: React.FC<{}> = (props) => {
     formatAddressForTable(order.sender),
     formatAmountsForUSDC(order.amount),
     formatAmountsForUSDC(order.maxAmount),
-    order.status,
+    getOrderStatusString(order.status),
   ]);
 
   const orderClaimsTableHeaders = ['Taker', 'Venmo Handle', 'Expiration'];
