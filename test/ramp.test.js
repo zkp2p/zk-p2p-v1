@@ -195,6 +195,24 @@ describe("Ramp", function () {
         });
     });
 
+    describe("onRamp", function () {
+        let amount = BigNumber.from(100000000); // $100
+        let maxAmountToPay = BigNumber.from(101000000); // $101
+        let onRamperVenmoId = BigNumber.from(1234567890);
+        let offRamperVenmoId = BigNumber.from(0987654321);
+        let orderId;
+
+        beforeEach(async function () {
+            await ramp.connect(onRamper).register(onRamperVenmoId);
+            await ramp.connect(offRamper).register(offRamperVenmoId);
+            orderId = await ramp.orderNonce();
+            await ramp.connect(onRamper).postOrder(amount, maxAmountToPay);
+
+            await fakeUSDC.connect(offRamper).approve(ramp.address, amount);
+            await ramp.connect(offRamper).claimOrder(orderId);
+        });
+    });
+
     describe("clawback", function () {
         let amount = BigNumber.from(100000000); // $100
         let maxAmountToPay = BigNumber.from(101000000); // $101
