@@ -2,7 +2,7 @@
 
 A trustless P2P fiat onramp powered by ZK proofs and Venmo
 
-<img width="1719" alt="Screenshot 2023-04-02 at 1 37 38 PM" src="https://user-images.githubusercontent.com/6797244/229353220-f54e9d54-b097-41f3-9778-2000cfa1ddb0.png">
+<img width="1715" alt="Screenshot 2023-04-02 at 1 39 16 PM" src="https://user-images.githubusercontent.com/6797244/229353330-7dfec078-0a13-49be-9d89-be06bc79e77d.png">
 
 ## Problem
 
