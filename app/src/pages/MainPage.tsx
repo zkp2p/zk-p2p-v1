@@ -159,7 +159,7 @@ export const MainPage: React.FC<{}> = (props) => {
     formatAddressForTable(order.sender),
     formatAmountsForUSDC(order.amount),
     formatAmountsForUSDC(order.maxAmount),
-    getOrderStatusString(order.status),
+    getOrderStatusString(order),
   ]);
 
   const orderClaimsTableHeaders = ['Taker', 'Venmo Handle', 'Expiration'];
