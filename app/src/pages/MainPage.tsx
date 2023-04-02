@@ -691,7 +691,7 @@ export const MainPage: React.FC<{}> = (props) => {
               </H3>
               <LabeledTextArea
                 label="Proof Output"
-                value={proof}
+                value={inputProof}
                 onChange={(e) => {
                   // setProof(e.currentTarget.value);
                   setInputProof(e.currentTarget.value);
@@ -701,7 +701,7 @@ export const MainPage: React.FC<{}> = (props) => {
               />
               <LabeledTextArea
                 label="Public Signals"
-                value={publicSignals}
+                value={inputPublicSignals}
                 secret
                 onChange={(e) => {
                   // setPublicSignals(e.currentTarget.value);
