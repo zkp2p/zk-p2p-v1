@@ -1,47 +1,30 @@
-## ZK Starter
+## ZKP2P
 
-Get started with ZK-SNARKS using Circom and Snark.js
+A trustless P2P fiat onramp powered by ZK proofs and Venmo
 
-### Getting started (Rough Notes)
+## Problem
 
-1. Write the circuit. Make sure it has constraints.
-2. Compile the circuit.
-    - `yarn compile`
-3. Circuit compilation creates a circuit.r1cs file. 
-    - R1CS stands for Rank1 constraint system.
-        - Lower level representation of the constraints in the circuit.
-    - Circuit.wasm is used to generate the witness.
-        - Series of instructions, that takes inputs and generates the intermediate values (the computation trace) that is input for the snark prover.
-    - WASM is just a single arrow representation of the circuit. It is the circuit but without constraints.
-4. Optional step:
-    - `yarn genKeyPhase1<Protocolname>`
-        - `yarn genKeyPhase1Groth` or `yarn genKeyPhase1Plonk`. Can run either for getting started.
-    - Output is a ptau file
-        - Which can also be downloaded from https://github.com/iden3/snarkjs#7-prepare-phase-2
-5. Gen Key Phase 2
-    - `yarn genKeyPhase2Groth pot_final.ptau` if you ran `yarn genKeyPhase1<ProtocolName>`
-    - `yarn genKeyPhase2Groth ~/ptau_files/powersOfTau28_hez_final_17.ptau` if you downloaded the ptau file
-    - Generates a set of proving and verifying keys from the circuit file.
-6. Prepare inputs
-    - Modify the python script to prepare the inputs
-7. Generate Proof
-    - `yarn genProofGroth`
-    - Calculates the witness.
-        - Calculated using WASM + input.json
-        - Basically a set of intermediate values that is input for the snark prover.
-    - Prover
-        - Takes the intermediate values (the witness file) and the proving key and generates a SNARK proof.
-8. Verification
-    - `yarn genVerifyGroth`
-    - Takes in the SNARK proof, the verification key and the public variables (inputs/outputs) and verifies the SNARK proof.
-9. Verification contract
-    - `yarn genContract`
-    - Snark js has a template verifier contract. Grabs all the values from verification key.json, and pastes them to the template contract to create the verifier contract.
-    - Verifier contract, like the verification key, is specific to the circuit.
-10. Creating calldata
-    - `yarn genCalldata`
-    - This is created using public.json and verification key.json
+#### New users face huge barriers to onboard funds onto web3
+Users must register for a centralized exchange (e.g. Coinbase) or use centralized fiat onramps which charge high fees (e.g. 5%)
 
-#### Notes:
-- If we modify inputs, then you need to run 6, 7, 10.
-- If you modify circuit, then compile, genKeyPhase2, and genContract. 
+#### Crypto natives are unable to offboard funds into the real world
+Only institutional accounts had direct access to convert USDC to USD. Existing P2P solutions either require meeting in person (e.g., LocalBitcoins) or rely on a centralized intermediary (e.g., OTC desks)
+
+#### ZKP2P
+ZKP2P enables an on-chain user to trade USDC for USD with a Venmo user using ZK proofs of email DKIM signatures. This is an use case built on top of (ZK Email)[https://github.com/zkemail/zk-email-verify/]
+
+<img width="1706" alt="Screenshot 2023-04-02 at 1 26 33 PM" src="https://user-images.githubusercontent.com/6797244/229352750-d7d2568b-1713-42d1-8f25-15e2779eebdf.png">
+
+## Deployed Addresses
+
+#### Scroll Alpha
+Ramp - [0x5c589c9De8d77ce24c2828B37e920A71074dae1a](https://blockscout.scroll.io/address/0x5c589c9De8d77ce24c2828B37e920A71074dae1a/transactions#address-tabs)
+FakeUSDC - [0x405bD6dBD2B9A392f4D600Be8571d40C516f94F0](https://blockscout.scroll.io/address/0x405bD6dBD2B9A392f4D600Be8571d40C516f94F0/transactions#address-tabs)
+
+#### Goerli
+Ramp - [0x805a3Ae6495Be653dE460685D5FFDD5A538550f1](https://goerli.etherscan.io/address/0x805a3Ae6495Be653dE460685D5FFDD5A538550f1)
+FakeUSDC - [0xb685Bdc019DEE17D073746a88bF6a6cDDED8Ae70](https://goerli.etherscan.io/address/0xb685Bdc019DEE17D073746a88bF6a6cDDED8Ae70)
+
+## Getting Started
+
+## TODO rest of docs
