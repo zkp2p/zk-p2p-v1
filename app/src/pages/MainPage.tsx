@@ -310,7 +310,7 @@ export const MainPage: React.FC<{}> = (props) => {
 
   // onRamp( uint256 _orderId, uint256 _offRamper, VenmoId, bytes calldata _proof) external onlyRegisteredUser()
   const { config: writeCompleteOrderConfig } = usePrepareContractWrite({
-    addressOrName: '1',
+    addressOrName: '0x6AE571Aaaf8D3bF5769B9318db6Fc9c03a80bc15',
     contractInterface: abi,
     functionName: 'onRamp',
     args: [
@@ -784,6 +784,13 @@ export const MainPage: React.FC<{}> = (props) => {
                   disabled={proof.length === 0 || publicSignals.length === 0 || isWriteCompleteOrderLoading}
                   onClick={async () => {
                     setLastAction("cancel");
+
+                    console.log(proof);
+                    console.log(publicSignals);
+
+                    console.log(...reformatProofForChain(proof));
+                    console.log(publicSignals ? JSON.parse(publicSignals) : null);
+
                     writeCompleteOrder?.();
                   }}
                 >
