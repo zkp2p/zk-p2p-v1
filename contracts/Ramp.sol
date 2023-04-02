@@ -3,6 +3,7 @@ pragma solidity ^0.8.12;
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import { Verifier } from "./Verifier.sol";
+import "hardhat/console.sol";
 
 contract Ramp is Verifier {
     
@@ -287,16 +288,20 @@ contract Ramp is Verifier {
     }
 
     // Code example:
-    function _stringToUint256(string memory s) internal pure returns (uint256) {
+    function _stringToUint256(string memory s) internal view returns (uint256) {
         bytes memory b = bytes(s);
-        uint result = 0;
-        uint oldResult = 0;
+        uint256 result = 0;
+        uint256 oldResult = 0;
+        console.logString(s);
         for (uint i = 0; i < b.length; i++) { // c = b[i] was not needed
-            // store old value so we can check for overflows
-            oldResult = result;
-            result = result * 10 + (uint8(b[i]) - 48);
-            // prevent overflows
-            require(result >= oldResult, "Overflow detected");
+            // UNSAFE: Check that the character is a number - we include padding 0s in Venmo ids
+            if (uint8(b[i]) >= 48 && uint8(b[i]) <= 57) {
+                // store old value so we can check for overflows
+                oldResult = result;
+                result = result * 10 + (uint8(b[i]) - 48);
+                // prevent overflows
+                require(result >= oldResult, "Overflow detected");
+            }
         }
         return result; 
     }
