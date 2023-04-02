@@ -288,11 +288,11 @@ contract Ramp is Verifier {
     }
 
     // Code example:
-    function _stringToUint256(string memory s) internal view returns (uint256) {
+    function _stringToUint256(string memory s) internal pure returns (uint256) {
         bytes memory b = bytes(s);
         uint256 result = 0;
         uint256 oldResult = 0;
-        console.logString(s);
+
         for (uint i = 0; i < b.length; i++) { // c = b[i] was not needed
             // UNSAFE: Check that the character is a number - we include padding 0s in Venmo ids
             if (uint8(b[i]) >= 48 && uint8(b[i]) <= 57) {
