@@ -588,7 +588,7 @@ export const MainPage: React.FC<{}> = (props) => {
     <Container>
       {showBrowserWarning && <TopBanner message={"ZK P2P On-Ramp only works on Chrome or Chromium-based browsers."} />}
       <div className="title">
-        <Header>ZK P2P On-Ramp From Venmo Header</Header>
+        <Header>ZK P2P On-Ramp From Venmo</Header>
       </div>
       <Main>
         <Column>
