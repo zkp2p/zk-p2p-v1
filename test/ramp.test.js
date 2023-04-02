@@ -226,6 +226,19 @@ describe("Ramp", function () {
 
             expect(order.status).to.equal(2);
         });
+
+        it("transfers funds to the on ramper", async function () {
+            const preOnRampBalance = await fakeUSDC.balanceOf(onRamper.address);
+            const preRampBalance = await fakeUSDC.balanceOf(ramp.address);
+
+            await ramp.connect(onRamper).onRamp(a, b, c, signals);
+
+            const postOnRampBalance = await fakeUSDC.balanceOf(onRamper.address);
+            const postRampBalance = await fakeUSDC.balanceOf(ramp.address);
+
+            expect(postOnRampBalance).to.equal(preOnRampBalance.add(amount));
+            expect(postRampBalance).to.equal(preRampBalance.sub(amount));
+        });
     });
 
     describe("clawback", function () {

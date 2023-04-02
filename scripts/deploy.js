@@ -12,13 +12,14 @@ async function main() {
   console.log(feeData, deployGasConfig);
   const [deployer] = await hre.ethers.getSigners();
 
-  console.log("Deploying Fake USDC contract with the account:", deployer.address);
+  // console.log("Deploying Fake USDC contract with the account:", deployer.address);
 
-  const FakeUSDC = await hre.ethers.getContractFactory("FakeUSDC");
-  const fakeUSDC = await FakeUSDC.deploy("Fake USDC", "fUSDC", 10000000000000, deployGasConfig);
+  // const FakeUSDC = await hre.ethers.getContractFactory("FakeUSDC");
+  // const fakeUSDC = await FakeUSDC.deploy("Fake USDC", "fUSDC", 10000000000000, deployGasConfig);
 
-  console.log("FakeUSDC contract deployed to address:", fakeUSDC.address);
+  // console.log("FakeUSDC contract deployed to address:", fakeUSDC.address);
 
+  const fakeUSDCAddress = "0xb685Bdc019DEE17D073746a88bF6a6cDDED8Ae70";
   const venmoRsaKey = [
     "683441457792668103047675496834917209",
     "1011953822609495209329257792734700899",
@@ -42,7 +43,7 @@ async function main() {
   console.log("Deploying Ramp contract with the account:", deployer.address);
 
   const Ramp = await hre.ethers.getContractFactory("Ramp");
-  const ramp = await Ramp.deploy(venmoRsaKey, fakeUSDC.address, deployGasConfig);
+  const ramp = await Ramp.deploy(venmoRsaKey, fakeUSDCAddress, deployGasConfig);
 
   console.log("Ramp contract deployed to address:", ramp.address);
 }

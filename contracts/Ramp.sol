@@ -3,7 +3,6 @@ pragma solidity ^0.8.12;
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import { Verifier } from "./Verifier.sol";
-import "hardhat/console.sol";
 
 contract Ramp is Verifier {
     
@@ -79,7 +78,7 @@ contract Ramp is Verifier {
         venmoMailserverKeys = _venmoMailserverKeys;
         usdc = _usdc;
 
-        orderNonce = 1;                     // start at 1 so that 0 can be used as a null value
+        orderNonce = 1;
     }
 
     /* ============ External Functions ============ */
@@ -153,7 +152,7 @@ contract Ramp is Verifier {
         orderClaims[orderId][offRamperAddress].status = ClaimStatus.Used;
         orders[orderId].status = OrderStatus.Filled;
 
-        usdc.transfer(orders[orderId].onRamper, orders[orderNonce].amountToReceive);
+        usdc.transfer(orders[orderId].onRamper, orders[orderId].amountToReceive);
     }
 
     function cancelOrder(uint256 _orderId) external {
