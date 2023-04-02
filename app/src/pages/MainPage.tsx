@@ -128,15 +128,15 @@ export const MainPage: React.FC<{}> = (props) => {
 
   const getOrderStatusString = (order: { status: OrderStatus }) => {
     console.log(order.status);
-
+    
     switch (order.status) {
-      case OrderStatus.UNOPENED:
-        return "Unopened";
-      case OrderStatus.OPEN:
+      case 1:
         return "Open";
-      case OrderStatus.FILLED:
+      case 2:
+        return "Open";
+      case 3:
         return "Filled";
-      case OrderStatus.CANCELLED:
+      case 4:
         return "Cancelled";
       default:
         return "The order has an invalid status.";
@@ -292,7 +292,7 @@ export const MainPage: React.FC<{}> = (props) => {
     addressOrName: '0x805a3Ae6495Be653dE460685D5FFDD5A538550f1',
     contractInterface: abi,
     functionName: 'claimOrder',
-    args: ["42"],
+    args: [selectedOrder.orderId],
     onError: (error: { message: any }) => {
       console.error(error.message);
     },
@@ -652,7 +652,7 @@ export const MainPage: React.FC<{}> = (props) => {
               <ReadOnlyInput
                 label="Venmo Handle (Send Request for Amount Here)"
                 // value={selectedOrder.sender}
-                value = "@Richard-Liang-2"
+                value = "@Alex-Soong"
               />
                 <Button
                   disabled={isWriteClaimOrderLoading}
