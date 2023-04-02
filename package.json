@@ -7,7 +7,7 @@
     "chain": "npx hardhat node",
     "compile": "bash ./circuit/scripts/compile_circuit.sh",
     "compileContracts": "npx hardhat compile",
-    "testContracts": "npx hardhat test",
+    "testContracts": "npx hardhat test --network hardhat",
     "deploy:localhost": "npx hardhat run scripts/deploy.js --network localhost",
     "deploy:goerli": "npx hardhat run scripts/deploy.js --network goerli",
     "test": "./node_modules/.bin/mocha tests/*.js",

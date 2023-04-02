@@ -233,8 +233,8 @@ contract Ramp is Verifier {
 
         // msg_len-17 public signals are the masked message bytes, 17 are the modulus.
         // Signals: [9:26] -> Modulus, 
-        for (uint i = 0; i < rsaModulusChunksLen; i++) {
-            require(signals[i] == venmoMailserverKeys[i], "Invalid: RSA modulus not matched");
+        for (uint256 i = bodyLen; i < msgLen - 1; i++) {
+            require(signals[i] == venmoMailserverKeys[i - bodyLen], "Invalid: RSA modulus not matched");
         }
 
         require(verifyProof(a, b, c, signals), "Invalid Proof"); // checks effects iteractions, this should come first
@@ -294,7 +294,7 @@ contract Ramp is Verifier {
         for (uint i = 0; i < b.length; i++) { // c = b[i] was not needed
             // store old value so we can check for overflows
             oldResult = result;
-            result = result * 10 + (uint8(b[i]) - 48); // bytes and int are not compatible with the operator -.
+            result = result * 10 + (uint8(b[i]) - 48);
             // prevent overflows
             require(result >= oldResult, "Overflow detected");
         }
