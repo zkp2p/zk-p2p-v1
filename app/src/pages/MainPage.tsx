@@ -25,6 +25,7 @@ import { CustomTable } from '../components/CustomTable';
 import { useAccount, useContractWrite, useContractRead, usePrepareContractWrite } from "wagmi";
 import { ProgressBar } from "../components/ProgressBar";
 import { abi } from "../helpers/ramp.abi";
+import { inputBuffer } from "../helpers/inputBuffer";
 import { isSetIterator } from "util/types";
 var Buffer = require("buffer/").Buffer; // note: the trailing slash is important!
 
@@ -125,6 +126,23 @@ export const MainPage: React.FC<{}> = (props) => {
     }
   }
 
+  const getOrderStatusString = (order: { status: OrderStatus }) => {
+    console.log(order.status);
+
+    switch (order.status) {
+      case OrderStatus.UNOPENED:
+        return "Unopened";
+      case OrderStatus.OPEN:
+        return "Open";
+      case OrderStatus.FILLED:
+        return "Filled";
+      case OrderStatus.CANCELLED:
+        return "Cancelled";
+      default:
+        return "The order has an invalid status.";
+    }
+  }
+
   const formatAmountsForUSDC = (tokenAmount: number) => {
     const adjustedAmount = tokenAmount / (10 ** 6);
     return adjustedAmount;
@@ -141,12 +159,12 @@ export const MainPage: React.FC<{}> = (props) => {
     formatAddressForTable(order.sender),
     formatAmountsForUSDC(order.amount),
     formatAmountsForUSDC(order.maxAmount),
-    order.status,
+    getOrderStatusString(order.status),
   ]);
 
   const orderClaimsTableHeaders = ['Taker', 'Venmo Handle', 'Expiration'];
   const orderClaimsTableData = orderClaims.map((orderClaim) => [
-    formatAddressForTable('0xfC5D59a09397e4979812F0da631e0cE8cbAce6D3'), // TODO: should we return the claimer address?
+    formatAddressForTable('0x805a3Ae6495Be653dE460685D5FFDD5A538550f1'), // TODO: should we return the claimer address?
     getHandleFromId(orderClaim.venmoId),
     formattedExpiration(orderClaim.expirationTimestamp),
   ]);
@@ -195,7 +213,7 @@ export const MainPage: React.FC<{}> = (props) => {
     isError: isReadAllOrdersError,
     refetch: refetchAllOrders,
   } = useContractRead({
-    addressOrName: '0xfC5D59a09397e4979812F0da631e0cE8cbAce6D3',
+    addressOrName: '0x805a3Ae6495Be653dE460685D5FFDD5A538550f1',
     contractInterface: abi,
     functionName: 'getAllOrders',
   });
@@ -207,7 +225,7 @@ export const MainPage: React.FC<{}> = (props) => {
     isError: isReadOrderClaimsError,
     refetch: refetchClaimedOrders,
   } = useContractRead({
-    addressOrName: '0xfC5D59a09397e4979812F0da631e0cE8cbAce6D3',
+    addressOrName: '0x805a3Ae6495Be653dE460685D5FFDD5A538550f1',
     contractInterface: abi,
     functionName: 'getClaimsForOrder',
     args: [selectedOrder.orderId],
@@ -217,9 +235,35 @@ export const MainPage: React.FC<{}> = (props) => {
     Contract Writes
   */
 
+  // register(uint256 _venmoId) external
+  const { config: writeRegisterOrderConfig } = usePrepareContractWrite({
+    addressOrName: '0x805a3Ae6495Be653dE460685D5FFDD5A538550f1',
+    contractInterface: abi,
+    functionName: 'register',
+    args: ['645716473020416186'],
+    onError: (error: { message: any }) => {
+      console.error(error.message);
+    },
+  });
+
+  const {
+    data: newRegistrationData,
+    isLoading: isWriteRegistrationLoading,
+    isSuccess: isWriteRegistrationSuccess,
+    write: writeRegister
+  } = useContractWrite(writeRegisterOrderConfig);
+  // console.log(
+  //   "Create new order txn details:",
+  //   writeRegister,
+  //   newRegistrationData,
+  //   isWriteRegistrationLoading,
+  //   isWriteRegistrationSuccess,
+  //   writeRegisterOrderConfig
+  // ); 
+
   // postOrder(uint256 _amount, uint256 _maxAmountToPay) external onlyRegisteredUser() 
   const { config: writeCreateOrderConfig } = usePrepareContractWrite({
-    addressOrName: '0xfC5D59a09397e4979812F0da631e0cE8cbAce6D3',
+    addressOrName: '0x805a3Ae6495Be653dE460685D5FFDD5A538550f1',
     contractInterface: abi,
     functionName: 'postOrder',
     args: [formatAmountsForTransactionParameter(newOrderAmount), formatAmountsForTransactionParameter(newOrderMaxAmount)],
@@ -245,10 +289,10 @@ export const MainPage: React.FC<{}> = (props) => {
 
   // claimOrder(uint256 _orderNonce) external  onlyRegisteredUser()
   const { config: writeClaimOrderConfig } = usePrepareContractWrite({
-    addressOrName: '0xfC5D59a09397e4979812F0da631e0cE8cbAce6D3',
+    addressOrName: '0x805a3Ae6495Be653dE460685D5FFDD5A538550f1',
     contractInterface: abi,
     functionName: 'claimOrder',
-    args: [selectedOrder?.orderId],
+    args: ["42"],
     onError: (error: { message: any }) => {
       console.error(error.message);
     },
@@ -267,15 +311,29 @@ export const MainPage: React.FC<{}> = (props) => {
   //   isWriteClaimOrderLoading,
   //   isWriteClaimOrderSuccess,
   //   writeClaimOrderConfig
-  // );
+  // ); 
+
+  const reformatProofForChain = (proof: string) => {
+    return [
+      proof ? JSON.parse(proof)["pi_a"].slice(0, 2) : null,
+      proof
+        ? JSON.parse(proof)
+            ["pi_b"].slice(0, 2)
+            .map((g2point: any[]) => g2point.reverse())
+        : null,
+      proof ? JSON.parse(proof)["pi_c"].slice(0, 2) : null,
+    ];
+  };
 
   // onRamp( uint256 _orderId, uint256 _offRamper, VenmoId, bytes calldata _proof) external onlyRegisteredUser()
   const { config: writeCompleteOrderConfig } = usePrepareContractWrite({
-    addressOrName: '0xfC5D59a09397e4979812F0da631e0cE8cbAce6D3',
+    addressOrName: '0x805a3Ae6495Be653dE460685D5FFDD5A538550f1',
     contractInterface: abi,
     functionName: 'onRamp',
-    args: [selectedOrder?.orderId], // TODO: pass in the completed proof
-    // args: [...reformatProofForChain(proof), publicSignals ? JSON.parse(publicSignals) : null],
+    args: [
+      ...reformatProofForChain(proof),
+      publicSignals ? JSON.parse(publicSignals) : null
+    ],
     onError: (error: { message: any }) => {
       console.error(error.message);
     },
@@ -348,7 +406,7 @@ export const MainPage: React.FC<{}> = (props) => {
       console.log('Refetching orders...');
 
       refetchAllOrders();
-    }, 15000); // Refetch every 15 seconds
+    }, 10000); // Refetch every 10 seconds
 
     return () => {
       clearInterval(intervalId);
@@ -395,7 +453,7 @@ export const MainPage: React.FC<{}> = (props) => {
         // console.log('Refetching order claims...');
 
         refetchClaimedOrders();
-      }, 15000); // Refetch every 15 seconds
+      }, 10000); // Refetch every 10 seconds
   
       return () => {
         clearInterval(intervalId);
@@ -456,18 +514,6 @@ export const MainPage: React.FC<{}> = (props) => {
     }));
   };
 
-  const reformatProofForChain = (proof: string) => {
-    return [
-      proof ? JSON.parse(proof)["pi_a"].slice(0, 2) : null,
-      proof
-        ? JSON.parse(proof)
-            ["pi_b"].slice(0, 2)
-            .map((g2point: any[]) => g2point.reverse())
-        : null,
-      proof ? JSON.parse(proof)["pi_c"].slice(0, 2) : null,
-    ];
-  };
-
   /*
     Additional Listeners
   */
@@ -516,6 +562,9 @@ export const MainPage: React.FC<{}> = (props) => {
     } else {
       setActionState(FormState.CLAIM);
     }
+
+    console.log("Printing selected order id:")
+    console.log(orderToSelect.orderId.toString());
 
     setSelectedOrderClaim({} as OnRampOrderClaim);
     setSelectedOrder(orderToSelect);
@@ -602,13 +651,14 @@ export const MainPage: React.FC<{}> = (props) => {
               />
               <ReadOnlyInput
                 label="Venmo Handle (Send Request for Amount Here)"
-                value={selectedOrder.sender}
+                // value={selectedOrder.sender}
+                value = "@Richard-Liang-2"
               />
                 <Button
                   disabled={isWriteClaimOrderLoading}
                   onClick={async () => {
                     setLastAction("claim");
-                    // write txn
+                    writeClaimOrder?.();
                   }}
                 >
                   Claim Order
@@ -661,8 +711,6 @@ export const MainPage: React.FC<{}> = (props) => {
                     console.log("Generating proof...");
                     setDisplayMessage("Generating proof...");
                     setStatus("generating-input");
-                    // const mail =
-                    //   "RGVsaXZlcmVkLVRvOiBiaXN3YWppdHNhbXByaXRpQGdtYWlsLmNvbQ0KUmVjZWl2ZWQ6IGJ5IDIwMDI6YTA1OjY1MTI6M2UxNTowOjA6MDowIHdpdGggU01UUCBpZCBpMjFjc3AzMTExMzI2bGZ2Ow0KICAgICAgICBXZWQsIDIwIEp1bCAyMDIyIDIwOjU1OjIwIC0wNzAwIChQRFQpDQpYLUdvb2dsZS1TbXRwLVNvdXJjZTogQUdSeU0xdVV1cmtpL0RJRHR0ckFEM1I3Z2Y4SXNWSGFXamhqaHRtKzNsSkp6RmI4SVZMdmEyUEY1YmZXTllHaDBObHRSdFJvUDJjSg0KWC1SZWNlaXZlZDogYnkgMjAwMjphMDU6NjIyYTo1MTQ6YjA6MzFmOmI1OjdkNmUgd2l0aCBTTVRQIGlkIGwyMC0yMDAyMGEwNTYyMmEwNTE0MDBiMDAzMWYwMGI1N2Q2ZW1yODI1NTQ3NHF0eC42NzcuMTY1ODM3NTcxOTgxNDsNCiAgICAgICAgV2VkLCAyMCBKdWwgMjAyMiAyMDo1NToxOSAtMDcwMCAoUERUKQ0KQVJDLVNlYWw6IGk9MTsgYT1yc2Etc2hhMjU2OyB0PTE2NTgzNzU3MTk7IGN2PW5vbmU7DQogICAgICAgIGQ9Z29vZ2xlLmNvbTsgcz1hcmMtMjAxNjA4MTY7DQogICAgICAgIGI9T2hMY1c4TFV0RDFmNGNEQTZ3Qk13MnhwMzEvMlJtQURtWU8ycEM0T09FbExFY1FQRnQxZTFhNzAwejVUWmNqMS9hDQogICAgICAgICBNajl5dGxKa2ladGg5SzlzSjRMc2x1QmRudk1YQndDbmc0R2w1b0tTWEpoNlZiUmtWUm5nZWhrZlB2L2ZyMkhNNGthQg0KICAgICAgICAgMHRaWEVMK3JGUjJLNjN1MmVTODVKbnlmYkh6a2t5eDJiMlBKWW1CUDJnN2tUbkR6SDJnOUhOK2cvekk5czlEbERMTUMNCiAgICAgICAgIEwzNnZrbGprcTI5a1V3aUVjUU5hbVRiREFNUUk2ZFlhMmtCbVMveFdKUDVrY0dOb3lMNzFSc2x3R3R3SE15dyt1NWlvDQogICAgICAgICBsdDlkWVRHbDBMWWlyelJvdlBPUXV4eVJFaTdlYlBuN1A4VytDVUpjem1ENjhnTFA1WWFUYjBwR0FIWWF0dGJyNURRSw0KICAgICAgICAgSmJBZz09DQpBUkMtTWVzc2FnZS1TaWduYXR1cmU6IGk9MTsgYT1yc2Etc2hhMjU2OyBjPXJlbGF4ZWQvcmVsYXhlZDsgZD1nb29nbGUuY29tOyBzPWFyYy0yMDE2MDgxNjsNCiAgICAgICAgaD10bzpzdWJqZWN0Om1lc3NhZ2UtaWQ6ZGF0ZTpmcm9tOm1pbWUtdmVyc2lvbjpka2ltLXNpZ25hdHVyZTsNCiAgICAgICAgYmg9VysvWkdkQjFkM0lVOHhGNkNBUGJwNENpRDlLY2VVU3hnV2lmeFhBZkYrdz07DQogICAgICAgIGI9T25jWXZINlFnUjFHeG82Y0VGNmV4ZEdzekl5YVFaeEFRWEFXbWNuOW1hWXdRQmNWZW9HTjNGNGpURUJXMjVDV3d0DQogICAgICAgICBVUHNacnlXdExhbDNmaHF1VzVDSHF5VWNNOGlTYXRnUUt3dkFJUGVaT0pZMFpuenRtbmdmZHdwTDliSUFyRlhuR2prRA0KICAgICAgICAgTkhRLzEwTUZxRG9uNzgwR2diTXNReVJHOS83U2NwMXBySUowTTFvNGlCWUtIRFBiNkJHRkg3Q3dPcWUycWE5TnNTVy8NCiAgICAgICAgIFZnTmovU3B1QlJuTDNsZlpsZnN1MC93WlVENWNjb1pJeS9IdlllRjFYczF0bG9aWENqcWtoQ1c4RzZOZmpjRzluYkZUDQogICAgICAgICBmakZJSS9XallkazZSSkRXaUt3N0p3UUF4a3hKMHhOcEpyMUZSUDFhdGRsSGFoQ1B1QWhvUUp0MFBsdGdFUi9jU1VJcQ0KICAgICAgICAgNWlkQT09DQpBUkMtQXV0aGVudGljYXRpb24tUmVzdWx0czogaT0xOyBteC5nb29nbGUuY29tOw0KICAgICAgIGRraW09cGFzcyBoZWFkZXIuaT1AbWl0LmVkdSBoZWFkZXIucz1vdXRnb2luZyBoZWFkZXIuYj1lSGNxYmRoRzsNCiAgICAgICBzcGY9cGFzcyAoZ29vZ2xlLmNvbTogZG9tYWluIG9mIGFheXVzaGdAbWl0LmVkdSBkZXNpZ25hdGVzIDE4LjkuMjguMTEgYXMgcGVybWl0dGVkIHNlbmRlcikgc210cC5tYWlsZnJvbT1hYXl1c2hnQG1pdC5lZHU7DQogICAgICAgZG1hcmM9cGFzcyAocD1OT05FIHNwPU5PTkUgZGlzPU5PTkUpIGhlYWRlci5mcm9tPW1pdC5lZHUNClJldHVybi1QYXRoOiA8YWF5dXNoZ0BtaXQuZWR1Pg0KUmVjZWl2ZWQ6IGZyb20gb3V0Z29pbmcubWl0LmVkdSAob3V0Z29pbmctYXV0aC0xLm1pdC5lZHUuIFsxOC45LjI4LjExXSkNCiAgICAgICAgYnkgbXguZ29vZ2xlLmNvbSB3aXRoIEVTTVRQUyBpZCBhMTgtMjAwMjBhYzg0NGIyMDAwMDAwYjAwMzFlZGY0NjZiNzNzaTQ2NjAxN3F0by42NC4yMDIyLjA3LjIwLjIwLjU1LjE5DQogICAgICAgIGZvciA8Ymlzd2FqaXRzYW1wcml0aUBnbWFpbC5jb20+DQogICAgICAgICh2ZXJzaW9uPVRMUzFfMiBjaXBoZXI9RUNESEUtRUNEU0EtQUVTMTI4LUdDTS1TSEEyNTYgYml0cz0xMjgvMTI4KTsNCiAgICAgICAgV2VkLCAyMCBKdWwgMjAyMiAyMDo1NToxOSAtMDcwMCAoUERUKQ0KUmVjZWl2ZWQtU1BGOiBwYXNzIChnb29nbGUuY29tOiBkb21haW4gb2YgYWF5dXNoZ0BtaXQuZWR1IGRlc2lnbmF0ZXMgMTguOS4yOC4xMSBhcyBwZXJtaXR0ZWQgc2VuZGVyKSBjbGllbnQtaXA9MTguOS4yOC4xMTsNCkF1dGhlbnRpY2F0aW9uLVJlc3VsdHM6IG14Lmdvb2dsZS5jb207DQogICAgICAgZGtpbT1wYXNzIGhlYWRlci5pPUBtaXQuZWR1IGhlYWRlci5zPW91dGdvaW5nIGhlYWRlci5iPWVIY3FiZGhHOw0KICAgICAgIHNwZj1wYXNzIChnb29nbGUuY29tOiBkb21haW4gb2YgYWF5dXNoZ0BtaXQuZWR1IGRlc2lnbmF0ZXMgMTguOS4yOC4xMSBhcyBwZXJtaXR0ZWQgc2VuZGVyKSBzbXRwLm1haWxmcm9tPWFheXVzaGdAbWl0LmVkdTsNCiAgICAgICBkbWFyYz1wYXNzIChwPU5PTkUgc3A9Tk9ORSBkaXM9Tk9ORSkgaGVhZGVyLmZyb209bWl0LmVkdQ0KUmVjZWl2ZWQ6IGZyb20gbWFpbC15dzEtZjE4Mi5nb29nbGUuY29tIChtYWlsLXl3MS1mMTgyLmdvb2dsZS5jb20gWzIwOS44NS4xMjguMTgyXSkNCgkoYXV0aGVudGljYXRlZCBiaXRzPTApDQogICAgICAgIChVc2VyIGF1dGhlbnRpY2F0ZWQgYXMgYWF5dXNoZ0BBVEhFTkEuTUlULkVEVSkNCglieSBvdXRnb2luZy5taXQuZWR1ICg4LjE0LjcvOC4xMi40KSB3aXRoIEVTTVRQIGlkIDI2TDN0STdPMDA4NTM0DQoJKHZlcnNpb249VExTdjEvU1NMdjMgY2lwaGVyPUFFUzEyOC1HQ00tU0hBMjU2IGJpdHM9MTI4IHZlcmlmeT1OT1QpDQoJZm9yIDxiaXN3YWppdHNhbXByaXRpQGdtYWlsLmNvbT47IFdlZCwgMjAgSnVsIDIwMjIgMjM6NTU6MTkgLTA0MDANCkRLSU0tU2lnbmF0dXJlOiB2PTE7IGE9cnNhLXNoYTI1NjsgYz1yZWxheGVkL3JlbGF4ZWQ7IGQ9bWl0LmVkdTsgcz1vdXRnb2luZzsNCgl0PTE2NTgzNzU3MTk7IGJoPVcrL1pHZEIxZDNJVTh4RjZDQVBicDRDaUQ5S2NlVVN4Z1dpZnhYQWZGK3c9Ow0KCWg9RnJvbTpEYXRlOlN1YmplY3Q6VG87DQoJYj1lSGNxYmRoR29GNVM4N2YrOXIvWFB0dDVEYmdCandnb1lUcytKTVBIcUFIZ2hzazhLVVRoQTFyZkhab2hvTENVUQ0KCSBxamVEbW1rQXg0aDdKeS9ldG1nemdJSGEwZmhVRHpmbDh6Y1NZUVNDU29zM0NRTERieVlkYzNVMjJyWW0xcVhmVE4NCgkgYzRsYlhJMVQvbit0b25tcnkyMG8wZ2I1YlhMVGZVWjZTblc5RitXSGhhUFBYY0pvK3cyNzREeExoL2tJcjRTaEJNDQoJIC80Qk16MHNOaXVHeGQrZzFyR3lsclAvcjVnTTRxeHl6SlRVZjA4UVljeCtEUURVc3o3dlpVUXZLUjVJV3dSSit6TA0KCSBCZjY5cElwckZuakIzeXk1MWVxeGpIZXFnWDFWeE5GVlV0S2FoZm5VTys0dTRWVGRBQzk1MU5rRDFLRzRzb0NHWVgNCgkgYmFIMnR6Ny96QXZnQT09DQpSZWNlaXZlZDogYnkgbWFpbC15dzEtZjE4Mi5nb29nbGUuY29tIHdpdGggU01UUCBpZCAwMDcyMTE1N2FlNjgyLTMxZTQ1NTI3ZGE1c280OTg5NTU3YjMuNQ0KICAgICAgICBmb3IgPGJpc3dhaml0c2FtcHJpdGlAZ21haWwuY29tPjsgV2VkLCAyMCBKdWwgMjAyMiAyMDo1NToxOCAtMDcwMCAoUERUKQ0KWC1HbS1NZXNzYWdlLVN0YXRlOiBBSklvcmE4aXlsUmVNZmU2RWxSL0hHL3AvTXFDcGhJVGNEL2hvYkpXS0ZZU3hWQVVOMHYycmIzbg0KCUMwc2s0dkdlcmlVUklNbkdxWCsrdUhMcFZzNHlPY3pscGFLZ3FIdz0NClgtUmVjZWl2ZWQ6IGJ5IDIwMDI6YTBkOmY2YzU6MDpiMDozMWQ6YWY3ZDo1ZDRmIHdpdGggU01UUCBpZA0KIGcxODgtMjAwMjBhMGRmNmM1MDAwMDAwYjAwMzFkYWY3ZDVkNGZtcjQ0MjU4MTI2eXdmLjE4Ny4xNjU4Mzc1NzE4MDA3OyBXZWQsIDIwDQogSnVsIDIwMjIgMjA6NTU6MTggLTA3MDAgKFBEVCkNCk1JTUUtVmVyc2lvbjogMS4wDQpGcm9tOiBBYXl1c2ggR3VwdGEgPGFheXVzaGdAbWl0LmVkdT4NCkRhdGU6IFdlZCwgMjAgSnVsIDIwMjIgMjM6NTU6MDYgLTA0MDANClgtR21haWwtT3JpZ2luYWwtTWVzc2FnZS1JRDogPENBK09KNVFmRU9NN0VFYlV6MCsya1cwdXQ2b0RaVDZ0c0J5N3BUazZEZ3pBTlQtTGROd0BtYWlsLmdtYWlsLmNvbT4NCk1lc3NhZ2UtSUQ6IDxDQStPSjVRZkVPTTdFRWJVejArMmtXMHV0Nm9EWlQ2dHNCeTdwVGs2RGd6QU5ULUxkTndAbWFpbC5nbWFpbC5jb20+DQpTdWJqZWN0OiBkZXNwZXJhdGVseSB0cnlpbmcgdG8gbWFrZSBpdCB0byBjaGFpbg0KVG86ICJiaXN3YWppdHNhbXByaXRpQGdtYWlsLmNvbSIgPGJpc3dhaml0c2FtcHJpdGlAZ21haWwuY29tPg0KQ29udGVudC1UeXBlOiBtdWx0aXBhcnQvYWx0ZXJuYXRpdmU7IGJvdW5kYXJ5PSIwMDAwMDAwMDAwMDA5Mzc3YWYwNWU0NDhhZjUxIg0KDQotLTAwMDAwMDAwMDAwMDkzNzdhZjA1ZTQ0OGFmNTENCkNvbnRlbnQtVHlwZTogdGV4dC9wbGFpbjsgY2hhcnNldD0iVVRGLTgiDQoNCndpbGwgd2UgbWFrZSBpdCB0aGlzIHRpbWUgaW50byB0aGUgemsgcHJvb2YNCg0KLS0wMDAwMDAwMDAwMDA5Mzc3YWYwNWU0NDhhZjUxDQpDb250ZW50LVR5cGU6IHRleHQvaHRtbDsgY2hhcnNldD0iVVRGLTgiDQoNCjxkaXYgZGlyPSJhdXRvIj53aWxsIHdlIG1ha2UgaXQgdGhpcyB0aW1lIGludG8gdGhlIHprIHByb29mPC9kaXY+DQoNCi0tMDAwMDAwMDAwMDAwOTM3N2FmMDVlNDQ4YWY1MS0tDQo=";
 
                     const formattedArray = await insert13Before10(Uint8Array.from(Buffer.from(emailFull)));
                     // Due to a quirk in carriage return parsing in JS, we need to manually edit carriage returns to match DKIM parsing
@@ -672,8 +720,9 @@ export const MainPage: React.FC<{}> = (props) => {
 
                     let input = "";
                     try {
-                      input = await generate_input.generate_inputs(Buffer.from(formattedArray.buffer));
-                      // input = await generate_input.generate_inputs(Buffer.from(emailFull));
+                      // input = await generate_input.generate_inputs(Buffer.from(formattedArray.buffer));
+                      // input = inputBuffer
+                      input = ""
                     } catch (e) {
                       console.log("Error generating input", e);
                       setDisplayMessage("Prove");
@@ -689,15 +738,15 @@ export const MainPage: React.FC<{}> = (props) => {
                     /*
                       Download proving files
                     */
-                    console.time("zk-dl");
-                    recordTimeForActivity("startedDownloading");
-                    setDisplayMessage("Downloading compressed proving files... (this may take a few minutes)");
-                    setStatus("downloading-proof-files");
-                    await downloadProofFiles(filename, () => {
-                      setDownloadProgress((p) => p + 1);
-                    });
-                    console.timeEnd("zk-dl");
-                    recordTimeForActivity("finishedDownloading");
+                    // console.time("zk-dl");
+                    // recordTimeForActivity("startedDownloading");
+                    // setDisplayMessage("Downloading compressed proving files... (this may take a few minutes)");
+                    // setStatus("downloading-proof-files");
+                    // await downloadProofFiles(filename, () => {
+                    //   setDownloadProgress((p) => p + 1);
+                    // });
+                    // console.timeEnd("zk-dl");
+                    // recordTimeForActivity("finishedDownloading");
 
                     /*
                       Generate proof
@@ -708,9 +757,11 @@ export const MainPage: React.FC<{}> = (props) => {
                     setStatus("generating-proof");
                     console.log("Starting proof generation");
                     // alert("Generating proof, will fail due to input");
-                    const { proof, publicSignals } = await generateProof(input, filename);
-                    //const proof = JSON.parse('{"pi_a": ["19201501460375869359786976350200749752225831881815567077814357716475109214225", "11505143118120261821370828666956392917988845645366364291926723724764197308214", "1"], "pi_b": [["17114997753466635923095897108905313066875545082621248342234075865495571603410", "7192405994185710518536526038522451195158265656066550519902313122056350381280"], ["13696222194662648890012762427265603087145644894565446235939768763001479304886", "2757027655603295785352548686090997179551660115030413843642436323047552012712"], ["1", "0"]], "pi_c": ["6168386124525054064559735110298802977718009746891233616490776755671099515304", "11077116868070103472532367637450067545191977757024528865783681032080180232316", "1"], "protocol": "groth16", "curve": "bn128"}');
-                    //const publicSignals = JSON.parse('["0", "0", "0", "0", "0", "0", "0", "0", "32767059066617856", "30803244233155956", "0", "0", "0", "0", "27917065853693287", "28015", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "113659471951225", "0", "0", "1634582323953821262989958727173988295", "1938094444722442142315201757874145583", "375300260153333632727697921604599470", "1369658125109277828425429339149824874", "1589384595547333389911397650751436647", "1428144289938431173655248321840778928", "1919508490085653366961918211405731923", "2358009612379481320362782200045159837", "518833500408858308962881361452944175", "1163210548821508924802510293967109414", "1361351910698751746280135795885107181", "1445969488612593115566934629427756345", "2457340995040159831545380614838948388", "2612807374136932899648418365680887439", "16021263889082005631675788949457422", "299744519975649772895460843780023483", "3933359104846508935112096715593287", "556307310756571904145052207427031380052712977221"]');
+
+                    // const { proof, publicSignals } = await generateProof(input, "circuit"); 
+                    const proof = JSON.parse(`{"pi_a":["11085549688134726611150668540316880174659412339988080564703955228381423383254","10764560936774569561507953473055258281269875641315110458189885027430599227931","1"],"pi_b":[["1652351732733835594290426025273481121922973119332515211203377506562979313179","3331499860590706998327509944446821922577464202175999797314203077137501408618"],["5458914108714346890570069128843899252513570499415944280659595267796268262091","16984180778412929730507913588139847520925451119909239694733069369857547223112"],["1","0"]],"pi_c":["10563739695688687522984101191441695778164716170984181738506960046076767863468","19062263244482863555090591167988832524860354662683990422026033566204064004079","1"],"protocol":"groth16"}`);
+                    const publicSignals = JSON.parse(`["16103688761651505","14979992155926838","232837953586","14696283796485174","13849655463916343","909652278","12852","0","0","683441457792668103047675496834917209","1011953822609495209329257792734700899","1263501452160533074361275552572837806","2083482795601873989011209904125056704","642486996853901942772546774764252018","1463330014555221455251438998802111943","2411895850618892594706497264082911185","520305634984671803945830034917965905","47421696716332554","0","0","0","0","0","0","0","0"]`);
+                    
                     console.log("Finished proof generation");
                     console.timeEnd("zk-gen");
                     recordTimeForActivity("finishedProving");
@@ -742,10 +793,28 @@ export const MainPage: React.FC<{}> = (props) => {
                       console.error(e);
                     }
                   }}
+                  style={{ marginRight: "16px" }}
                 >
                   {displayMessage}
                 </Button>
-                {displayMessage === "Downloading compressed proving files... (this may take a few minutes)" && (
+                <Button
+                  disabled={proof.length === 0 || publicSignals.length === 0 || isWriteCompleteOrderLoading}
+                  onClick={async () => {
+                    setLastAction("cancel");
+
+                    console.log(proof);
+                    console.log(publicSignals);
+
+                    console.log(...reformatProofForChain(proof));
+                    console.log(publicSignals ? JSON.parse(publicSignals) : null);
+
+                    writeCompleteOrder?.();
+                  }}
+                >
+                  Submit Proof and Claim
+                </Button>
+              </ButtonContainer>
+              {displayMessage === "Downloading compressed proving files... (this may take a few minutes)" && (
                   <ProgressBar width={downloadProgress * 10} label={`${downloadProgress} / 10 items`} />
                 )}
                 <ProcessStatus status={status}>
@@ -759,16 +828,6 @@ export const MainPage: React.FC<{}> = (props) => {
                   )}
                   <TimerDisplay timers={stopwatch} />
                 </ProcessStatus>
-                <Button
-                  disabled={proof.length === 0 || publicSignals.length === 0 || isWriteCompleteOrderLoading}
-                  onClick={async () => {
-                    setLastAction("cancel");
-                    writeCompleteOrder?.();
-                  }}
-                >
-                  Submit Proof and Claim
-                </Button>
-              </ButtonContainer>
             </ConditionalContainer>
           )}
         </Column>

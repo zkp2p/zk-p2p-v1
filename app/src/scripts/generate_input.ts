@@ -21,7 +21,7 @@ var Cryo = require("cryo");
 const pki = require("node-forge").pki;
 
 // const email_file = "monia_email.eml"; // "./test_email.txt", "./twitter_msg.eml", kaylee_phone_number_email_twitter
-const email_file = "venmo_email_2.eml";
+const email_file = "venmo_email_1.eml";
 
 export interface ICircuitInputs {
   modulus?: string[];

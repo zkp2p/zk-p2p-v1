@@ -2,5 +2,7 @@
   "Deploying Fake USDC contract with the account": "0xb654f7ac7B06ccDBcA27e86CEEB5E23F2f3ACEbe",
   "FakeUSDC contract deployed to address": "0xb685Bdc019DEE17D073746a88bF6a6cDDED8Ae70",
   "Deploying Ramp contract with the account": "0xb654f7ac7B06ccDBcA27e86CEEB5E23F2f3ACEbe",
-  "Ramp contract deployed to address": "0xfC5D59a09397e4979812F0da631e0cE8cbAce6D3"
+  "Ramp contract deployed to address LEGACY 1": "0xfC5D59a09397e4979812F0da631e0cE8cbAce6D3",
+  "Ramp contract deployed to address LEGACY 2": "0x6AE571Aaaf8D3bF5769B9318db6Fc9c03a80bc15",
+  "Ramp contract deployed to address": "0x805a3Ae6495Be653dE460685D5FFDD5A538550f1"
 }
