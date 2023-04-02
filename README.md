@@ -1,8 +1,8 @@
-## ZKP2P
+# ZKP2P
 
-A trustless P2P fiat onramp powered by ZK proofs and Venmo
+### A trustless P2P fiat onramp powered by ZK proofs and Venmo
 
-<img width="1715" alt="Screenshot 2023-04-02 at 1 39 16 PM" src="https://user-images.githubusercontent.com/6797244/229353330-7dfec078-0a13-49be-9d89-be06bc79e77d.png">
+![zkp2p](https://user-images.githubusercontent.com/6797244/229355494-3f9fd4aa-76a2-4219-b294-88e356e43345.jpeg)
 
 ## Problem
 
@@ -26,5 +26,7 @@ ZKP2P enables an on-chain user to trade USDC for USD with a Venmo user using ZK 
 * FakeUSDC - [0xb685Bdc019DEE17D073746a88bF6a6cDDED8Ae70](https://goerli.etherscan.io/address/0xb685Bdc019DEE17D073746a88bF6a6cDDED8Ae70)
 
 ## Getting Started
+
+<img width="1715" alt="Screenshot 2023-04-02 at 1 39 16 PM" src="https://user-images.githubusercontent.com/6797244/229353330-7dfec078-0a13-49be-9d89-be06bc79e77d.png">
 
 ## TODO rest of docs
