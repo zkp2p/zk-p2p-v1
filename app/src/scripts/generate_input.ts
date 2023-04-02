@@ -21,7 +21,8 @@ var Cryo = require("cryo");
 const pki = require("node-forge").pki;
 
 // const email_file = "monia_email.eml"; // "./test_email.txt", "./twitter_msg.eml", kaylee_phone_number_email_twitter
-const email_file = "venmo_email_1.eml";
+const email_file = process.argv[2];
+const out_file = process.argv[3];
 
 export interface ICircuitInputs {
   modulus?: string[];
@@ -220,9 +221,9 @@ export async function generate_inputs(email: Buffer): Promise<ICircuitInputs> {
 
 async function do_generate() {
   const email = fs.readFileSync(email_file);
-  console.log(email);
+  // console.log(email);
   const gen_inputs = await generate_inputs(email);
-  console.log(JSON.stringify(gen_inputs));
+  // console.log(JSON.stringify(gen_inputs));
   return gen_inputs;
 }
 
@@ -255,6 +256,6 @@ if (typeof require !== "undefined" && require.main === module) {
   // debug_file();
   const circuitInputs = do_generate();
   console.log("Writing to file...");
-  circuitInputs.then((inputs) => fs.writeFileSync(`./circuits/inputs/input_twitter.json`, JSON.stringify(inputs), { flag: "w" }));
+  circuitInputs.then((inputs) => fs.writeFileSync(out_file, JSON.stringify(inputs), { flag: "w" }));
   // gen_test();
 }
