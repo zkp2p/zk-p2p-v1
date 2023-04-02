@@ -167,7 +167,7 @@ template P2POnrampVerify(max_header_bytes, max_body_bytes, n, k) {
     found_user_id.in <== venmo_user_regex.out;
     found_user_id.out === 0;
     log(venmo_user_regex.out);
-    // We isolate where the username begins: twitter_eq there is 1, everywhere else is 0
+    // We isolate where the username begins: eq there is 1, everywhere else is 0
     component venmo_user_id_eq[max_body_bytes];
     for (var i = 0; i < max_body_bytes; i++) {
         venmo_user_id_eq[i] = IsEqual();
@@ -176,7 +176,7 @@ template P2POnrampVerify(max_header_bytes, max_body_bytes, n, k) {
     }
     for (var j = 0; j < max_venmo_len; j++) {
         // This vector is 0 everywhere except at one value
-        // [x][x] is the starting character of the twitter username
+        // [x][x] is the starting character of the venmo ID
         reveal_venmo_user[j][j] <== venmo_user_id_eq[j].out * venmo_user_regex.reveal[j];
         for (var i = j + 1; i < max_body_bytes; i++) {
             // This shifts the username back to the start of the string. For example,
