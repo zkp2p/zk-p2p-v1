@@ -15,6 +15,9 @@ Only institutional accounts had direct access to convert USDC to USD. Existing P
 #### ZKP2P
 ZKP2P enables an on-chain user to trade USDC for USD with a Venmo user using ZK proofs of email DKIM signatures. This is an use case built on top of (ZK Email)[https://github.com/zkemail/zk-email-verify/]
 
+## High Level Flow
+![P2P Venmo Onramp Hack](https://user-images.githubusercontent.com/6797244/229359133-e0862928-5849-43f5-8361-2ac698c1c17a.jpg)
+
 ## Deployed Addresses
 
 #### Scroll Alpha
