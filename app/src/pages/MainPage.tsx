@@ -168,7 +168,7 @@ export const MainPage: React.FC<{}> = (props) => {
 
   const orderClaimsTableHeaders = ['Taker', 'Venmo Handle', 'Expiration'];
   const orderClaimsTableData = orderClaims.map((orderClaim) => [
-    formatAddressForTable(contractAddresses[chain.network]["ramp"]), // TODO: should we return the claimer address?
+    formatAddressForTable(contractAddresses['goerli']["ramp"]), // TODO: should we return the claimer address?
     getHandleFromId(orderClaim.venmoId),
     formattedExpiration(orderClaim.expirationTimestamp),
   ]);
@@ -217,7 +217,7 @@ export const MainPage: React.FC<{}> = (props) => {
     isError: isReadAllOrdersError,
     refetch: refetchAllOrders,
   } = useContractRead({
-    addressOrName: contractAddresses[chain.network]["ramp"],
+    addressOrName: contractAddresses['goerli']["ramp"], // TODO: enable other networks
     contractInterface: abi,
     functionName: 'getAllOrders',
   });
@@ -229,7 +229,7 @@ export const MainPage: React.FC<{}> = (props) => {
     isError: isReadOrderClaimsError,
     refetch: refetchClaimedOrders,
   } = useContractRead({
-    addressOrName: contractAddresses[chain.network]["ramp"],
+    addressOrName: contractAddresses['goerli']["ramp"], // TODO: enable other networks
     contractInterface: abi,
     functionName: 'getClaimsForOrder',
     args: [selectedOrder.orderId],
@@ -241,7 +241,7 @@ export const MainPage: React.FC<{}> = (props) => {
 
   // register(uint256 _venmoId) external
   const { config: writeRegisterOrderConfig } = usePrepareContractWrite({
-    addressOrName: contractAddresses[chain.network]["ramp"],
+    addressOrName: contractAddresses['goerli']["ramp"], // TODO: enable other networks
     contractInterface: abi,
     functionName: 'register',
     args: ['645716473020416186'],
@@ -267,7 +267,7 @@ export const MainPage: React.FC<{}> = (props) => {
 
   // postOrder(uint256 _amount, uint256 _maxAmountToPay) external onlyRegisteredUser() 
   const { config: writeCreateOrderConfig } = usePrepareContractWrite({
-    addressOrName: contractAddresses[chain.network]["ramp"],
+    addressOrName: contractAddresses['goerli']["ramp"], // TODO: enable other networks
     contractInterface: abi,
     functionName: 'postOrder',
     args: [formatAmountsForTransactionParameter(newOrderAmount), formatAmountsForTransactionParameter(newOrderMaxAmount)],
@@ -293,7 +293,7 @@ export const MainPage: React.FC<{}> = (props) => {
 
   // claimOrder(uint256 _orderNonce) external  onlyRegisteredUser()
   const { config: writeClaimOrderConfig } = usePrepareContractWrite({
-    addressOrName: contractAddresses[chain.network]["ramp"],
+    addressOrName: contractAddresses['goerli']["ramp"], // TODO: enable other networks
     contractInterface: abi,
     functionName: 'claimOrder',
     args: [selectedOrder.orderId],
@@ -331,7 +331,7 @@ export const MainPage: React.FC<{}> = (props) => {
 
   // onRamp( uint256 _orderId, uint256 _offRamper, VenmoId, bytes calldata _proof) external onlyRegisteredUser()
   const { config: writeCompleteOrderConfig } = usePrepareContractWrite({
-    addressOrName: contractAddresses[chain.network]["ramp"],
+    addressOrName: contractAddresses['goerli']["ramp"], // TODO: enable other networks
     contractInterface: abi,
     functionName: 'onRamp',
     args: [
