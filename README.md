@@ -5,8 +5,8 @@
 ![zkp2p](https://user-images.githubusercontent.com/6797244/229355494-3f9fd4aa-76a2-4219-b294-88e356e43345.jpeg)
 
 ### Resources
-- ![Demo - ZKHack Lisbon 2nd Place](https://www.youtube.com/watch?v=GjxNsZ-Gg-Q)
-- ![Devfolio](https://devfolio.co/projects/zkpp-23ef)
+- [Demo - ZKHack Lisbon 2nd Place](https://www.youtube.com/watch?v=GjxNsZ-Gg-Q)
+- [Devfolio](https://devfolio.co/projects/zkpp-23ef)
 
 ### Problems
 - New retail users face huge barriers to onboard funds onto web3
@@ -16,7 +16,7 @@
 - Existing P2P solutions either require meeting in person (e.g., LocalBitcoins) or rely on a centralized intermediary (e.g., OTC desks)
 
 ### App Overview
-ZKP2P enables trustless USDC to USD trades using ZK proofs of DKIM signatures of Venmo confirmation emails. This is an use case built on top of the libraries created by ![ZK Email](https://github.com/zkemail/zk-email-verify/). This can be extended to additional P2P payment systems other than Venmo (e.g. Paypal) and other tokens besides USDC.
+ZKP2P enables trustless USDC to USD trades using ZK proofs of DKIM signatures of Venmo confirmation emails. This is an use case built on top of the libraries created by [ZK Email](https://github.com/zkemail/zk-email-verify/). This can be extended to additional P2P payment systems other than Venmo (e.g. Paypal) and other tokens besides USDC.
 
 <img width="1715" alt="Screenshot 2023-04-02 at 1 39 16 PM" src="https://user-images.githubusercontent.com/6797244/229353330-7dfec078-0a13-49be-9d89-be06bc79e77d.png">
 
