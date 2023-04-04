@@ -2,7 +2,9 @@
 
 ### A trustless P2P fiat onramp powered by ZK proofs and Venmo
 
-![zkp2p](https://user-images.githubusercontent.com/6797244/229355494-3f9fd4aa-76a2-4219-b294-88e356e43345.jpeg)
+<img width="1321" alt="zkp2p cover image" src="https://user-images.githubusercontent.com/6797244/229355494-3f9fd4aa-76a2-4219-b294-88e356e43345.jpeg">
+
+
 
 ZKP2P enables trustless USDC to USD trades using ZK proofs of DKIM signatures of Venmo confirmation emails. The app can be found at zkp2p.xyz (not live yet). We use the libraries created by [ZK Email](https://github.com/zkemail/zk-email-verify/) to prove the SHA256 and RSA signatures and regex.
 
