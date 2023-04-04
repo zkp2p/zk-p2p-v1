@@ -11,6 +11,8 @@ Part of [ZK Hack Lisbon](https://www.zklisbon.com/) 2023 (2nd place winner).
 Our demo at the [ZK Hack closing ceremony](https://www.youtube.com/watch?v=GjxNsZ-Gg-Q) and [Devfolio](https://devfolio.co/projects/zkpp-23ef)
 
 DM us to join the conversation!
+Twitter - [Richard](https://twitter.com/richardzliang), [Brian](https://twitter.com/Bmwball56), [Alex](https://twitter.com/asoong91)
+Telegram - Todo
 
 ### Problem
 - New retail users face huge barriers to onboard funds onto web3
