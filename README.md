@@ -26,8 +26,8 @@ There are 2 actors in the system: 1) off-rampers and 2) on-rampers.
 1. Onrampers post an order specifying the amount of USDC they want to receive and the maximum amount of USD they are willing to pay. Onrampers can cancel their order at any time
 2. TODO
 
+<img width="1321" alt="zkp2p flow" src="https://user-images.githubusercontent.com/73331595/229766786-09effb1c-0bce-467d-829c-da6f58ca1d7b.png">
 
-![P2P Venmo Onramp Hack](https://user-images.githubusercontent.com/73331595/229766067-a5091196-5e18-4be5-af61-ba9d505cfebf.png)
 
 ### Limitations
 - Slow proving time. It takes 60s for witness generation and 15s for proof gen using RapidSnark. 5GB proving key size. 8M+ constraints (a lot can be heavily optimized in the future)
