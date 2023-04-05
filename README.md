@@ -15,6 +15,7 @@ Twitter
 - [Richard](https://twitter.com/richardzliang)
 - [Brian](https://twitter.com/Bmwball56)
 - [Alex](https://twitter.com/asoong91)
+- [Sachin](https://twitter.com/0xSachinK)
 
 [Telegram](https://t.me/+XDj9FNnW-xs5ODNl)
 
@@ -54,7 +55,7 @@ This is WIP
 
 ### Limitations
 - Slow proving time. It takes 60s for witness generation and 15s for proof gen using RapidSnark. 5GB proving key size. 8M+ constraints (a lot can be heavily optimized in the future)
-- Mechanism relies on trusting Venmo. It is likely not sound for large transactions where a malicious actor has more incentive to attack the system. (e.g. chargebacks, convincing Venmo signatures to sign a malicious email). Hopefully for smaller transactions, there is more recourse (e.g. user ID is doxxed and victime can complain to Venmo)
+- Mechanism relies on trusting Venmo. It is likely not sound for large transactions where a malicious actor has more incentive to attack the system. (e.g. chargebacks, convincing Venmo signatures to sign a malicious email). Hopefully for smaller transactions, there is more recourse (e.g. user ID is doxxed and victim can complain to Venmo)
 
 ### Future Work
 - Deploy to prod!
