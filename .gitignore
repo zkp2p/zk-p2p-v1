@@ -21,3 +21,6 @@ cache/
 
 .env
 yarn-error.log
+
+*.eml
+contracts/paypal_*
