@@ -1,6 +1,6 @@
 cd circuit
 # Compile the circuit
-circom circuit.circom --r1cs --wasm --sym
+circom circuit.circom --wasm
 # View information about the circuit
 ../node_modules/.bin/snarkjs r1cs info circuit.r1cs
 # Export r1cs to json (To make it human redable)
