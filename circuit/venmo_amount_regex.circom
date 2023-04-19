@@ -5,7 +5,7 @@ include "../zk-email-verify-circuits/regex_helpers.circom";
 // Extract the amount from the Venmo email subject
 // let regex = `((\r\n)|\^)subject: You paid [a-zA-Z ]+ (\$[0-9]+\.[0-9][0-9])\r\n`;
 // Example subject: You paid La Fleur Salon $30.00
-template AmountRegexRegex (msg_bytes) {
+template AmountRegex (msg_bytes) {
     signal input msg[msg_bytes];
     signal output out;
 
