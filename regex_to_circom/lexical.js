@@ -27,7 +27,11 @@ const word_char = "(a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|
 // let regex = `href=3D"https://venmo.com/code\?user_id=3D(0|1|2|3|4|5|6|7|8|9)+=\n(0|1|2|3|4|5|6|7|8|9)`
 // let regex = `href=3D"https://venmo.com/code\?user_id=3D[0-9]+=\n[0-9]+`
 // 27 spaces
-let regex = `                           href=3D"https://venmo.com/code\?user_id=3D(0|1|2|3|4|5|6|7|8|9)+`
+// let regex = `                           href=3D"https://venmo.com/code\?user_id=3D(0|1|2|3|4|5|6|7|8|9)+`
+// let regex = `https://venmo.com/code\?user_id=3D(0|1|2|3|4|5|6|7|8|9)+`
+let regex = `user_id=3D` + `${word_char}+` // Get MM user ID
+
+
 
 // Example subject: You paid La Fleur Salon $30.00
 // let regex = `((\r\n)|\^)subject: You paid [a-zA-Z ]+ (\$[0-9]+\.[0-9][0-9])\r\n`;  // subject regex
