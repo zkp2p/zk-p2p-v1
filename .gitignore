@@ -10,7 +10,7 @@ circuit/*.ptau
 # The following files will be required for verification on other clients like frontend
 circuit/verification_key.json
 circuit/circuit_final.zkey
-circuit/circuit_js
+# circuit/circuit_js
 
 build/
 circuit/circuit_cpp/

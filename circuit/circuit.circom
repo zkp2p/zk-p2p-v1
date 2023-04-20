@@ -163,6 +163,7 @@ template P2POnrampVerify(max_header_bytes, max_body_bytes, n, k) {
     found_mm_id.in <== venmo_mm_regex.out;
     // found_mm_id.out === 0;
     log(found_mm_id.out);
+    log(venmo_mm_regex.out);
     // We isolate where the venom id begins: eq there is 1, everywhere else is 0
     component venmo_mm_id_eq[max_body_bytes];
     for (var i = 0; i < max_body_bytes; i++) {
@@ -251,6 +252,7 @@ template P2POnrampVerify(max_header_bytes, max_body_bytes, n, k) {
     found_amount.in <== venmo_amount_regex.out;
     // found_amount.out === 0;
     log(found_amount.out);
+    log(venmo_amount_regex.out);
     // We isolate where the amount begins: eq there is 1, everywhere else is 0
     component venmo_amount_eq[max_header_bytes];
     for (var i = 0; i < max_header_bytes; i++) {
