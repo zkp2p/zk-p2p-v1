@@ -26,5 +26,6 @@ contracts/Paypal*
 contracts/paypal*
 
 *.eml
+*.wtns
 
 .DS_Store
