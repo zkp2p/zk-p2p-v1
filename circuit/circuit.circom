@@ -56,6 +56,7 @@ template P2POnrampVerify(max_header_bytes, max_body_bytes, n, k) {
     signal input body_hash_idx;
     signal body_hash[LEN_SHA_B64][max_header_bytes];
 
+/*
     // SHA HEADER: 506,670 constraints
     // This calculates the SHA256 hash of the header, which is the "base_msg" that is RSA signed.
     // The header signs the fields in the "h=Date:From:To:Subject:MIME-Version:Content-Type:Message-ID;"
@@ -151,6 +152,7 @@ template P2POnrampVerify(max_header_bytes, max_body_bytes, n, k) {
         }
         sha_body_bytes[i].out === sha_b64.out[i];
     }
+*/
 
     // VENMO MM REGEX
     // This computes the regex states on each character in the email body
@@ -240,7 +242,7 @@ template P2POnrampVerify(max_header_bytes, max_body_bytes, n, k) {
     }
     log("venmo mm id reveal end");
 
-    // var chunks = 7;
+    var chunks = 7;
     // This extracts the amount from the subject line
     component venmo_amount_regex = VenmoAmountRegex(max_header_bytes);
     for (var i = 0; i < max_header_bytes; i++) {
@@ -302,7 +304,6 @@ template P2POnrampVerify(max_header_bytes, max_body_bytes, n, k) {
         }
         reveal_packed[i] <== packed_output[i].out;
     }
-
     // TOTAL CONSTRAINTS: TODO
     // TODO total signals
 }

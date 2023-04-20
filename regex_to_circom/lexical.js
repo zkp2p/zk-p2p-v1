@@ -13,14 +13,15 @@ const catch_all_without_semicolon =
   "(0|1|2|3|4|5|6|7|8|9|a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z|!|\"|#|$|%|&|'|\\(|\\)|\\*|\\+|,|-|.|/|:|<|=|>|\\?|@|[|\\\\|]|^|_|`|{|\\||}|~| |\t|\n|\r|\x0b|\x0c)";
 const base_64 = "(a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z|0|1|2|3|4|5|6|7|8|9|\\+|/|=)";
 const word_char = "(a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z|0|1|2|3|4|5|6|7|8|9|_)";
+const word_char_with_decimal_place = "(a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z|0|1|2|3|4|5|6|7|8|9|_|.)";
+const word_char_with_new_line_and_equals = "(a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z|0|1|2|3|4|5|6|7|8|9|_|\r|\n|=)";
 
 // let old_regex = '(\r\n|\x80)(to|from):([A-Za-z0-9 _."@-]+<)?[a-zA-Z0-9_.-]+@[a-zA-Z0-9_.]+>?\r\n';
 // let regex = '(\r\n|\x80)(to|from):((a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z|0|1|2|3|4|5|6|7|8|9| |_|.|"|@|-)+<)?(a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z|0|1|2|3|4|5|6|7|8|9|_|.|-)+@(a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z|0|1|2|3|4|5|6|7|8|9|_|.|-)+>?\r\n';
 // let regex = `\r\ndkim-signature:(${key_chars}=${catch_all_without_semicolon}+; )+bh=${base_64}+; `;
 // 'dkim-signature:((a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z)=(0|1|2|3|4|5|6|7|8|9|a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z|!|"|#|$|%|&|\'|\\(|\\)|\\*|\\+|,|-|.|/|:|<|=|>|\\?|@|[|\\\\|]|^|_|`|{|\\||}|~| |\t|\n|\r|\x0B|\f)+; )+bh=(a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z|0|1|2|3|4|5|6|7|8|9|\\+|/|=)+; '
 // let regex = STRING_PRESELECTOR + `${word_char}+`;
-// let regex = 'hello(0|1|2|3|4|5|6|7|8|9)+world';
-// let regex = `<p>(a|b|c|d|e|f|0|1|2|3|4|5|6|7|8|9)+`
+let regex = 'hello(0|1|2|3|4|5|6|7|8|9)+world';
 
 // MM ID regex
 // let regex = `ht=\ntps://venmo.com/code\?user_id=3D(0|1|2|3|4|5|6|7|8|9)+`
@@ -29,14 +30,16 @@ const word_char = "(a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|
 // 27 spaces
 // let regex = `                           href=3D"https://venmo.com/code\?user_id=3D(0|1|2|3|4|5|6|7|8|9)+`
 // let regex = `https://venmo.com/code\?user_id=3D(0|1|2|3|4|5|6|7|8|9)+`
-let regex = `user_id=3D` + `${word_char}+` // + `=\r\n` + `${word_char}+` // Get MM user ID
-
+// let regex = `user_id=3D` + `${word_char}+` + `=\r\n` + `${word_char}+` // (Reveals only the first 14 digits before equals)
+// let regex = `user_id=3D` + `${word_char_with_new_line_and_equals}+`; // Get MM user ID
 
 
 // Example subject: You paid La Fleur Salon $30.00
 // let regex = `((\r\n)|\^)subject: You paid [a-zA-Z ]+ (\$[0-9]+\.[0-9][0-9])\r\n`;  // subject regex
 // let regex = `Subject: You paid [a-zA-Z ]+ \$[0-9]+\.[0-9][0-9]`
 // let regex = `Subject: You paid (a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z| )+ \$(0|1|2|3|4|5|6|7|8|9)+\.(0|1|2|3|4|5|6|7|8|9)(0|1|2|3|4|5|6|7|8|9)`
+// let regex = `$` + `${word_char}+` + `.` + `${word_char}+`    (Reveals only the first two values before the decimal place)
+// let regex = `$` + `${word_char_with_decimal_place}+`
 
 // console.log(regex);
 // console.log(Buffer.from(regex).toString('base64'));
