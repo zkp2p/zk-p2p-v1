@@ -23,6 +23,8 @@ const pki = require("node-forge").pki;
 // const email_file = "monia_email.eml"; // "./test_email.txt", "./twitter_msg.eml", kaylee_phone_number_email_twitter
 const email_file = process.argv[2];
 const out_file = process.argv[3];
+// Pass in orderId as input in command line
+const order_id = process.argv[4];
 
 export interface ICircuitInputs {
   modulus?: string[];
@@ -36,8 +38,9 @@ export interface ICircuitInputs {
   in_body_hash?: string[];
   precomputed_sha?: string[];
   body_hash_idx?: string;  
-  venmo_mm_id_idx?: string;
+  venmo_offramper_id_idx?: string;
   venmo_amount_idx?: string;
+  order_id?: string;
 }
 
 enum CircuitType {
@@ -141,12 +144,12 @@ export async function getCircuitInputs(
   // Extract the venmo amount from email subject
   let raw_header = Buffer.from(prehash_message_string).toString();
   let email_subject = trimStrByStr(raw_header, "subject:");
-  const venmo_amount_idx = raw_header.length - trimStrByStr(email_subject, "$").length;
-  console.log("amount idx: ", venmo_amount_idx.toString());
+  const venmo_amount_idx = (raw_header.length - trimStrByStr(email_subject, "$").length).toString();
+  console.log("amount idx: ", venmo_amount_idx);
 
-  // Extract the venmo MM id from email body
-  const venmo_mm_id_idx = (Buffer.from(bodyRemaining).indexOf(Buffer.from("user_id=3D")) + Buffer.from("user_id=3D").length).toString();
-  console.log("Venmo MM Id idx: ", venmo_mm_id_idx);
+  // Extract the venmo Offramper id from email body
+  const venmo_offramper_id_idx = (Buffer.from(bodyRemaining).indexOf(Buffer.from("user_id=3D")) + Buffer.from("user_id=3D").length).toString();
+  console.log("Venmo Offramper Id idx: ", venmo_offramper_id_idx);
   
   if (circuit === CircuitType.RSA) {
     circuitInputs = {
@@ -164,8 +167,9 @@ export async function getCircuitInputs(
       in_body_padded,
       in_body_len_padded_bytes,
       body_hash_idx,
-      venmo_mm_id_idx,
-      venmo_amount_idx
+      venmo_offramper_id_idx,
+      venmo_amount_idx,
+      order_id,
     };
   } else {
     assert(circuit === CircuitType.SHA, "Invalid circuit type");

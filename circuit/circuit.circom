@@ -6,10 +6,8 @@ include "../zk-email-verify-circuits/rsa.circom";
 include "../zk-email-verify-circuits/dkim_header_regex.circom";
 include "../zk-email-verify-circuits/body_hash_regex.circom";
 include "../zk-email-verify-circuits/base64.circom";
-// include "./venmo_message_regex.circom";
-// include "./venmo_user_regex.circom";
-include "./VenmoMMV1_regex.circom";
-include "./VenmoAmount_regex.circom";
+include "./venmo_offramper_id_regex.circom";
+include "./venmo_amount_regex.circom";
 include "../node_modules/circomlib/circuits/poseidon.circom";
 
 // Here, n and k are the biginteger parameters for RSA
@@ -44,10 +42,10 @@ template P2POnrampVerify(max_header_bytes, max_body_bytes, n, k) {
     var max_venmo_id_len = 28;
     var max_venmo_id_packed_bytes = (max_venmo_id_len - 1) \ 7 + 1; // ceil(max_num_bytes / 7)
 
-    // Venmo MM signals
-    signal input venmo_mm_id_idx;
-    signal reveal_venmo_mm[max_venmo_id_len][max_body_bytes];
-    signal output packed_venmo_mm_id_hash;
+    // Venmo Offramper signals
+    signal input venmo_offramper_id_idx;
+    signal reveal_venmo_offramper[max_venmo_id_len][max_body_bytes];
+    signal output packed_venmo_offramper_id_hash;
     
     var max_venmo_amount_len = 21;      // Arbitrary, but should be enough for most cases.
     var max_venmo_amount_packed_bytes = (max_venmo_amount_len - 1) \ 7 + 1; // ceil(max_num_bytes / 7)
@@ -60,6 +58,13 @@ template P2POnrampVerify(max_header_bytes, max_body_bytes, n, k) {
     var LEN_SHA_B64 = 44;     // ceil(32/3) * 4, should be automatically calculated.
     signal input body_hash_idx;
     signal body_hash[LEN_SHA_B64][max_header_bytes];
+
+    // The following signals do not take part in computation
+    signal input order_id;
+    signal order_id_squared;
+
+    // Add constraint to tie the proof to a specific order_id to prevent replay attacks and frontrunning.
+    order_id_squared <== order_id * order_id;
 
     // SHA HEADER: 506,670 constraints
     // This calculates the SHA256 hash of the header, which is the "base_msg" that is RSA signed.
@@ -158,66 +163,66 @@ template P2POnrampVerify(max_header_bytes, max_body_bytes, n, k) {
     }
 
     //
-    // Extract Venmo MM ID
+    // Extract Venmo Offramper ID
     //
     // This computes the regex states on each character in the email body
-    component venmo_mm_regex = VenmoMMV1Regex(max_body_bytes);
+    component venmo_offramper_regex = VenmoOfframperIdRegex(max_body_bytes);
     for (var i = 0; i < max_body_bytes; i++) {
-        venmo_mm_regex.msg[i] <== in_body_padded[i];
+        venmo_offramper_regex.msg[i] <== in_body_padded[i];
     }
 
     // Logging
-    log("Found ", venmo_mm_regex.out, " matches for Venmo MM ID");
-    log("venmo mm id reveal start");
+    log("Found ", venmo_offramper_regex.out, " matches for Venmo Offramper ID");
+    log("venmo Offramper id reveal start");
     for (var i = 0; i < max_body_bytes; i++) {
-        log(venmo_mm_regex.reveal[i]);
+        log(venmo_offramper_regex.reveal[i]);
     }
-    log("venmo mm id reveal end");
+    log("venmo Offramper id reveal end");
 
     // This ensures we found a match at least once
-    component found_mm_id = IsZero();
-    found_mm_id.in <== venmo_mm_regex.out;
-    found_mm_id.out === 0;
+    component found_offramper_id = IsZero();
+    found_offramper_id.in <== venmo_offramper_regex.out;
+    found_offramper_id.out === 0;
     
     // We isolate where the venom id begins: eq there is 1, everywhere else is 0
-    component venmo_mm_id_eq[max_body_bytes];
+    component venmo_offramper_id_eq[max_body_bytes];
     for (var i = 0; i < max_body_bytes; i++) {
-        venmo_mm_id_eq[i] = IsEqual();
-        venmo_mm_id_eq[i].in[0] <== i;
-        venmo_mm_id_eq[i].in[1] <== venmo_mm_id_idx;
+        venmo_offramper_id_eq[i] = IsEqual();
+        venmo_offramper_id_eq[i].in[0] <== i;
+        venmo_offramper_id_eq[i].in[1] <== venmo_offramper_id_idx;
     }
 
     // This is the matrix that stores the reveal of the amount
     for (var j = 0; j < max_venmo_id_len; j++) {
-        reveal_venmo_mm[j][j] <== venmo_mm_id_eq[j].out * venmo_mm_regex.reveal[j];
+        reveal_venmo_offramper[j][j] <== venmo_offramper_id_eq[j].out * venmo_offramper_regex.reveal[j];
         for (var i = j + 1; i < max_body_bytes; i++) {
-            reveal_venmo_mm[j][i] <== reveal_venmo_mm[j][i - 1] + venmo_mm_id_eq[i-j].out * venmo_mm_regex.reveal[i];
+            reveal_venmo_offramper[j][i] <== reveal_venmo_offramper[j][i - 1] + venmo_offramper_id_eq[i-j].out * venmo_offramper_regex.reveal[i];
         }
     }
 
-    // MM ID PACKING
+    // Offramper ID PACKING
     // Pack output for solidity verifier to be < 24kb size limit
     var chunks = 7;
-    component packed_venmo_mm_id_output[max_venmo_id_packed_bytes];
+    component packed_venmo_offramper_id_output[max_venmo_id_packed_bytes];
     for (var i = 0; i < max_venmo_id_packed_bytes; i++) {
-        packed_venmo_mm_id_output[i] = Bytes2Packed(chunks);
+        packed_venmo_offramper_id_output[i] = Bytes2Packed(chunks);
         for (var j = 0; j < chunks; j++) {
             var reveal_idx = i * chunks + j;
             if (reveal_idx < max_body_bytes) {
-                packed_venmo_mm_id_output[i].in[j] <== reveal_venmo_mm[i * chunks + j][max_body_bytes - 1];
+                packed_venmo_offramper_id_output[i].in[j] <== reveal_venmo_offramper[i * chunks + j][max_body_bytes - 1];
             } else {
-                packed_venmo_mm_id_output[i].in[j] <== 0;
+                packed_venmo_offramper_id_output[i].in[j] <== 0;
             }
         }
     }
     
-    // Hashing; Calculate poseidon hash of the packed venmo mm id
-    component packed_venmo_mm_id_hasher = Poseidon(max_venmo_id_packed_bytes);
+    // Hashing; Calculate poseidon hash of the packed venmo Offramper id
+    component packed_venmo_offramper_id_hasher = Poseidon(max_venmo_id_packed_bytes);
     for (var i = 0; i < max_venmo_id_packed_bytes; i++) {
-        packed_venmo_mm_id_hasher.inputs[i] <== packed_venmo_mm_id_output[i].out;
+        packed_venmo_offramper_id_hasher.inputs[i] <== packed_venmo_offramper_id_output[i].out;
     }
-    packed_venmo_mm_id_hash <== packed_venmo_mm_id_hasher.out;
-    log("Hash of packed Venmo MM ID", packed_venmo_mm_id_hash);
+    packed_venmo_offramper_id_hash <== packed_venmo_offramper_id_hasher.out;
+    log("Hash of packed Venmo Offramper ID", packed_venmo_offramper_id_hash);
 
     //
     // AMOUNT EXTRACTION

@@ -3,7 +3,7 @@ pragma circom 2.0.3;
 
 include "../zk-email-verify-circuits/regex_helpers.circom";
 
-template VenmoMMV1Regex (msg_bytes) {
+template VenmoOfframperIdRegex (msg_bytes) {
     signal input msg[msg_bytes];
     signal output out;
 
