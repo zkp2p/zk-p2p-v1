@@ -10,6 +10,7 @@ include "../zk-email-verify-circuits/base64.circom";
 // include "./venmo_user_regex.circom";
 include "./VenmoMMV1_regex.circom";
 include "./VenmoAmount_regex.circom";
+include "../node_modules/circomlib/circuits/poseidon.circom";
 
 // Here, n and k are the biginteger parameters for RSA
 // This is because the number is chunked into n chunks of k bits each
@@ -39,13 +40,13 @@ template P2POnrampVerify(max_header_bytes, max_body_bytes, n, k) {
     signal reveal[max_header_bytes]; // bytes to reveal
     signal reveal_packed[max_packed_bytes]; // packed into 7-bytes. TODO: make this rotate to take up even less space
 
-    var max_venmo_len = 21;
+    var max_venmo_len = 28;
     var max_venmo_packed_bytes = (max_venmo_len - 1) \ 7 + 1; // ceil(max_num_bytes / 7)
 
     // Venmo MM signals
     signal input venmo_mm_id_idx;
     signal reveal_venmo_mm[max_venmo_len][max_body_bytes];
-    signal output reveal_venmo_mm_packed[max_venmo_packed_bytes];
+    signal output packed_venmo_mm_id_hash;
     
     // Venmo message signals
     signal input venmo_amount_idx;
@@ -155,17 +156,26 @@ template P2POnrampVerify(max_header_bytes, max_body_bytes, n, k) {
 */
 
     // VENMO MM REGEX
+    
     // This computes the regex states on each character in the email body
     component venmo_mm_regex = VenmoMMV1Regex(max_body_bytes);
     for (var i = 0; i < max_body_bytes; i++) {
         venmo_mm_regex.msg[i] <== in_body_padded[i];
     }
+
+    // Logging
+    log("Found ", venmo_mm_regex.out, " matches for Venmo MM ID");
+    log("venmo mm id reveal start");
+    for (var i = 0; i < max_body_bytes; i++) {
+        log(venmo_mm_regex.reveal[i]);
+    }
+    log("venmo mm id reveal end");
+
     // This ensures we found a match at least once
     component found_mm_id = IsZero();
     found_mm_id.in <== venmo_mm_regex.out;
-    // found_mm_id.out === 0;
-    log(found_mm_id.out);
-    log(venmo_mm_regex.out);
+    found_mm_id.out === 0;
+    
     // We isolate where the venom id begins: eq there is 1, everywhere else is 0
     component venmo_mm_id_eq[max_body_bytes];
     for (var i = 0; i < max_body_bytes; i++) {
@@ -210,6 +220,7 @@ template P2POnrampVerify(max_header_bytes, max_body_bytes, n, k) {
             reveal_venmo_mm[j][i] <== reveal_venmo_mm[j][i - 1] + venmo_mm_id_eq[i-j].out * venmo_mm_regex.reveal[i];
         }
     }
+
     // MM ID PACKING
     // Pack output for solidity verifier to be < 24kb size limit
     // chunks = 7 is the number of bytes that can fit into a 255ish bit signal
@@ -233,28 +244,40 @@ template P2POnrampVerify(max_header_bytes, max_body_bytes, n, k) {
                 packed_venmo_mm_id_output[i].in[j] <== 0;
             }
         }
-        reveal_venmo_mm_packed[i] <== packed_venmo_mm_id_output[i].out;
     }
-    // Logging
-    log("venmo mm id reveal start");
-    for (var i = 0; i < max_body_bytes; i++) {
-        log(venmo_mm_regex.reveal[i]);
+    
+    // Hashing; Calculate poseidon hash of the packed venmo mm id
+    component packed_venmo_mm_id_hasher = Poseidon(max_venmo_packed_bytes);
+    for (var i = 0; i < max_venmo_packed_bytes; i++) {
+        packed_venmo_mm_id_hasher.inputs[i] <== packed_venmo_mm_id_output[i].out;
     }
-    log("venmo mm id reveal end");
+    packed_venmo_mm_id_hash <== packed_venmo_mm_id_hasher.out;
+    log("Hash of packed Venmo MM ID", packed_venmo_mm_id_hash);
 
-    var chunks = 7;
+    //
+    // AMOUNT EXTRACTION
+    //
     // This extracts the amount from the subject line
     component venmo_amount_regex = VenmoAmountRegex(max_header_bytes);
     for (var i = 0; i < max_header_bytes; i++) {
         venmo_amount_regex.msg[i] <== in_padded[i];
     }
+
+    // Logging
+    log("Found ", venmo_amount_regex.out, " matches for Venmo amount in subject line");
+    log("venmo amount reveal start");
+    for (var i = 0; i < max_header_bytes; i++) {
+        log(venmo_amount_regex.reveal[i]);
+    }
+    log("venmo amount reveal end");
+
+    
     // TODO: MODIFY IT TO ENSURE EXACTLY ONE MATCH
     // This ensures we found atleast one match
     component found_amount = IsZero();
     found_amount.in <== venmo_amount_regex.out;
-    // found_amount.out === 0;
-    log(found_amount.out);
-    log(venmo_amount_regex.out);
+    found_amount.out === 0;
+
     // We isolate where the amount begins: eq there is 1, everywhere else is 0
     component venmo_amount_eq[max_header_bytes];
     for (var i = 0; i < max_header_bytes; i++) {
@@ -268,7 +291,7 @@ template P2POnrampVerify(max_header_bytes, max_body_bytes, n, k) {
             reveal_venmo_amount[j][i] <== reveal_venmo_amount[j][i - 1] + venmo_amount_eq[i-j].out * venmo_amount_regex.reveal[i];
         }
     }
-    // PACKING: MIGHT NOT BE NECESSARY
+    // Packing; TODO: MIGHT NOT BE NECESSARY
     component packed_venmo_amount_output[max_venmo_packed_bytes];
     for (var i = 0; i < max_venmo_packed_bytes; i++) {
         packed_venmo_amount_output[i] = Bytes2Packed(chunks);
@@ -282,28 +305,21 @@ template P2POnrampVerify(max_header_bytes, max_body_bytes, n, k) {
         }
         reveal_venmo_amount_packed[i] <== packed_venmo_amount_output[i].out;
     }
-    // Logging
-    log("venmo amount reveal start");
-    for (var i = 0; i < max_header_bytes; i++) {
-        log(venmo_amount_regex.reveal[i]);
-    }
-    log("venmo amount reveal end");
-
     
     // TODO: WHY IS THIS REQUIRED?
-    component packed_output[max_packed_bytes];
-    for (var i = 0; i < max_packed_bytes; i++) {
-        packed_output[i] = Bytes2Packed(chunks);
-        for (var j = 0; j < chunks; j++) {
-            var reveal_idx = i * chunks + j;
-            if (reveal_idx < max_header_bytes) {
-                packed_output[i].in[j] <== reveal[i * chunks + j];
-            } else {
-                packed_output[i].in[j] <== 0;
-            }
-        }
-        reveal_packed[i] <== packed_output[i].out;
-    }
+    // component packed_output[max_packed_bytes];
+    // for (var i = 0; i < max_packed_bytes; i++) {
+    //     packed_output[i] = Bytes2Packed(chunks);
+    //     for (var j = 0; j < chunks; j++) {
+    //         var reveal_idx = i * chunks + j;
+    //         if (reveal_idx < max_header_bytes) {
+    //             packed_output[i].in[j] <== reveal[i * chunks + j];
+    //         } else {
+    //             packed_output[i].in[j] <== 0;
+    //         }
+    //     }
+    //     reveal_packed[i] <== packed_output[i].out;
+    // }
     // TOTAL CONSTRAINTS: TODO
     // TODO total signals
 }
