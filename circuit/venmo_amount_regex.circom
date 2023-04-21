@@ -13,16 +13,16 @@ template VenmoAmountRegex (msg_bytes) {
         in[i] <== msg[i];
     }
 	
-	component eq[5][num_bytes];
+	component eq[4][num_bytes];
 	component lt[12][num_bytes];
-	component and[9][num_bytes];
+	component and[10][num_bytes];
 	component multi_or[3][num_bytes];
-	signal states[num_bytes+1][3];
+	signal states[num_bytes+1][4];
 	
 	for (var i = 0; i < num_bytes; i++) {
 		states[i][0] <== 1;
 	}
-	for (var i = 1; i < 3; i++) {
+	for (var i = 1; i < 4; i++) {
 		states[0][i] <== 0;
 	}
 	
@@ -57,17 +57,13 @@ template VenmoAmountRegex (msg_bytes) {
 		eq[0][i] = IsEqual();
 		eq[0][i].in[0] <== in[i];
 		eq[0][i].in[1] <== 95;
-		eq[1][i] = IsEqual();
-		eq[1][i].in[0] <== in[i];
-		eq[1][i].in[1] <== 46;
 		and[3][i] = AND();
 		and[3][i].a <== states[i][1];
-		multi_or[0][i] = MultiOR(5);
+		multi_or[0][i] = MultiOR(4);
 		multi_or[0][i].in[0] <== and[0][i].out;
 		multi_or[0][i].in[1] <== and[1][i].out;
 		multi_or[0][i].in[2] <== and[2][i].out;
 		multi_or[0][i].in[3] <== eq[0][i].out;
-		multi_or[0][i].in[4] <== eq[1][i].out;
 		and[3][i].b <== multi_or[0][i].out;
 		lt[6][i] = LessThan(8);
 		lt[6][i].in[0] <== 64;
@@ -96,38 +92,41 @@ template VenmoAmountRegex (msg_bytes) {
 		and[6][i] = AND();
 		and[6][i].a <== lt[10][i].out;
 		and[6][i].b <== lt[11][i].out;
-		eq[2][i] = IsEqual();
-		eq[2][i].in[0] <== in[i];
-		eq[2][i].in[1] <== 95;
-		eq[3][i] = IsEqual();
-		eq[3][i].in[0] <== in[i];
-		eq[3][i].in[1] <== 46;
+		eq[1][i] = IsEqual();
+		eq[1][i].in[0] <== in[i];
+		eq[1][i].in[1] <== 95;
 		and[7][i] = AND();
 		and[7][i].a <== states[i][2];
-		multi_or[1][i] = MultiOR(5);
+		multi_or[1][i] = MultiOR(4);
 		multi_or[1][i].in[0] <== and[4][i].out;
 		multi_or[1][i].in[1] <== and[5][i].out;
 		multi_or[1][i].in[2] <== and[6][i].out;
-		multi_or[1][i].in[3] <== eq[2][i].out;
-		multi_or[1][i].in[4] <== eq[3][i].out;
+		multi_or[1][i].in[3] <== eq[1][i].out;
 		and[7][i].b <== multi_or[1][i].out;
 		multi_or[2][i] = MultiOR(2);
 		multi_or[2][i].in[0] <== and[3][i].out;
 		multi_or[2][i].in[1] <== and[7][i].out;
 		states[i+1][1] <== multi_or[2][i].out;
-		eq[4][i] = IsEqual();
-		eq[4][i].in[0] <== in[i];
-		eq[4][i].in[1] <== 36;
+		eq[2][i] = IsEqual();
+		eq[2][i].in[0] <== in[i];
+		eq[2][i].in[1] <== 36;
 		and[8][i] = AND();
 		and[8][i].a <== states[i][0];
-		and[8][i].b <== eq[4][i].out;
+		and[8][i].b <== eq[2][i].out;
 		states[i+1][2] <== and[8][i].out;
+		eq[3][i] = IsEqual();
+		eq[3][i].in[0] <== in[i];
+		eq[3][i].in[1] <== 46;
+		and[9][i] = AND();
+		and[9][i].a <== states[i][1];
+		and[9][i].b <== eq[3][i].out;
+		states[i+1][3] <== and[9][i].out;
 	}
 	
 	signal final_state_sum[num_bytes+1];
-	final_state_sum[0] <== states[0][1];
+	final_state_sum[0] <== states[0][3];
 	for (var i = 1; i <= num_bytes; i++) {
-		final_state_sum[i] <== final_state_sum[i-1] + states[i][1];
+		final_state_sum[i] <== final_state_sum[i-1] + states[i][3];
 	}
 	out <== final_state_sum[num_bytes];
 
