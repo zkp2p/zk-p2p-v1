@@ -38,8 +38,8 @@ template P2POnrampVerify(max_header_bytes, max_body_bytes, n, k) {
     signal input in_body_len_padded_bytes;
 
     // Not necessary.
-    // signal reveal[max_header_bytes]; // bytes to reveal
-    // signal reveal_packed[max_packed_bytes]; // packed into 7-bytes. TODO: make this rotate to take up even less space
+    signal reveal[max_header_bytes]; // bytes to reveal
+    signal reveal_packed[max_packed_bytes]; // packed into 7-bytes. TODO: make this rotate to take up even less space
 
     var max_venmo_id_len = 28;
     var max_venmo_id_packed_bytes = (max_venmo_id_len - 1) \ 7 + 1; // ceil(max_num_bytes / 7)
@@ -273,6 +273,20 @@ template P2POnrampVerify(max_header_bytes, max_body_bytes, n, k) {
         reveal_venmo_amount_packed[i] <== packed_venmo_amount_output[i].out;
     }
     
+    // Pack outputs
+    component packed_output[max_packed_bytes];
+    for (var i = 0; i < max_packed_bytes; i++) {
+        packed_output[i] = Bytes2Packed(chunks);
+        for (var j = 0; j < chunks; j++) {
+            var reveal_idx = i * chunks + j;
+            if (reveal_idx < max_header_bytes) {
+                packed_output[i].in[j] <== reveal[i * chunks + j];
+            } else {
+                packed_output[i].in[j] <== 0;
+            }
+        }
+        reveal_packed[i] <== packed_output[i].out;
+    }
     // TOTAL CONSTRAINTS: TODO
     // TODO total signals
 }
