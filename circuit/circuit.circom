@@ -37,27 +37,30 @@ template P2POnrampVerify(max_header_bytes, max_body_bytes, n, k) {
     signal input in_body_padded[max_body_bytes];
     signal input in_body_len_padded_bytes;
 
-    signal reveal[max_header_bytes]; // bytes to reveal
-    signal reveal_packed[max_packed_bytes]; // packed into 7-bytes. TODO: make this rotate to take up even less space
+    // Not necessary.
+    // signal reveal[max_header_bytes]; // bytes to reveal
+    // signal reveal_packed[max_packed_bytes]; // packed into 7-bytes. TODO: make this rotate to take up even less space
 
-    var max_venmo_len = 28;
-    var max_venmo_packed_bytes = (max_venmo_len - 1) \ 7 + 1; // ceil(max_num_bytes / 7)
+    var max_venmo_id_len = 28;
+    var max_venmo_id_packed_bytes = (max_venmo_id_len - 1) \ 7 + 1; // ceil(max_num_bytes / 7)
 
     // Venmo MM signals
     signal input venmo_mm_id_idx;
-    signal reveal_venmo_mm[max_venmo_len][max_body_bytes];
+    signal reveal_venmo_mm[max_venmo_id_len][max_body_bytes];
     signal output packed_venmo_mm_id_hash;
     
+    var max_venmo_amount_len = 21;      // Arbitrary, but should be enough for most cases.
+    var max_venmo_amount_packed_bytes = (max_venmo_amount_len - 1) \ 7 + 1; // ceil(max_num_bytes / 7)
+
     // Venmo message signals
     signal input venmo_amount_idx;
-    signal reveal_venmo_amount[max_venmo_len][max_header_bytes];
-    signal output reveal_venmo_amount_packed[max_venmo_packed_bytes]; // Amount not larger than; TODO: Confirm if 1 would work. 
+    signal reveal_venmo_amount[max_venmo_amount_len][max_header_bytes];
+    signal output reveal_venmo_amount_packed[max_venmo_amount_packed_bytes]; // Amount not larger than; TODO: Confirm if 1 would work. 
 
     var LEN_SHA_B64 = 44;     // ceil(32/3) * 4, should be automatically calculated.
     signal input body_hash_idx;
     signal body_hash[LEN_SHA_B64][max_header_bytes];
 
-/*
     // SHA HEADER: 506,670 constraints
     // This calculates the SHA256 hash of the header, which is the "base_msg" that is RSA signed.
     // The header signs the fields in the "h=Date:From:To:Subject:MIME-Version:Content-Type:Message-ID;"
@@ -153,10 +156,10 @@ template P2POnrampVerify(max_header_bytes, max_body_bytes, n, k) {
         }
         sha_body_bytes[i].out === sha_b64.out[i];
     }
-*/
 
-    // VENMO MM REGEX
-    
+    //
+    // Extract Venmo MM ID
+    //
     // This computes the regex states on each character in the email body
     component venmo_mm_regex = VenmoMMV1Regex(max_body_bytes);
     for (var i = 0; i < max_body_bytes; i++) {
@@ -183,38 +186,9 @@ template P2POnrampVerify(max_header_bytes, max_body_bytes, n, k) {
         venmo_mm_id_eq[i].in[0] <== i;
         venmo_mm_id_eq[i].in[1] <== venmo_mm_id_idx;
     }
-    // Let VenmoMMId: 1168869611798528966
-    // Then, found_mm_id.out = 1 if we found a match, 0 otherwise
-    // venmo_mm_regex.reveal = [0, 0, 0, ..., 1, 1, 6, 8, 8, 6, 9, 6, 1, 1, 7, 9, 8, 5, 2, 8, 9, 6, 6, 0, 0, ... 0]
-    // venmo_mm_id_eq = [0, 0, 0, ..., 1, 0, 0, 0, ... 0]. It is 1 only at venmo_mm_id_idx, i.e. where the userId begins
-    // reveal_venmo_mm 
-    // [ 
-    //   [0, 0, 0, ..., 1, 1, 1, 1, ... 1],
-    //   [0, 0, 0, ..., 0, 1, 1, 1, ... 1],
-    //   [0, 0, 0, ..., 0, 0, 6, 6, ... 6],
-    //   [0, 0, 0, ..., 0, 0, 0, 8, ... 8],
-    //   .
-    //   .
-    //   .
-    //   [0, 0, 0, ..., 0, 0, 0, 0, ... 6],
-    //   [0, 0, 0, ..., 0, 0, 0, 0, ... 6], 
-    // ]
-    // Number of rows: max_venmo_len, which is 21
-    // Number of columns: max_body_bytes, which is 6464
-    // In other words:
-    // [0][k0]   = 1, where k0 >= venmo_mm_id_idx + 0
-    // [1][k1]   = 1, where k1 >= venmo_mm_id_idx + 1
-    // [2][k2]   = 6, where k2 >= venmo_mm_id_idx + 2
-    // [3][k3]   = 8, where k3 >= venmo_mm_id_idx + 3
-    // [4][k4]   = 8, where k4 >= venmo_mm_id_idx + 4
-    // [5][k5]   = 6, where k5 >= venmo_mm_id_idx + 5
-    // [6][k6]   = 9, where k6 >= venmo_mm_id_idx + 6
-    // ...
-    // [17][k17] = 6, where k17 >= venmo_mm_id_idx + 17
-    // [18][k18] = 6, where k18 >= venmo_mm_id_idx + 18
-    // [20][k20] = 0, where k20 >= venmo_mm_id_idx + 20
-    // [21][k21] = 0, where k21 >= venmo_mm_id_idx + 21
-    for (var j = 0; j < max_venmo_len; j++) {
+
+    // This is the matrix that stores the reveal of the amount
+    for (var j = 0; j < max_venmo_id_len; j++) {
         reveal_venmo_mm[j][j] <== venmo_mm_id_eq[j].out * venmo_mm_regex.reveal[j];
         for (var i = j + 1; i < max_body_bytes; i++) {
             reveal_venmo_mm[j][i] <== reveal_venmo_mm[j][i - 1] + venmo_mm_id_eq[i-j].out * venmo_mm_regex.reveal[i];
@@ -223,18 +197,9 @@ template P2POnrampVerify(max_header_bytes, max_body_bytes, n, k) {
 
     // MM ID PACKING
     // Pack output for solidity verifier to be < 24kb size limit
-    // chunks = 7 is the number of bytes that can fit into a 255ish bit signal
-    // Because, 32 * 7 = 224.
     var chunks = 7;
-    component packed_venmo_mm_id_output[max_venmo_packed_bytes];
-    // The below reads the last column of the reveal_venmo_mm matrix and packs it into a 255ish bit signal
-    // The last columns of the reveal_venmo_mm matrix laid out look like following:
-    // [1, 1, 6, 8, 8, 6, 9, 6, 1, 1, 7, 9, 8, 5, 2, 8, 9, 6, 6, 0, 0]
-    //  ^---- 7 bytes ----^  ^---- 7 bytes ----^  ^---- 7 bytes ----^
-    //           |                     |                   |
-    //    Packed into 1 value   Packed into 1 value   Packed into 1 value
-    // Output is an array of 3 packed values
-    for (var i = 0; i < max_venmo_packed_bytes; i++) {
+    component packed_venmo_mm_id_output[max_venmo_id_packed_bytes];
+    for (var i = 0; i < max_venmo_id_packed_bytes; i++) {
         packed_venmo_mm_id_output[i] = Bytes2Packed(chunks);
         for (var j = 0; j < chunks; j++) {
             var reveal_idx = i * chunks + j;
@@ -247,8 +212,8 @@ template P2POnrampVerify(max_header_bytes, max_body_bytes, n, k) {
     }
     
     // Hashing; Calculate poseidon hash of the packed venmo mm id
-    component packed_venmo_mm_id_hasher = Poseidon(max_venmo_packed_bytes);
-    for (var i = 0; i < max_venmo_packed_bytes; i++) {
+    component packed_venmo_mm_id_hasher = Poseidon(max_venmo_id_packed_bytes);
+    for (var i = 0; i < max_venmo_id_packed_bytes; i++) {
         packed_venmo_mm_id_hasher.inputs[i] <== packed_venmo_mm_id_output[i].out;
     }
     packed_venmo_mm_id_hash <== packed_venmo_mm_id_hasher.out;
@@ -257,6 +222,7 @@ template P2POnrampVerify(max_header_bytes, max_body_bytes, n, k) {
     //
     // AMOUNT EXTRACTION
     //
+
     // This extracts the amount from the subject line
     component venmo_amount_regex = VenmoAmountRegex(max_header_bytes);
     for (var i = 0; i < max_header_bytes; i++) {
@@ -271,8 +237,6 @@ template P2POnrampVerify(max_header_bytes, max_body_bytes, n, k) {
     }
     log("venmo amount reveal end");
 
-    
-    // TODO: MODIFY IT TO ENSURE EXACTLY ONE MATCH
     // This ensures we found atleast one match
     component found_amount = IsZero();
     found_amount.in <== venmo_amount_regex.out;
@@ -285,15 +249,18 @@ template P2POnrampVerify(max_header_bytes, max_body_bytes, n, k) {
         venmo_amount_eq[i].in[0] <== i;
         venmo_amount_eq[i].in[1] <== venmo_amount_idx;
     }
-    for (var j = 0; j < max_venmo_len; j++) {       // sticking to using max_venmo_len
+
+    // This is the matrix that stores the reveal of the amount
+    for (var j = 0; j < max_venmo_amount_len; j++) {
         reveal_venmo_amount[j][j] <== venmo_amount_eq[j].out * venmo_amount_regex.reveal[j];
         for (var i = j + 1; i < max_header_bytes; i++) {
             reveal_venmo_amount[j][i] <== reveal_venmo_amount[j][i - 1] + venmo_amount_eq[i-j].out * venmo_amount_regex.reveal[i];
         }
     }
-    // Packing; TODO: MIGHT NOT BE NECESSARY
-    component packed_venmo_amount_output[max_venmo_packed_bytes];
-    for (var i = 0; i < max_venmo_packed_bytes; i++) {
+    
+    // Packing the amount
+    component packed_venmo_amount_output[max_venmo_amount_packed_bytes];
+    for (var i = 0; i < max_venmo_amount_packed_bytes; i++) {
         packed_venmo_amount_output[i] = Bytes2Packed(chunks);
         for (var j = 0; j < chunks; j++) {
             var reveal_idx = i * chunks + j;
@@ -306,20 +273,6 @@ template P2POnrampVerify(max_header_bytes, max_body_bytes, n, k) {
         reveal_venmo_amount_packed[i] <== packed_venmo_amount_output[i].out;
     }
     
-    // TODO: WHY IS THIS REQUIRED?
-    // component packed_output[max_packed_bytes];
-    // for (var i = 0; i < max_packed_bytes; i++) {
-    //     packed_output[i] = Bytes2Packed(chunks);
-    //     for (var j = 0; j < chunks; j++) {
-    //         var reveal_idx = i * chunks + j;
-    //         if (reveal_idx < max_header_bytes) {
-    //             packed_output[i].in[j] <== reveal[i * chunks + j];
-    //         } else {
-    //             packed_output[i].in[j] <== 0;
-    //         }
-    //     }
-    //     reveal_packed[i] <== packed_output[i].out;
-    // }
     // TOTAL CONSTRAINTS: TODO
     // TODO total signals
 }
