@@ -31,23 +31,21 @@ There are currently 2 major flows in the protocol described below:
 
 ## Technology Overview
 
-### Background
-Our project is build on top of the zk-email-verify circuit.
-
 ### Circuits
-
-We used Circom 2.0 to write our circuits. We used circuits written by the zk-email team for the following tasks
+#### ZK-email-verify
+Our project is build on top of the [zk-email-verify]([url](https://github.com/zkemail/zk-email-verify)) project. We use the following circuits written in Circom from their repo:
 - **RSA Signature verification**: Verifies a signature signed by a 2048 bit RSA public key
 - **SHA256 Partial hashing**: Completes the sha256 hash given a pre-computed state. Allows us to calculate first part of the partial hashes outside the circuit thus reducing proving time.
 - **Regex circuits**: To perform arbitrary regex checks within the circom framework, they implemented a Python program that converts a given regex into a deterministic finite automata (DFA) and then represents the DFA via gate operations in circom code.
 
-We used their generator scripts to generate our own regex circuits for parsing a venmo email. Currently we have the following regex circuits:
+#### Venmo Email regex circuits
+We used their regex circuit generator scripts to generate our own regex circuits for parsing a venmo email. Currently we have the following regex circuits:
 - **Venmo MM Regex**: This regex circuit extracts out the venmo mm id from the venmo payment email.
 - **Venmo User Regex**: This regex circuit extracts out the venmo user ID from the venmo payment email
 - **Venmo Message Regex**: This regex circuit extracts out the venmo custom message from the venmo payment email. The venmo custom message contains the order ID which needs to be submitted as a public signal on-chain.
 
-### P2P OnRamp Circuit:
-The circuit is designed to verify certain information from an email in a zero-knowledge proof setting. It checks if the email header and body are correctly signed using RSA and SHA-256, ensuring the email's authenticity. It also extracts specific information from the email body, such as the Venmo user ID, Venmo MM ID, and a Venmo message, by matching them against predefined regex patterns. The extracted information is then packed into smaller chunks for efficient processing. The primary goal of the circuit is to verify the authenticity of the email and extract important information without revealing the complete content of the email.
+#### P2P OnRamp Circuit:
+This circuit is designed to verify certain information from an email in a zero-knowledge proof setting. It checks if the email header and body are correctly signed using RSA and SHA-256, ensuring the email's authenticity. It also extracts specific information from the email body, such as the Venmo user ID, Venmo MM ID, and a Venmo message, by matching them against predefined regex patterns. The extracted information is then packed into smaller chunks for efficient processing. The primary goal of the circuit is to verify the authenticity of the email and extract important information without revealing the complete content of the email.
 
 |Compilation|Value|
 |------|------|
@@ -62,46 +60,28 @@ The circuit is designed to verify certain information from an email in a zero-kn
 
 The smart contracts are written in Solidity and deployed on the Goerli test network. The contract provides trustless on-ramping and off-ramping mechanisms for USDC tokens using Venmo as the payment platform. The following functionalities are provided by the contract:
 
-#### User Registration
+- **User Registration**: Users can register their Venmo IDs using the `register` function, which maps their Ethereum address to their Venmo ID and vice versa.
 
-Users can register their Venmo IDs using the `register` function, which maps their Ethereum address to their Venmo ID and vice versa.
+- **Posting Orders**: Registered users can post an order using the `postOrder` function, specifying the amount they want to receive and the maximum amount they're willing to pay. Orders are stored in the `orders` mapping, with an incremental `orderNonce` as the key.
 
-#### Posting Orders
+- **Claiming Orders**: Users can claim an open order using the `claimOrder` function. The function verifies that the order is open and not claimed by the caller. The claimer submits their USDC tokens, and the order's claim status is updated accordingly.
 
-Registered users can post an order using the `postOrder` function, specifying the amount they want to receive and the maximum amount they're willing to pay. Orders are stored in the `orders` mapping, with an incremental `orderNonce` as the key.
+- **On-Ramping**: Users can initiate the on-ramp process using the `onRamp` function, which verifies the zero-knowledge proof provided by the on-ramper. It checks if the order is open and if the off-ramper has submitted a claim. Once verified, the claim status is updated, the order is marked as filled, and USDC tokens are transferred to the on-ramper.
 
-#### Claiming Orders
+- **Canceling Orders**: Order creators can cancel their open orders using the `cancelOrder` function, which checks if the order is open and if the caller is the order creator before marking the order as canceled.
 
-Users can claim an open order using the `claimOrder` function. The function verifies that the order is open and not claimed by the caller. The claimer submits their USDC tokens, and the order's claim status is updated accordingly.
+- **Clawback**: Users can claw back their funds from submitted claims that haven't been used or have expired using the `clawback` function. The function checks the claim status and order status before transferring the USDC tokens back to the caller.
 
-#### On-Ramping
+- **View Functions**: The contract offers view functions for retrieving claims associated with a specific order (`getClaimsForOrder`) and fetching all orders (`getAllOrders`).
 
-Users can initiate the on-ramp process using the `onRamp` function, which verifies the zero-knowledge proof provided by the on-ramper. It checks if the order is open and if the off-ramper has submitted a claim. Once verified, the claim status is updated, the order is marked as filled, and USDC tokens are transferred to the on-ramper.
+- The contract uses the `IERC20` interface from OpenZeppelin for handling ERC20 token (USDC) interactions and a custom `Verifier` contract for handling zero-knowledge proofs. The contract stores orders and claims in mappings and maintains various enums and structs to represent order and claim statuses. 
 
-#### Canceling Orders
-
-Order creators can cancel their open orders using the `cancelOrder` function, which checks if the order is open and if the caller is the order creator before marking the order as canceled.
-
-#### Clawback
-
-Users can claw back their funds from submitted claims that haven't been used or have expired using the `clawback` function. The function checks the claim status and order status before transferring the USDC tokens back to the caller.
-
-#### View Functions
-
-The contract offers view functions for retrieving claims associated with a specific order (`getClaimsForOrder`) and fetching all orders (`getAllOrders`).
-
-#### Internal Functions
-
-The contract has internal functions for verifying and parsing on-ramp proofs (`_verifyAndParseOnRampProof`), converting packed bytes to strings (`_convertPackedBytesToBytes`), and converting strings to uint256 (`_stringToUint256`). 
-
-The contract uses the `IERC20` interface from OpenZeppelin for handling ERC20 token (USDC) interactions and a custom `Verifier` contract for handling zero-knowledge proofs. The contract stores orders and claims in mappings and maintains various enums and structs to represent order and claim statuses. 
-
-The contract addresses are: 
-- Ramp - `0x805a3Ae6495Be653dE460685D5FFDD5A538550f1`
-- FakeUSDC - `0xb685Bdc019DEE17D073746a88bF6a6cDDED8Ae70`
+The contract addresses on the Goerli network are: 
+- Ramp - [0x805a3Ae6495Be653dE460685D5FFDD5A538550f1](https://goerli.etherscan.io/address/0x805a3Ae6495Be653dE460685D5FFDD5A538550f1)
+- FakeUSDC - [0xb685Bdc019DEE17D073746a88bF6a6cDDED8Ae70](https://goerli.etherscan.io/address/0xb685Bdc019DEE17D073746a88bF6a6cDDED8Ae70)
 
 ### Proof generation
-We set up an EC2 z1d.12x large instance. We followed the best practices for large circuits guide to setup the server for circuit compilation and proof generation.
+We set up an EC2 `z1d.12x` large instance for remote proof generation. We followed the [best practices for large circuits](https://hackmd.io/V-7Aal05Tiy-ozmzTGBYPA?view) guide to setup the server for faster circuit compilation and proof generation during development.
 
 ## Approach to Problem
 
