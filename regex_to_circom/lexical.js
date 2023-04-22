@@ -39,7 +39,7 @@ let regex = 'hello(0|1|2|3|4|5|6|7|8|9)+world';
 // let regex = `Subject: You paid [a-zA-Z ]+ \$[0-9]+\.[0-9][0-9]`
 // let regex = `Subject: You paid (a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z| )+ \$(0|1|2|3|4|5|6|7|8|9)+\.(0|1|2|3|4|5|6|7|8|9)(0|1|2|3|4|5|6|7|8|9)`
 // let regex = `$` + `${word_char}+` + `.` + `${word_char}+`    (Reveals only the first two values before the decimal place)
-// let regex = `$` + `${word_char}+` + `.`;
+// let regex = `$` + `${word_char_with_decimal_place}+`
 
 // console.log(regex);
 // console.log(Buffer.from(regex).toString('base64'));

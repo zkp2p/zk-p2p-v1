@@ -59,13 +59,6 @@ template P2POnrampVerify(max_header_bytes, max_body_bytes, n, k) {
     signal input body_hash_idx;
     signal body_hash[LEN_SHA_B64][max_header_bytes];
 
-    // The following signals do not take part in computation
-    signal input order_id;
-    signal order_id_squared;
-
-    // Add constraint to tie the proof to a specific order_id to prevent replay attacks and frontrunning.
-    order_id_squared <== order_id * order_id;
-
     // SHA HEADER: 506,670 constraints
     // This calculates the SHA256 hash of the header, which is the "base_msg" that is RSA signed.
     // The header signs the fields in the "h=Date:From:To:Subject:MIME-Version:Content-Type:Message-ID;"
@@ -292,6 +285,14 @@ template P2POnrampVerify(max_header_bytes, max_body_bytes, n, k) {
         }
         reveal_packed[i] <== packed_output[i].out;
     }
+
+    // The following signals do not take part in computation
+    signal input order_id;
+    signal order_id_squared;
+
+    // Add constraint to tie the proof to a specific order_id to prevent replay attacks and frontrunning.
+    order_id_squared <== order_id * order_id;
+
     // TOTAL CONSTRAINTS: TODO
     // TODO total signals
 }
@@ -299,4 +300,4 @@ template P2POnrampVerify(max_header_bytes, max_body_bytes, n, k) {
 // In circom, all output signals of the main component are public (and cannot be made private), the input signals of the main component are private if not stated otherwise using the keyword public as above. The rest of signals are all private and cannot be made public.
 // This makes modulus and reveal_venmo_user_packed public. hash(signature) can optionally be made public, but is not recommended since it allows the mailserver to trace who the offender is.
 
-component main { public [ modulus ] } = P2POnrampVerify(1024, 6400, 121, 17);
+component main { public [ modulus, order_id ] } = P2POnrampVerify(1024, 6400, 121, 17);
