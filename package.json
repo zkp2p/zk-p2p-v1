@@ -22,7 +22,8 @@
     "genContract": "bash ./circuit/scripts/generate_contract.sh && yarn bumpSolidity",
     "genCalldata": "bash ./circuit/scripts/generate_calldata.sh",
     "genWitness": "bash ./circuit/server-scripts/generate_witness.sh",
-    "genProofServer": "bash ./circuit/server-scripts/generate_proof.sh"
+    "genProofServer": "bash ./circuit/server-scripts/generate_proof.sh",
+    "genKeyPhase2GrothServer": "bash ./circuit/server-scripts/generate_keys_phase2_groth16.sh"
   },
   "keywords": [],
   "author": "",
