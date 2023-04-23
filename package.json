@@ -20,7 +20,9 @@
     "verifyProofGroth": "bash ./circuit/scripts/verify_proof_groth16.sh",
     "bumpSolidity": "node scripts/bump-solidity.js",
     "genContract": "bash ./circuit/scripts/generate_contract.sh && yarn bumpSolidity",
-    "genCalldata": "bash ./circuit/scripts/generate_calldata.sh"
+    "genCalldata": "bash ./circuit/scripts/generate_calldata.sh",
+    "genWitness": "bash ./circuit/server-scripts/generate_witness.sh",
+    "genProofServer": "bash ./circuit/server-scripts/generate_proof.sh"
   },
   "keywords": [],
   "author": "",
