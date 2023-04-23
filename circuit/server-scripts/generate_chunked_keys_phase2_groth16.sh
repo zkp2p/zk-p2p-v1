@@ -7,12 +7,12 @@
 exec &> >(tee -a test_log.out)
 
 PATH_TO_CIRCUIT=${1:-./circuit}                                         # First argument $1 is path to circuit directory
+PARTIAL_ZKEYS=${2:-./partial_zkeys}                                         # Second argument $2 is path to partial zkeys directory (Relative to PATH_TO_CIRCUIT)
 CIRCUIT_NAME=${2:-circuit}                                             # Second argument $2 is circuit name
 SKIP_PHASE2_CONTRIBUTION=${3:-true}                                 # Third argument $3 is true/false whether to skip phase 2 contribution. Setting to true is unsafe but can be for testing. Otherwise, set to false
 PHASE1=$HOME/ptau_files/powersOfTau28_hez_final_${4:-23}.ptau     # Fourth argument $4 is ptau file number 
 SKIP_ZKEY_VERIFICATION=${5:-true}                                   # Fifth argument $5 is true/false whether to skip zkey verification
 echo $PWD
-
 
 echo "****NOTE****"
 echo "This script uses ./node_modules/.bin/snarkjs for chunked zkey generation"
@@ -35,22 +35,28 @@ fi
 cd "$PATH_TO_CIRCUIT/"
 
 
+if [ ! -d "$PARTIAL_ZKEYS" ]; then
+    echo "No partial_zkeys directory found. Creating partial_zkeys directory..."
+    mkdir -p "$PARTIAL_ZKEYS"
+fi
+
+
 if $SKIP_PHASE2_CONTRIBUTION; then
     echo "****GENERATING ZKEY 0****"
     start=`date +%s`
-    $NODE_PATH --trace-gc --trace-gc-ignore-scavenger --max-old-space-size=2048000 --initial-old-space-size=2048000 --no-global-gc-scheduling --no-incremental-marking --max-semi-space-size=1024 --initial-heap-size=2048000 --expose-gc $SNARKJS_PATH zkey new "$CIRCUIT_NAME".r1cs "$PHASE1" "$CIRCUIT_NAME".zkey -v
+    $NODE_PATH --trace-gc --trace-gc-ignore-scavenger --max-old-space-size=2048000 --initial-old-space-size=2048000 --no-global-gc-scheduling --no-incremental-marking --max-semi-space-size=1024 --initial-heap-size=2048000 --expose-gc $SNARKJS_PATH zkey new "$CIRCUIT_NAME".r1cs "$PHASE1" "$PARTIAL_ZKEYS"/"$CIRCUIT_NAME".zkey -v
     end=`date +%s`
     echo "DONE ($((end-start))s)"
 else
     echo "****GENERATING ZKEY 0****"
     start=`date +%s`
-    $NODE_PATH --trace-gc --trace-gc-ignore-scavenger --max-old-space-size=2048000 --initial-old-space-size=2048000 --no-global-gc-scheduling --no-incremental-marking --max-semi-space-size=1024 --initial-heap-size=2048000 --expose-gc $SNARKJS_PATH zkey new "$CIRCUIT_NAME".r1cs "$PHASE1" "$CIRCUIT_NAME"_0.zkey -v
+    $NODE_PATH --trace-gc --trace-gc-ignore-scavenger --max-old-space-size=2048000 --initial-old-space-size=2048000 --no-global-gc-scheduling --no-incremental-marking --max-semi-space-size=1024 --initial-heap-size=2048000 --expose-gc $SNARKJS_PATH zkey new "$CIRCUIT_NAME".r1cs "$PHASE1" "$PARTIAL_ZKEYS"/"$CIRCUIT_NAME"_0.zkey -v
     end=`date +%s`
     echo "DONE ($((end-start))s)"
 
     echo "****CONTRIBUTE TO PHASE 2 CEREMONY****"
     start=`date +%s`
-    $NODE_PATH $SNARKJS_PATH zkey contribute -verbose "$CIRCUIT_NAME"_0.zkey "$CIRCUIT_NAME".zkey -n="First phase2 contribution" -e="some random text for entropy"
+    $NODE_PATH $SNARKJS_PATH zkey contribute -verbose "$PARTIAL_ZKEYS"/"$CIRCUIT_NAME"_0.zkey "$PARTIAL_ZKEYS"/"$CIRCUIT_NAME".zkey -n="First phase2 contribution" -e="some random text for entropy"
     end=`date +%s`
     echo "DONE ($((end-start))s)"
 fi
@@ -58,13 +64,13 @@ fi
 if ! $SKIP_ZKEY_VERIFICATION; then
     echo "****VERIFYING FINAL ZKEY****"
     start=`date +%s`
-    $NODE_PATH --trace-gc --trace-gc-ignore-scavenger --max-old-space-size=2048000 --initial-old-space-size=2048000 --no-global-gc-scheduling --no-incremental-marking --max-semi-space-size=1024 --initial-heap-size=2048000 --expose-gc $SNARKJS_PATH zkey verify -verbose "$CIRCUIT_NAME".r1cs "$PHASE1" "$CIRCUIT_NAME".zkey
+    $NODE_PATH --trace-gc --trace-gc-ignore-scavenger --max-old-space-size=2048000 --initial-old-space-size=2048000 --no-global-gc-scheduling --no-incremental-marking --max-semi-space-size=1024 --initial-heap-size=2048000 --expose-gc $SNARKJS_PATH zkey verify -verbose "$CIRCUIT_NAME".r1cs "$PHASE1" "$PARTIAL_ZKEYS"/"$CIRCUIT_NAME".zkey
     end=`date +%s`
     echo "DONE ($((end-start))s)"
 fi
 
 echo "****EXPORTING VKEY****"
 start=`date +%s`
-$NODE_PATH $SNARKJS_PATH zkey export verificationkey "$CIRCUIT_NAME".zkey vkey.json -v
+$NODE_PATH $SNARKJS_PATH zkey export verificationkey "$PARTIAL_ZKEYS"/"$CIRCUIT_NAME".zkey vkey.json -v
 end=`date +%s`
 echo "DONE ($((end-start))s)"
