@@ -27,7 +27,7 @@ fi
 
 # Back in build directory
 cd "$PATH_TO_CIRCUIT/"
-$SNARKJS_PATH wej witness.wtns witness.json
+# $SNARKJS_PATH wej witness.wtns witness.json
 
 if $SKIP_PHASE2_CONTRIBUTION; then
     echo "****GENERATING ZKEY 0****"
