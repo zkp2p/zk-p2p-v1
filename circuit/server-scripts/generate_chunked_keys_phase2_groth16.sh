@@ -15,9 +15,9 @@ SKIP_ZKEY_VERIFICATION=${5:-true}                                   # Fifth argu
 echo $PWD
 
 echo "****NOTE****"
-echo "This script uses ./node_modules/.bin/snarkjs for chunked zkey generation"
+echo "This script uses ../node_modules/.bin/snarkjs for chunked zkey generation"
 echo ""
-SNARKJS_PATH=./node_modules/.bin/snarkjs
+SNARKJS_PATH=../node_modules/.bin/snarkjs
 
 # if [ ! $# -eq 5 ]; # Check if there are 5 arguments
 # then
