@@ -23,7 +23,8 @@
     "genCalldata": "bash ./circuit/scripts/generate_calldata.sh",
     "genWitness": "bash ./circuit/server-scripts/generate_witness.sh",
     "genProofServer": "bash ./circuit/server-scripts/generate_proof.sh",
-    "genKeyPhase2GrothServer": "bash ./circuit/server-scripts/generate_keys_phase2_groth16.sh"
+    "genKeyPhase2GrothServer": "bash ./circuit/server-scripts/generate_keys_phase2_groth16.sh",
+    "circuitStats": "bash ./circuit/scripts/circuit_stats.sh"
   },
   "keywords": [],
   "author": "",
