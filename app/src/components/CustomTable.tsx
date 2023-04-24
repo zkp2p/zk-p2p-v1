@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 
 interface CustomTableProps {
@@ -6,9 +6,20 @@ interface CustomTableProps {
   data: any[][];
   onRowClick?: (rowData: any[]) => void;
   selectedRow?: number;
+  rowsPerPage?: number;
 }
 
-export const CustomTable: React.FC<CustomTableProps> = ({ headers, data, onRowClick, selectedRow }) => {
+export const CustomTable: React.FC<CustomTableProps> = ({ headers, data, onRowClick, selectedRow, rowsPerPage = 10 }) => {
+  const [currentPage, setCurrentPage] = useState(0);
+
+  const totalPages = Math.ceil(data.length / rowsPerPage);
+
+  const handleChangePage = (newPage: number) => {
+    setCurrentPage(newPage);
+  };
+
+  const paginatedData = data.slice(currentPage * rowsPerPage, (currentPage + 1) * rowsPerPage);
+
   return (
     <TableContainer>
       <StyledTable>
@@ -20,7 +31,7 @@ export const CustomTable: React.FC<CustomTableProps> = ({ headers, data, onRowCl
           </tr>
         </thead>
         <tbody>
-          {data.map((row, rowIndex) => (
+          {paginatedData.map((row, rowIndex) => (
             <TableRow key={rowIndex} onClick={() => onRowClick && onRowClick([rowIndex])} selected={rowIndex === selectedRow}>
               {row.map((cell, cellIndex) => (
                 <TableCell key={cellIndex}>{cell}</TableCell>
@@ -29,6 +40,11 @@ export const CustomTable: React.FC<CustomTableProps> = ({ headers, data, onRowCl
           ))}
         </tbody>
       </StyledTable>
+      <PaginationContainer>
+        <PaginationButton disabled={currentPage === 0} onClick={() => handleChangePage(currentPage - 1)}>Previous</PaginationButton>
+        <PageInfo>{currentPage + 1} of {totalPages}</PageInfo>
+        <PaginationButton disabled={currentPage === totalPages - 1} onClick={() => handleChangePage(currentPage + 1)}>Next</PaginationButton>
+      </PaginationContainer>
     </TableContainer>
   );
 };
@@ -71,4 +87,34 @@ const TableRow = styled.tr<{ selected: boolean }>`
 const TableCell = styled.td`
   padding: 16px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+`;
+
+const PaginationContainer = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+`;
+
+const PaginationButton = styled.button`
+  background-color: rgba(0, 0, 0, 0.5);
+  color: white;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.8);
+  }
+
+  &:disabled {
+    background-color: rgba(0, 0, 0, 0.2);
+    cursor: not-allowed;
+  }
+`;
+
+const PageInfo = styled.span`
+  color: rgba(255, 255, 255, 0.8);
 `;

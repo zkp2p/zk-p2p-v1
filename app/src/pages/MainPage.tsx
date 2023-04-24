@@ -193,7 +193,7 @@ export const MainPage: React.FC<{}> = (props) => {
   }
 
   function formatAddressForTable(addressToFormat: string) {
-    if (addressToFormat == address) {
+    if (addressToFormat === address) {
       return "You";
     } else {
       const prefix = addressToFormat.substring(0, 4);
@@ -560,9 +560,6 @@ export const MainPage: React.FC<{}> = (props) => {
     const [rowIndex] = rowData;
     const orderToSelect = orders[rowIndex];
 
-    // console.log("Selected order: ", orderToSelect)
-    // console.log(orders)
-
     if (orderToSelect.sender === address) {
       setActionState(FormState.UPDATE);
     } else {
@@ -598,8 +595,14 @@ export const MainPage: React.FC<{}> = (props) => {
       </div>
       <Main>
         <Column>
-          <SubHeader>Orders</SubHeader>
-          <CustomTable headers={orderTableHeaders} data={orderTableData} onRowClick={handleOrderRowClick} selectedRow={selectedOrder.orderId - 1}/>
+          <SubHeader>Orders1</SubHeader>
+          <CustomTable
+            headers={orderTableHeaders}
+            data={orderTableData}
+            onRowClick={handleOrderRowClick}
+            selectedRow={selectedOrder.orderId - 1}
+            rowsPerPage={10}
+          />
           <Button
             onClick={async () => {
               setLastAction("new");
@@ -680,7 +683,13 @@ export const MainPage: React.FC<{}> = (props) => {
               <H3>
                 Select Claim and Complete
               </H3>
-              <CustomTable headers={orderClaimsTableHeaders} data={orderClaimsTableData} onRowClick={handleOrderClaimRowClick} selectedRow={getIndexForSelectedClaim(selectedOrderClaim)}/>
+              <CustomTable
+                headers={orderClaimsTableHeaders}
+                data={orderClaimsTableData}
+                onRowClick={handleOrderClaimRowClick}
+                selectedRow={getIndexForSelectedClaim(selectedOrderClaim)}
+                rowsPerPage={3}
+              />
               <LabeledTextArea
                 label="Full Email with Headers"
                 value={emailFull}
