@@ -1,5 +1,3 @@
-'use strict';
-
 const { formatSignatureHeaderLine } = require('../tools');
 
 const formatSimpleLine = (line, suffix) => Buffer.from(line.toString('binary') + (suffix ? suffix : ''), 'binary');

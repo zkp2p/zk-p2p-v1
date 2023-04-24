@@ -312,7 +312,6 @@ class DkimVerifier extends MessageParser {
         switch (signatureHeader.type) {
           case "ARC":
             throw Error("ARC not possible");
-            break;
           case "DKIM":
           default:
             this.results.push(result);

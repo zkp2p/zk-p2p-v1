@@ -1,5 +1,3 @@
-'use strict';
-
 const { formatSignatureHeaderLine, formatRelaxedLine } = require('../tools');
 
 // generate headers for signing

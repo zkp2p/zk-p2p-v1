@@ -1,5 +1,3 @@
-'use strict';
-
 let { relaxedHeaders } = require('./relaxed');
 let { simpleHeaders } = require('./simple');
 

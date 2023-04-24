@@ -1,12 +1,12 @@
 import {
   bytesToBigInt,
   stringToBytes,
-  fromHex,
+  // fromHex,
   toCircomBigIntBytes,
-  packBytesIntoNBytes,
-  bufferToUint8Array,
+  // packBytesIntoNBytes,
+  // bufferToUint8Array,
   bufferToString,
-  bufferToHex,
+  // bufferToHex,
   Uint8ArrayToString,
   Uint8ArrayToCharArray,
   assert,
@@ -17,7 +17,8 @@ import { CIRCOM_FIELD_MODULUS, MAX_HEADER_PADDED_BYTES, MAX_BODY_PADDED_BYTES, S
 import { shaHash, partialSha, sha256Pad } from "../../src/helpers/shaHash";
 import { dkimVerify } from "../../src/helpers/dkim";
 import * as fs from "fs";
-var Cryo = require("cryo");
+
+// var Cryo = require("cryo");
 const pki = require("node-forge").pki;
 
 // const email_file = "monia_email.eml"; // "./test_email.txt", "./twitter_msg.eml", kaylee_phone_number_email_twitter
@@ -195,8 +196,10 @@ export async function generate_inputs(email: Buffer): Promise<ICircuitInputs> {
       }
     }
   }
-  const _ = result.results[0].publicKey.toString();
+
+  // const _ = result.results[0].publicKey.toString();
   console.log("DKIM verification successful");
+
   // try {
   //   // TODO: Condiiton code on if there is an internet connection, run this code
   //   var frozen = Cryo.stringify(result);
@@ -206,6 +209,7 @@ export async function generate_inputs(email: Buffer): Promise<ICircuitInputs> {
   //   let frozen = fs.readFileSync(`./email_cache.json`, { encoding: "utf-8" });
   //   result = Cryo.parse(frozen);
   // }
+
   let sig = BigInt("0x" + Buffer.from(result.results[0].signature, "base64").toString("hex"));
   let message = result.results[0].status.signature_header;
   let body = result.results[0].body;
@@ -227,9 +231,9 @@ async function do_generate() {
   return gen_inputs;
 }
 
-async function gen_test() {
-  console.log(packBytesIntoNBytes(Uint8Array.from([0, 121, 117, 115, 104, 95, 103, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])));
-}
+// async function gen_test() {
+//   console.log(packBytesIntoNBytes(Uint8Array.from([0, 121, 117, 115, 104, 95, 103, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])));
+// }
 
 export async function insert13Before10(a: Uint8Array): Promise<Uint8Array> {
   let ret = new Uint8Array(a.length + 1000);
@@ -245,11 +249,11 @@ export async function insert13Before10(a: Uint8Array): Promise<Uint8Array> {
   return ret.slice(0, j);
 }
 
-async function debug_file() {
-  const email = fs.readFileSync(email_file);
-  console.log(Uint8Array.from(email));
-  // Key difference: file load has 13 10, web version has just 10
-}
+// async function debug_file() {
+//   const email = fs.readFileSync(email_file);
+//   console.log(Uint8Array.from(email));
+//   // Key difference: file load has 13 10, web version has just 10
+// }
 
 // If main
 if (typeof require !== "undefined" && require.main === module) {

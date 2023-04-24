@@ -1,5 +1,5 @@
 import { createHash } from "crypto";
-import { assert, int64toBytes, int8toBytes, mergeUInt8Arrays, Uint8ArrayToHex } from "./binaryFormat";
+import { assert, int64toBytes, int8toBytes, mergeUInt8Arrays } from "./binaryFormat";
 // const { webcrypto, KeyObject } = await import('crypto');
 // const { subtle } = webcrypto;
 import { Hash } from "./fast-sha256";
