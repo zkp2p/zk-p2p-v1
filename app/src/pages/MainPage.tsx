@@ -19,7 +19,7 @@ import { SingleLineInput } from "../components/SingleLineInput";
 import { ReadOnlyInput } from "../components/ReadOnlyInput";
 import { Button } from "../components/Button";
 import { Col, Row } from "../components/Layout";
-// import { NumberedStep } from "../components/NumberedStep";
+import { NumberedStep } from "../components/NumberedStep";
 import { TopBanner } from "../components/TopBanner";
 import { CustomTable } from '../components/CustomTable';
 import { useAccount, useContractWrite, useContractRead, useNetwork, usePrepareContractWrite } from "wagmi";
@@ -168,7 +168,7 @@ export const MainPage: React.FC<{}> = (props) => {
 
   const orderClaimsTableHeaders = ['Taker', 'Venmo Handle', 'Expiration'];
   const orderClaimsTableData = orderClaims.map((orderClaim) => [
-    formatAddressForTable(contractAddresses['goerli']["ramp"]), // TODO: should we return the claimer address?
+    formatAddressForTable(contractAddresses["goerli"]["ramp"]), // TODO: should we return the claimer address?
     getHandleFromId(orderClaim.venmoId),
     formattedExpiration(orderClaim.expirationTimestamp),
   ]);
@@ -193,7 +193,7 @@ export const MainPage: React.FC<{}> = (props) => {
   }
 
   function formatAddressForTable(addressToFormat: string) {
-    if (addressToFormat == address) {
+    if (addressToFormat === address) {
       return "You";
     } else {
       const prefix = addressToFormat.substring(0, 4);
@@ -217,7 +217,7 @@ export const MainPage: React.FC<{}> = (props) => {
     isError: isReadAllOrdersError,
     refetch: refetchAllOrders,
   } = useContractRead({
-    addressOrName: contractAddresses['goerli']["ramp"], // TODO: enable other networks
+    addressOrName: contractAddresses["goerli"]["ramp"], // TODO: enable other networks
     contractInterface: abi,
     functionName: 'getAllOrders',
   });
@@ -229,7 +229,7 @@ export const MainPage: React.FC<{}> = (props) => {
     isError: isReadOrderClaimsError,
     refetch: refetchClaimedOrders,
   } = useContractRead({
-    addressOrName: contractAddresses['goerli']["ramp"], // TODO: enable other networks
+    addressOrName: contractAddresses["goerli"]["ramp"], // TODO: enable other networks
     contractInterface: abi,
     functionName: 'getClaimsForOrder',
     args: [selectedOrder.orderId],
@@ -241,7 +241,7 @@ export const MainPage: React.FC<{}> = (props) => {
 
   // register(uint256 _venmoId) external
   const { config: writeRegisterOrderConfig } = usePrepareContractWrite({
-    addressOrName: contractAddresses['goerli']["ramp"], // TODO: enable other networks
+    addressOrName: contractAddresses["goerli"]["ramp"], // TODO: enable other networks
     contractInterface: abi,
     functionName: 'register',
     args: ['645716473020416186'],
@@ -267,7 +267,7 @@ export const MainPage: React.FC<{}> = (props) => {
 
   // postOrder(uint256 _amount, uint256 _maxAmountToPay) external onlyRegisteredUser() 
   const { config: writeCreateOrderConfig } = usePrepareContractWrite({
-    addressOrName: contractAddresses['goerli']["ramp"], // TODO: enable other networks
+    addressOrName: contractAddresses["goerli"]["ramp"], // TODO: enable other networks
     contractInterface: abi,
     functionName: 'postOrder',
     args: [formatAmountsForTransactionParameter(newOrderAmount), formatAmountsForTransactionParameter(newOrderMaxAmount)],
@@ -293,7 +293,7 @@ export const MainPage: React.FC<{}> = (props) => {
 
   // claimOrder(uint256 _orderNonce) external  onlyRegisteredUser()
   const { config: writeClaimOrderConfig } = usePrepareContractWrite({
-    addressOrName: contractAddresses['goerli']["ramp"], // TODO: enable other networks
+    addressOrName: contractAddresses["goerli"]["ramp"], // TODO: enable other networks
     contractInterface: abi,
     functionName: 'claimOrder',
     args: [selectedOrder.orderId],
@@ -331,7 +331,7 @@ export const MainPage: React.FC<{}> = (props) => {
 
   // onRamp( uint256 _orderId, uint256 _offRamper, VenmoId, bytes calldata _proof) external onlyRegisteredUser()
   const { config: writeCompleteOrderConfig } = usePrepareContractWrite({
-    addressOrName: contractAddresses['goerli']["ramp"], // TODO: enable other networks
+    addressOrName: contractAddresses["goerli"]["ramp"], // TODO: enable other networks
     contractInterface: abi,
     functionName: 'onRamp',
     args: [
@@ -560,9 +560,6 @@ export const MainPage: React.FC<{}> = (props) => {
     const [rowIndex] = rowData;
     const orderToSelect = orders[rowIndex];
 
-    // console.log("Selected order: ", orderToSelect)
-    // console.log(orders)
-
     if (orderToSelect.sender === address) {
       setActionState(FormState.UPDATE);
     } else {
@@ -598,8 +595,14 @@ export const MainPage: React.FC<{}> = (props) => {
       </div>
       <Main>
         <Column>
-          <SubHeader>Orders</SubHeader>
-          <CustomTable headers={orderTableHeaders} data={orderTableData} onRowClick={handleOrderRowClick} selectedRow={selectedOrder.orderId - 1}/>
+          <SubHeader>Orders1</SubHeader>
+          <CustomTable
+            headers={orderTableHeaders}
+            data={orderTableData}
+            onRowClick={handleOrderRowClick}
+            selectedRow={selectedOrder.orderId - 1}
+            rowsPerPage={10}
+          />
           <Button
             onClick={async () => {
               setLastAction("new");
@@ -680,7 +683,13 @@ export const MainPage: React.FC<{}> = (props) => {
               <H3>
                 Select Claim and Complete
               </H3>
-              <CustomTable headers={orderClaimsTableHeaders} data={orderClaimsTableData} onRowClick={handleOrderClaimRowClick} selectedRow={getIndexForSelectedClaim(selectedOrderClaim)}/>
+              <CustomTable
+                headers={orderClaimsTableHeaders}
+                data={orderClaimsTableData}
+                onRowClick={handleOrderClaimRowClick}
+                selectedRow={getIndexForSelectedClaim(selectedOrderClaim)}
+                rowsPerPage={3}
+              />
               <LabeledTextArea
                 label="Full Email with Headers"
                 value={emailFull}
