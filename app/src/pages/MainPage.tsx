@@ -19,7 +19,7 @@ import { SingleLineInput } from "../components/SingleLineInput";
 import { ReadOnlyInput } from "../components/ReadOnlyInput";
 import { Button } from "../components/Button";
 import { Col, Row } from "../components/Layout";
-// import { NumberedStep } from "../components/NumberedStep";
+import { NumberedStep } from "../components/NumberedStep";
 import { TopBanner } from "../components/TopBanner";
 import { CustomTable } from '../components/CustomTable';
 import { useAccount, useContractWrite, useContractRead, useNetwork, usePrepareContractWrite } from "wagmi";
