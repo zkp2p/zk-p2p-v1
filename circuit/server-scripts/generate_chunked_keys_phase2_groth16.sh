@@ -68,9 +68,3 @@ if ! $SKIP_ZKEY_VERIFICATION; then
     end=`date +%s`
     echo "DONE ($((end-start))s)"
 fi
-
-echo "****EXPORTING VKEY****"
-start=`date +%s`
-$NODE_PATH $SNARKJS_PATH zkey export verificationkey "$PARTIAL_ZKEYS"/"$CIRCUIT_NAME".zkey vkey.json -v
-end=`date +%s`
-echo "DONE ($((end-start))s)"
