@@ -23,8 +23,6 @@ const pki = require("node-forge").pki;
 // const email_file = "monia_email.eml"; // "./test_email.txt", "./twitter_msg.eml", kaylee_phone_number_email_twitter
 const email_file = process.argv[2];
 const out_file = process.argv[3];
-// Pass in orderId as input in command line
-const order_id = process.argv[4];
 
 export interface ICircuitInputs {
   modulus?: string[];
@@ -73,6 +71,7 @@ export async function getCircuitInputs(
   message: Buffer,
   body: Buffer,
   body_hash: string,
+  order_id: string,
   circuit: CircuitType
 ): Promise<{
   valid: {
@@ -185,7 +184,7 @@ export async function getCircuitInputs(
   };
 }
 
-export async function generate_inputs(email: Buffer): Promise<ICircuitInputs> {
+export async function generate_inputs(email: Buffer, order_id: string): Promise<ICircuitInputs> {
   var result;
   console.log("DKIM verification starting");
   result = await dkimVerify(email);
@@ -220,14 +219,14 @@ export async function generate_inputs(email: Buffer): Promise<ICircuitInputs> {
   let pubkey = result.results[0].publicKey;
   const pubKeyData = pki.publicKeyFromPem(pubkey.toString());
   let modulus = BigInt(pubKeyData.n.toString());
-  let fin_result = await getCircuitInputs(sig, modulus, message, body, body_hash, circuitType);
+  let fin_result = await getCircuitInputs(sig, modulus, message, body, body_hash, order_id, circuitType);
   return fin_result.circuitInputs;
 }
 
 async function do_generate() {
   const email = fs.readFileSync(email_file);
   // console.log(email);
-  const gen_inputs = await generate_inputs(email);
+  const gen_inputs = await generate_inputs(email, "0");
   // console.log(JSON.stringify(gen_inputs));
   return gen_inputs;
 }
