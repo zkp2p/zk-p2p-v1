@@ -26,7 +26,8 @@
     "genKeyPhase2GrothServer": "bash ./circuit/server-scripts/generate_keys_phase2_groth16.sh",
     "circuitStats": "bash ./circuit/scripts/circuit_stats.sh",
     "genChunkedZkeyServer": "bash ./circuit/server-scripts/generate_chunked_keys_phase2_groth16.sh",
-    "genVkeyServer": "bash ./circuit/server-scripts/generate_verification_key.sh"
+    "genVkeyServer": "bash ./circuit/server-scripts/generate_verification_key.sh",
+    "uploadChunkedKeys": "bash ./circuit/server-scripts/upload_chunked_keys_to_s3.sh"
   },
   "keywords": [],
   "author": "",
