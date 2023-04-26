@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
 
+
 interface CustomTableProps {
   headers: string[];
   data: any[][];
