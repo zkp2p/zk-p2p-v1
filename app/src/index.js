@@ -3,7 +3,6 @@ import ReactDOM from "react-dom";
 import App from "./App";
 import { WagmiConfig, createClient, configureChains, chain } from "wagmi";
 import { publicProvider } from "wagmi/providers/public";
-import { alchemyProvider } from 'wagmi/providers/alchemy'
 import {
   getDefaultWallets,
   RainbowKitProvider,
@@ -30,10 +29,7 @@ export const scrollAlpha = {
 
 const { chains, provider, webSocketProvider } = configureChains(
   [chain.goerli, scrollAlpha],
-  [
-    alchemyProvider({ apiKey: '7OLNUah9mWjItVi7QiJWrlc6xVVdSGn3' }),
-    publicProvider()
-  ]
+  [publicProvider()]
 );
 
 const { connectors } = getDefaultWallets({
