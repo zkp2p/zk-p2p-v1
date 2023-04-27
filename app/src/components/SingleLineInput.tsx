@@ -1,6 +1,7 @@
 import styled from "styled-components";
 import { Col } from "./Layout";
 
+
 export const SingleLineInput: React.FC<{
   label: string;
   value: any;
@@ -16,7 +17,12 @@ export const SingleLineInput: React.FC<{
       >
         {label}
       </label>
-      <Input onChange={onChange} value={value} placeholder={label} readOnly={readOnly} />
+      <Input
+        onChange={onChange}
+        value={value}
+        placeholder={label}
+        readOnly={readOnly}
+      />
     </InputContainer>
   );
 };

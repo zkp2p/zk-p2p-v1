@@ -15,8 +15,8 @@ import atob from "atob";
 // import { downloadProofFiles, generateProof, verifyProof } from "../helpers/zkp";
 // import { packedNBytesToString } from "../helpers/binaryFormat";
 import { LabeledTextArea } from "../components/LabeledTextArea";
-import { SingleLineInput } from "../components/SingleLineInput";
 import { ReadOnlyInput } from "../components/ReadOnlyInput";
+import { NewOrderForm } from "../components/NewOrderForm";
 import { Button } from "../components/Button";
 import { Col, Row } from "../components/Layout";
 // import { NumberedStep } from "../components/NumberedStep";
@@ -28,6 +28,7 @@ import { abi } from "../helpers/ramp.abi";
 // import { inputBuffer } from "../helpers/inputBuffer";
 // import { isSetIterator } from "util/types";
 import { contractAddresses } from "../helpers/deployed_addresses";
+
 var Buffer = require("buffer/").Buffer; // note: the trailing slash is important!
 
 // const generate_input = require("../scripts/generate_input");
@@ -91,7 +92,8 @@ export const MainPage: React.FC<{}> = (props) => {
   // ----- new state -----
   // const [lastAction, setLastAction] = useState<"" | "new" | "create" | "claim" | "cancel" | "complete" | "sign">("");
   const [newOrderAmount, setNewOrderAmount] = useState<number>(0);
-  const [newOrderMaxAmount, setNewOrderMaxAmount] = useState<number>(0);
+  const [newOrderVenmoIdEncryptingKey, setNewOrderVenmoIdEncryptingKey] = useState<string>('');
+  
   const [actionState, setActionState] = useState<FormState>(FormState.DEFAULT);
   const [selectedOrder, setSelectedOrder] = useState<OnRampOrder>({} as OnRampOrder);
   const [selectedOrderClaim, setSelectedOrderClaim] = useState<OnRampOrderClaim >({} as OnRampOrderClaim);
@@ -244,7 +246,10 @@ export const MainPage: React.FC<{}> = (props) => {
     addressOrName: contractAddresses["goerli"]["ramp"], // TODO: enable other networks
     contractInterface: abi,
     functionName: 'postOrder',
-    args: [formatAmountsForTransactionParameter(newOrderAmount), formatAmountsForTransactionParameter(newOrderMaxAmount)],
+    args: [
+      formatAmountsForTransactionParameter(newOrderAmount),
+      formatAmountsForTransactionParameter(newOrderAmount)
+    ],
     onError: (error: { message: any }) => {
       console.error(error.message);
     },
@@ -256,16 +261,10 @@ export const MainPage: React.FC<{}> = (props) => {
     // isSuccess: isWriteNewOrderSuccess,
     write: writeNewOrder
   } = useContractWrite(writeCreateOrderConfig);
-  // console.log(
-  //   "Create new order txn details:",
-  //   writeNewOrder,
-  //   newOrderData,
-  //   isWriteNewOrderLoading,
-  //   isWriteNewOrderSuccess,
-  //   writeCreateOrderConfig
-  // );
 
+  //
   // claimOrder(uint256 _orderNonce) external  onlyRegisteredUser()
+  //
   const { config: writeClaimOrderConfig } = usePrepareContractWrite({
     addressOrName: contractAddresses["goerli"]["ramp"], // TODO: enable other networks
     contractInterface: abi,
@@ -282,15 +281,11 @@ export const MainPage: React.FC<{}> = (props) => {
     // isSuccess: isWriteClaimOrderSuccess,
     write: writeClaimOrder
   } = useContractWrite(writeClaimOrderConfig);
-  // console.log(
-  //   "Create claim order txn details:",
-  //   writeClaimOrder,
-  //   claimOrderData,
-  //   isWriteClaimOrderLoading,
-  //   isWriteClaimOrderSuccess,
-  //   writeClaimOrderConfig
-  // ); 
 
+
+  //
+  // onRamp( uint256 _orderId, uint256 _offRamper, VenmoId, bytes calldata _proof) external onlyRegisteredUser()
+  //
   const reformatProofForChain = (proof: string) => {
     return [
       proof ? JSON.parse(proof)["pi_a"].slice(0, 2) : null,
@@ -303,7 +298,6 @@ export const MainPage: React.FC<{}> = (props) => {
     ];
   };
 
-  // onRamp( uint256 _orderId, uint256 _offRamper, VenmoId, bytes calldata _proof) external onlyRegisteredUser()
   const { config: writeCompleteOrderConfig } = usePrepareContractWrite({
     addressOrName: contractAddresses["goerli"]["ramp"], // TODO: enable other networks
     contractInterface: abi,
@@ -323,20 +317,6 @@ export const MainPage: React.FC<{}> = (props) => {
     // isSuccess: isWriteCompleteOrderSuccess,
     write: writeCompleteOrder
   } = useContractWrite(writeCompleteOrderConfig);
-  // console.log(
-  //   "Create complete order txn details:",
-  //   proof,
-  //   publicSignals,
-  //   writeCompleteOrder,
-  //   completeOrderData,
-  //   isWriteCompleteOrderLoading,
-  //   isWriteCompleteOrderSuccess,
-  //   writeCompleteOrderConfig
-  // );
-
-  // TODO: function cancelOrder(uint256 _orderId) external
-
-  // TODO: function clawback(uint256 _orderId) external {
 
   /*
     Hooks
@@ -500,7 +480,6 @@ export const MainPage: React.FC<{}> = (props) => {
 
   useMount(() => {
     function handleKeyDown() {
-      // setLastAction("");
     }
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
@@ -579,7 +558,6 @@ export const MainPage: React.FC<{}> = (props) => {
           />
           <Button
             onClick={async () => {
-              // setLastAction("new");
               setSelectedOrderClaim({} as OnRampOrderClaim);
               setSelectedOrder({} as OnRampOrder);
               setActionState(FormState.NEW);
@@ -591,32 +569,14 @@ export const MainPage: React.FC<{}> = (props) => {
         <Column>
           <SubHeader>{formHeaderText}</SubHeader>
           {actionState === FormState.NEW && (
-            <ConditionalContainer>
-              <SingleLineInput
-                label="Amount"
-                value={newOrderAmount}
-                onChange={(e) => {
-                  setNewOrderAmount(e.currentTarget.value);
-                }}
-              />
-              <SingleLineInput
-                label="Max Amount"
-                value={newOrderMaxAmount}
-                onChange={(e) => {
-                  setNewOrderMaxAmount(e.currentTarget.value);
-                }}
-              />
-              <Button
-                disabled={isWriteNewOrderLoading}
-                onClick={async () => {
-                  // setLastAction("create");
-                  setActionState(FormState.NEW);
-                  writeNewOrder?.();
-                }}
-              >
-                Create
-              </Button>
-            </ConditionalContainer>
+            <NewOrderForm
+              writeNewOrder={writeNewOrder}
+              isWriteNewOrderLoading={isWriteNewOrderLoading}
+              newOrderAmount={newOrderAmount}
+              setNewOrderAmount={setNewOrderAmount}
+              venmoIdEncryptingKey={newOrderVenmoIdEncryptingKey}
+              setVenmoIdEncryptingKey={setNewOrderVenmoIdEncryptingKey}
+            />
           )}
           {actionState === FormState.CLAIM && (
             <ConditionalContainer>
@@ -640,7 +600,6 @@ export const MainPage: React.FC<{}> = (props) => {
                 <Button
                   disabled={isWriteClaimOrderLoading}
                   onClick={async () => {
-                    // setLastAction("claim");
                     writeClaimOrder?.();
                   }}
                 >
@@ -777,7 +736,6 @@ export const MainPage: React.FC<{}> = (props) => {
                       setStatus("error-failed-to-prove");
                       return;
                     }
-                    // setLastAction("sign");
                     setDisplayMessage("Finished computing ZK proof");
                     setStatus("done");
                     try {
@@ -794,7 +752,6 @@ export const MainPage: React.FC<{}> = (props) => {
                 <Button
                   disabled={proof.length === 0 || publicSignals.length === 0 || isWriteCompleteOrderLoading}
                   onClick={async () => {
-                    // setLastAction("cancel");
 
                     console.log(proof);
                     console.log(publicSignals);
