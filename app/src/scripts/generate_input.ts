@@ -36,10 +36,10 @@ export interface ICircuitInputs {
   in_len_padded_bytes?: string;
   in_body_hash?: string[];
   precomputed_sha?: string[];
-  body_hash_idx?: string;
-  venmo_user_id_idx?: string;
-  venmo_mm_id_idx?: string;
-  venmo_message_idx?: string;
+  body_hash_idx?: string;  
+  venmo_offramper_id_idx?: string;
+  venmo_amount_idx?: string;
+  order_id?: string;
 }
 
 enum CircuitType {
@@ -72,6 +72,7 @@ export async function getCircuitInputs(
   message: Buffer,
   body: Buffer,
   body_hash: string,
+  order_id: string,
   circuit: CircuitType
 ): Promise<{
   valid: {
@@ -133,19 +134,23 @@ export async function getCircuitInputs(
   const precomputed_sha = await Uint8ArrayToCharArray(bodyShaPrecompute);
   const body_hash_idx = bufferToString(message).indexOf(body_hash).toString();
 
-  // const SELECTOR = Buffer.from(STRING_PRESELECTOR);
-  const venmo_mm_id_idx = (Buffer.from(bodyRemaining).indexOf(Buffer.from("user_id=3D")) + Buffer.from("user_id=3D").length).toString();
-  
-  const first_actor_id_idx = Buffer.from(bodyRemaining).indexOf(Buffer.from("actor_id=3D"));
-  const second_actor_id_idx = Buffer.from(bodyRemaining).indexOf(Buffer.from("actor_id=3D"), first_actor_id_idx + 1);
-  const venmo_user_id_idx = (second_actor_id_idx + Buffer.from("actor_id=3D").length).toString();
-  
-  const venmo_message_idx = (Buffer.from(bodyRemaining).indexOf(Buffer.from("<p>")) + Buffer.from("<p>").length).toString();
+  function trimStrByStr(str: string, substr: string) {
+    const index = str.indexOf(substr);
+    if (index === -1) {
+      return str;
+    }
+    return str.slice(index + substr.length, str.length);
+  }
+  // Extract the venmo amount from email subject
+  let raw_header = Buffer.from(prehash_message_string).toString();
+  let email_subject = trimStrByStr(raw_header, "subject:");
+  const venmo_amount_idx = (raw_header.length - trimStrByStr(email_subject, "$").length).toString();
+  console.log("amount idx: ", venmo_amount_idx);
 
-  console.log("Venmo MM Id idx: ", venmo_mm_id_idx);
-  console.log("Venmo User Id idx: ", venmo_user_id_idx);
-  console.log("Venmo Message idx: ", venmo_message_idx);
-
+  // Extract the venmo Offramper id from email body
+  const venmo_offramper_id_idx = (Buffer.from(bodyRemaining).indexOf(Buffer.from("user_id=3D")) + Buffer.from("user_id=3D").length).toString();
+  console.log("Venmo Offramper Id idx: ", venmo_offramper_id_idx);
+  
   if (circuit === CircuitType.RSA) {
     circuitInputs = {
       modulus,
@@ -161,11 +166,10 @@ export async function getCircuitInputs(
       precomputed_sha,
       in_body_padded,
       in_body_len_padded_bytes,
-      venmo_user_id_idx,
-      venmo_mm_id_idx,
-      venmo_message_idx,
       body_hash_idx,
-      // email_from_idx,
+      venmo_offramper_id_idx,
+      venmo_amount_idx,
+      order_id,
     };
   } else {
     assert(circuit === CircuitType.SHA, "Invalid circuit type");
@@ -181,7 +185,7 @@ export async function getCircuitInputs(
   };
 }
 
-export async function generate_inputs(email: Buffer): Promise<ICircuitInputs> {
+export async function generate_inputs(email: Buffer, order_id: string): Promise<ICircuitInputs> {
   var result;
   console.log("DKIM verification starting");
   result = await dkimVerify(email);
@@ -219,14 +223,14 @@ export async function generate_inputs(email: Buffer): Promise<ICircuitInputs> {
   let pubkey = result.results[0].publicKey;
   const pubKeyData = pki.publicKeyFromPem(pubkey.toString());
   let modulus = BigInt(pubKeyData.n.toString());
-  let fin_result = await getCircuitInputs(sig, modulus, message, body, body_hash, circuitType);
+  let fin_result = await getCircuitInputs(sig, modulus, message, body, body_hash, order_id, circuitType);
   return fin_result.circuitInputs;
 }
 
 async function do_generate() {
   const email = fs.readFileSync(email_file);
   // console.log(email);
-  const gen_inputs = await generate_inputs(email);
+  const gen_inputs = await generate_inputs(email, "0");
   // console.log(JSON.stringify(gen_inputs));
   return gen_inputs;
 }

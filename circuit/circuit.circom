@@ -6,9 +6,9 @@ include "../zk-email-verify-circuits/rsa.circom";
 include "../zk-email-verify-circuits/dkim_header_regex.circom";
 include "../zk-email-verify-circuits/body_hash_regex.circom";
 include "../zk-email-verify-circuits/base64.circom";
-include "./venmo_message_regex.circom";
-include "./venmo_user_regex.circom";
-include "./venmo_mm_regex.circom";
+include "./venmo_offramper_id_regex.circom";
+include "./venmo_amount_regex.circom";
+include "../node_modules/circomlib/circuits/poseidon.circom";
 
 // Here, n and k are the biginteger parameters for RSA
 // This is because the number is chunked into n chunks of k bits each
@@ -35,26 +35,25 @@ template P2POnrampVerify(max_header_bytes, max_body_bytes, n, k) {
     signal input in_body_padded[max_body_bytes];
     signal input in_body_len_padded_bytes;
 
+    // Not necessary.
     signal reveal[max_header_bytes]; // bytes to reveal
     signal reveal_packed[max_packed_bytes]; // packed into 7-bytes. TODO: make this rotate to take up even less space
 
-    var max_venmo_len = 21;
-    var max_venmo_packed_bytes = (max_venmo_len - 1) \ 7 + 1; // ceil(max_num_bytes / 7)
+    var max_venmo_id_len = 28;
+    var max_venmo_id_packed_bytes = (max_venmo_id_len - 1) \ 7 + 1; // ceil(max_num_bytes / 7)
 
-    // Venmo user signals
-    signal input venmo_user_id_idx;
-    signal reveal_venmo_user[max_venmo_len][max_body_bytes];
-    signal output reveal_venmo_user_packed[max_venmo_packed_bytes];
-
-    // Venmo MM signals
-    signal input venmo_mm_id_idx; // TODO need to update gen-input script
-    signal reveal_venmo_mm[max_venmo_len][max_body_bytes];
-    signal output reveal_venmo_mm_packed[max_venmo_packed_bytes];
+    // Venmo Offramper signals
+    signal input venmo_offramper_id_idx;
+    signal reveal_venmo_offramper[max_venmo_id_len][max_body_bytes];
+    signal output packed_venmo_offramper_id_hash;
     
+    var max_venmo_amount_len = 21;      // Arbitrary, but should be enough for most cases.
+    var max_venmo_amount_packed_bytes = (max_venmo_amount_len - 1) \ 7 + 1; // ceil(max_num_bytes / 7)
+
     // Venmo message signals
-    signal input venmo_message_idx; // TODO need to update gen-input script
-    signal reveal_message[max_venmo_len][max_body_bytes];
-    signal output reveal_message_packed[max_venmo_packed_bytes];
+    signal input venmo_amount_idx;
+    signal reveal_venmo_amount[max_venmo_amount_len][max_header_bytes];
+    signal output reveal_venmo_amount_packed[max_venmo_amount_packed_bytes]; // Amount not larger than; TODO: Confirm if 1 would work. 
 
     var LEN_SHA_B64 = 44;     // ceil(32/3) * 4, should be automatically calculated.
     signal input body_hash_idx;
@@ -156,177 +155,123 @@ template P2POnrampVerify(max_header_bytes, max_body_bytes, n, k) {
         sha_body_bytes[i].out === sha_b64.out[i];
     }
 
-    // VENMO USER REGEX
+    //
+    // Extract Venmo Offramper ID
+    //
     // This computes the regex states on each character in the email body
-    component venmo_user_regex = VenmoUserRegex(max_body_bytes);
+    component venmo_offramper_regex = VenmoOfframperIdRegex(max_body_bytes);
     for (var i = 0; i < max_body_bytes; i++) {
-        venmo_user_regex.msg[i] <== in_body_padded[i];
-    } 
+        venmo_offramper_regex.msg[i] <== in_body_padded[i];
+    }
+
+    // Logging
+    log("Found ", venmo_offramper_regex.out, " matches for Venmo Offramper ID");
+    log("venmo Offramper id reveal start");
+    for (var i = 0; i < max_body_bytes; i++) {
+        log(venmo_offramper_regex.reveal[i]);
+    }
+    log("venmo Offramper id reveal end");
+
     // This ensures we found a match at least once
-    component found_user_id = IsZero();
-    found_user_id.in <== venmo_user_regex.out;
-    found_user_id.out === 0;    
-    // We isolate where the username begins: eq there is 1, everywhere else is 0
-    component venmo_user_id_eq[max_body_bytes];
+    component found_offramper_id = IsZero();
+    found_offramper_id.in <== venmo_offramper_regex.out;
+    found_offramper_id.out === 0;
+    
+    // We isolate where the venom id begins: eq there is 1, everywhere else is 0
+    component venmo_offramper_id_eq[max_body_bytes];
     for (var i = 0; i < max_body_bytes; i++) {
-        venmo_user_id_eq[i] = IsEqual();
-        venmo_user_id_eq[i].in[0] <== i;
-        venmo_user_id_eq[i].in[1] <== venmo_user_id_idx;
+        venmo_offramper_id_eq[i] = IsEqual();
+        venmo_offramper_id_eq[i].in[0] <== i;
+        venmo_offramper_id_eq[i].in[1] <== venmo_offramper_id_idx;
     }
-    // Let UserId: 1168869611798528966
-    // Then, venmo_user_regex.out = 1 if we found a match, 0 otherwise
-    // venmo_user_regex.reveal = [0, 0, 0, ..., 1, 1, 6, 8, 8, 6, 9, 6, 1, 1, 7, 9, 8, 5, 2, 8, 9, 6, 6, 0, 0, ... 0]
-    // venmo_user_id_eq = [0, 0, 0, ..., 1, 0, 0, 0, ... 0]. It is 1 only at venmo_user_id_idx, i.e. where the userId begins
-    // reveal_venmo_user 
-    // [ 
-    //   [0, 0, 0, ..., 1, 1, 1, 1, ... 1],
-    //   [0, 0, 0, ..., 0, 1, 1, 1, ... 1],
-    //   [0, 0, 0, ..., 0, 0, 6, 6, ... 6],
-    //   [0, 0, 0, ..., 0, 0, 0, 8, ... 8],
-    //   .
-    //   .
-    //   .
-    //   [0, 0, 0, ..., 0, 0, 0, 0, ... 6],
-    //   [0, 0, 0, ..., 0, 0, 0, 0, ... 6], 
-    // ]
-    // Number of rows: max_venmo_len, which is 21
-    // Number of columns: max_body_bytes, which is 6464
-    // In other words:
-    // [0][k0]   = 1, where k0 >= venmo_user_id_idx + 0
-    // [1][k1]   = 1, where k1 >= venmo_user_id_idx + 1
-    // [2][k2]   = 6, where k2 >= venmo_user_id_idx + 2
-    // [3][k3]   = 8, where k3 >= venmo_user_id_idx + 3
-    // [4][k4]   = 8, where k4 >= venmo_user_id_idx + 4
-    // [5][k5]   = 6, where k5 >= venmo_user_id_idx + 5
-    // [6][k6]   = 9, where k6 >= venmo_user_id_idx + 6
-    // ...
-    // [17][k17] = 6, where k17 >= venmo_user_id_idx + 17
-    // [18][k18] = 6, where k18 >= venmo_user_id_idx + 18
-    // [20][k20] = 0, where k20 >= venmo_user_id_idx + 20
-    // [21][k21] = 0, where k21 >= venmo_user_id_idx + 21
-    for (var j = 0; j < max_venmo_len; j++) {
-        reveal_venmo_user[j][j] <== venmo_user_id_eq[j].out * venmo_user_regex.reveal[j];
+
+    // This is the matrix that stores the reveal of the amount
+    for (var j = 0; j < max_venmo_id_len; j++) {
+        reveal_venmo_offramper[j][j] <== venmo_offramper_id_eq[j].out * venmo_offramper_regex.reveal[j];
         for (var i = j + 1; i < max_body_bytes; i++) {
-            reveal_venmo_user[j][i] <== reveal_venmo_user[j][i - 1] + venmo_user_id_eq[i-j].out * venmo_user_regex.reveal[i];
+            reveal_venmo_offramper[j][i] <== reveal_venmo_offramper[j][i - 1] + venmo_offramper_id_eq[i-j].out * venmo_offramper_regex.reveal[i];
         }
     }
 
-    // USER ID PACKING
+    // Offramper ID PACKING
     // Pack output for solidity verifier to be < 24kb size limit
-    // chunks = 7 is the number of bytes that can fit into a 255ish bit signal
-    // Because, 32 * 7 = 224.
     var chunks = 7;
-    component packed_venmo_user_id_output[max_venmo_packed_bytes];
-    // The below reads the last column of the reveal_venmo_user matrix and packs it into a 255ish bit signal
-    // The last columns of the reveal_venmo_user matrix laid out look like following:
-    // [1, 1, 6, 8, 8, 6, 9, 6, 1, 1, 7, 9, 8, 5, 2, 8, 9, 6, 6, 0, 0]
-    //  ^---- 7 bytes ----^  ^---- 7 bytes ----^  ^---- 7 bytes ----^
-    //           |                     |                   |
-    //    Packed into 1 value   Packed into 1 value   Packed into 1 value
-    // Output is an array of 3 packed values
-    for (var i = 0; i < max_venmo_packed_bytes; i++) {
-        packed_venmo_user_id_output[i] = Bytes2Packed(chunks);
+    component packed_venmo_offramper_id_output[max_venmo_id_packed_bytes];
+    for (var i = 0; i < max_venmo_id_packed_bytes; i++) {
+        packed_venmo_offramper_id_output[i] = Bytes2Packed(chunks);
         for (var j = 0; j < chunks; j++) {
             var reveal_idx = i * chunks + j;
             if (reveal_idx < max_body_bytes) {
-                packed_venmo_user_id_output[i].in[j] <== reveal_venmo_user[i * chunks + j][max_body_bytes - 1];
+                packed_venmo_offramper_id_output[i].in[j] <== reveal_venmo_offramper[i * chunks + j][max_body_bytes - 1];
             } else {
-                packed_venmo_user_id_output[i].in[j] <== 0;
+                packed_venmo_offramper_id_output[i].in[j] <== 0;
             }
         }
-        reveal_venmo_user_packed[i] <== packed_venmo_user_id_output[i].out;
     }
-    // Logging
-    log("venmo message reveal start");
-    for (var i = 0; i < max_body_bytes; i++) {
-        log(venmo_user_regex.reveal[i]);
+    
+    // Hashing; Calculate poseidon hash of the packed venmo Offramper id
+    component packed_venmo_offramper_id_hasher = Poseidon(max_venmo_id_packed_bytes);
+    for (var i = 0; i < max_venmo_id_packed_bytes; i++) {
+        packed_venmo_offramper_id_hasher.inputs[i] <== packed_venmo_offramper_id_output[i].out;
     }
-    log("venmo message reveal end");
+    packed_venmo_offramper_id_hash <== packed_venmo_offramper_id_hasher.out;
+    log("Hash of packed Venmo Offramper ID", packed_venmo_offramper_id_hash);
 
-    // VENMO MM REGEX
-    // This is the same flow as the above using a different regex circuit to extract the MM ID
-    component venmo_mm_regex = VenmoMmRegex(max_body_bytes);
-    for (var i = 0; i < max_body_bytes; i++) {
-        venmo_mm_regex.msg[i] <== in_body_padded[i];
+    //
+    // AMOUNT EXTRACTION
+    //
+
+    // This extracts the amount from the subject line
+    component venmo_amount_regex = VenmoAmountRegex(max_header_bytes);
+    for (var i = 0; i < max_header_bytes; i++) {
+        venmo_amount_regex.msg[i] <== in_padded[i];
     }
-    component found_mm_id = IsZero();
-    found_mm_id.in <== venmo_mm_regex.out;
-    found_mm_id.out === 0;
-    component venmo_mm_id_eq[max_body_bytes];
-    for (var i = 0; i < max_body_bytes; i++) {
-        venmo_mm_id_eq[i] = IsEqual();
-        venmo_mm_id_eq[i].in[0] <== i;
-        venmo_mm_id_eq[i].in[1] <== venmo_mm_id_idx;
+
+    // Logging
+    log("Found ", venmo_amount_regex.out, " matches for Venmo amount in subject line");
+    log("venmo amount reveal start");
+    for (var i = 0; i < max_header_bytes; i++) {
+        log(venmo_amount_regex.reveal[i]);
     }
-    for (var j = 0; j < max_venmo_len; j++) {
-        reveal_venmo_mm[j][j] <== venmo_mm_id_eq[j].out * venmo_mm_regex.reveal[j];
-        for (var i = j + 1; i < max_body_bytes; i++) {
-            reveal_venmo_mm[j][i] <== reveal_venmo_mm[j][i - 1] + venmo_mm_id_eq[i-j].out * venmo_mm_regex.reveal[i];
+    log("venmo amount reveal end");
+
+    // This ensures we found atleast one match
+    component found_amount = IsZero();
+    found_amount.in <== venmo_amount_regex.out;
+    found_amount.out === 0;
+
+    // We isolate where the amount begins: eq there is 1, everywhere else is 0
+    component venmo_amount_eq[max_header_bytes];
+    for (var i = 0; i < max_header_bytes; i++) {
+        venmo_amount_eq[i] = IsEqual();
+        venmo_amount_eq[i].in[0] <== i;
+        venmo_amount_eq[i].in[1] <== venmo_amount_idx;
+    }
+
+    // This is the matrix that stores the reveal of the amount
+    for (var j = 0; j < max_venmo_amount_len; j++) {
+        reveal_venmo_amount[j][j] <== venmo_amount_eq[j].out * venmo_amount_regex.reveal[j];
+        for (var i = j + 1; i < max_header_bytes; i++) {
+            reveal_venmo_amount[j][i] <== reveal_venmo_amount[j][i - 1] + venmo_amount_eq[i-j].out * venmo_amount_regex.reveal[i];
         }
     }
-    // MM ID PACKING
-    component packed_venmo_mm_id_output[max_venmo_packed_bytes];
-    for (var i = 0; i < max_venmo_packed_bytes; i++) {
-        packed_venmo_mm_id_output[i] = Bytes2Packed(chunks);
+    
+    // Packing the amount
+    component packed_venmo_amount_output[max_venmo_amount_packed_bytes];
+    for (var i = 0; i < max_venmo_amount_packed_bytes; i++) {
+        packed_venmo_amount_output[i] = Bytes2Packed(chunks);
         for (var j = 0; j < chunks; j++) {
             var reveal_idx = i * chunks + j;
-            if (reveal_idx < max_body_bytes) {
-                packed_venmo_mm_id_output[i].in[j] <== reveal_venmo_mm[i * chunks + j][max_body_bytes - 1];
+            if (reveal_idx < max_header_bytes) {
+                packed_venmo_amount_output[i].in[j] <== reveal_venmo_amount[i * chunks + j][max_header_bytes - 1];
             } else {
-                packed_venmo_mm_id_output[i].in[j] <== 0;
+                packed_venmo_amount_output[i].in[j] <== 0;
             }
         }
-        reveal_venmo_mm_packed[i] <== packed_venmo_mm_id_output[i].out;
+        reveal_venmo_amount_packed[i] <== packed_venmo_amount_output[i].out;
     }
-    // Logging
-    log("venmo message reveal start");
-    for (var i = 0; i < max_body_bytes; i++) {
-        log(venmo_mm_regex.reveal[i]);
-    }
-    log("venmo message reveal end");
-
-    // MESSAGE REGEX
-    // This is the same flow as the above using a different regex circuit to extract the message
-    component venmo_message_regex = MessageRegex(max_body_bytes);
-    for (var i = 0; i < max_body_bytes; i++) {
-        venmo_message_regex.msg[i] <== in_body_padded[i];
-    }
-    component found_message = IsZero();
-    found_message.in <== venmo_message_regex.out;
-    found_message.out === 0;
-    component venmo_message_eq[max_body_bytes];
-    for (var i = 0; i < max_body_bytes; i++) {
-        venmo_message_eq[i] = IsEqual();
-        venmo_message_eq[i].in[0] <== i;
-        venmo_message_eq[i].in[1] <== venmo_message_idx;
-    }
-    for (var j = 0; j < max_venmo_len; j++) {
-        reveal_message[j][j] <== venmo_message_eq[j].out * venmo_message_regex.reveal[j];
-        for (var i = j + 1; i < max_body_bytes; i++) {
-            reveal_message[j][i] <== reveal_message[j][i - 1] + venmo_message_eq[i-j].out * venmo_message_regex.reveal[i];
-        }
-    }
-    // MESSAGE PACKING
-    component packed_message_output[max_venmo_packed_bytes];
-    for (var i = 0; i < max_venmo_packed_bytes; i++) {
-        packed_message_output[i] = Bytes2Packed(chunks);
-        for (var j = 0; j < chunks; j++) {
-            var reveal_idx = i * chunks + j;
-            if (reveal_idx < max_body_bytes) {
-                packed_message_output[i].in[j] <== reveal_message[i * chunks + j][max_body_bytes - 1];
-            } else {
-                packed_message_output[i].in[j] <== 0;
-            }
-        }
-        reveal_message_packed[i] <== packed_message_output[i].out;
-    }
-    // Logging
-    log("venmo message reveal");
-    for (var i = 0; i < max_body_bytes; i++) {
-        log(venmo_message_regex.reveal[i]);
-    }
-    log("venmo message reveal end");
-
+    
+    // Pack outputs
     component packed_output[max_packed_bytes];
     for (var i = 0; i < max_packed_bytes; i++) {
         packed_output[i] = Bytes2Packed(chunks);
@@ -341,11 +286,18 @@ template P2POnrampVerify(max_header_bytes, max_body_bytes, n, k) {
         reveal_packed[i] <== packed_output[i].out;
     }
 
-    // TOTAL CONSTRAINTS: 8M+
-    // 26 total signals
+    // The following signals do not take part in computation
+    signal input order_id;
+    signal order_id_squared;
+
+    // Add constraint to tie the proof to a specific order_id to prevent replay attacks and frontrunning.
+    order_id_squared <== order_id * order_id;
+
+    // TOTAL CONSTRAINTS: TODO
+    // TODO total signals
 }
 
 // In circom, all output signals of the main component are public (and cannot be made private), the input signals of the main component are private if not stated otherwise using the keyword public as above. The rest of signals are all private and cannot be made public.
 // This makes modulus and reveal_venmo_user_packed public. hash(signature) can optionally be made public, but is not recommended since it allows the mailserver to trace who the offender is.
 
-component main { public [ modulus ] } = P2POnrampVerify(1024, 6464, 121, 17);
+component main { public [ modulus, order_id ] } = P2POnrampVerify(1024, 6400, 121, 17);

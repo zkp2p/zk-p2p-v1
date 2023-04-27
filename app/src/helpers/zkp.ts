@@ -4,7 +4,7 @@ import { uncompressGz as uncompress } from "./uncompress";
 
 const snarkjs = require("snarkjs");
 
-export const loadURL = "https://zkemail-zkey-chunks.s3.amazonaws.com/";
+export const loadURL = "https://zk-p2p-onramp.s3.amazonaws.com/";
 const compressed = true;
 // const loadURL = "/zkemail-zkey-chunks/";
 
@@ -89,8 +89,9 @@ export async function generateProof(input: any, filename: string) {
   // TODO: figure out how to generate this s.t. it passes build
   console.log("generating proof for input");
   console.log(input);
-  const { proof, publicSignals } = await snarkjs.groth16.fullProve(input, `${filename}.wasm`, `${filename}.zkey`);
+  const { proof, publicSignals } = await snarkjs.groth16.fullProve(input, `${loadURL}${filename}.wasm`, `${filename}.zkey`);
   console.log(`Generated proof ${JSON.stringify(proof)}`);
+  console.log(`Generated public signals ${JSON.stringify(publicSignals)}`);
 
   return {
     proof,

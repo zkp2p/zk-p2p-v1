@@ -20,7 +20,14 @@
     "verifyProofGroth": "bash ./circuit/scripts/verify_proof_groth16.sh",
     "bumpSolidity": "node scripts/bump-solidity.js",
     "genContract": "bash ./circuit/scripts/generate_contract.sh && yarn bumpSolidity",
-    "genCalldata": "bash ./circuit/scripts/generate_calldata.sh"
+    "genCalldata": "bash ./circuit/scripts/generate_calldata.sh",
+    "genWitness": "bash ./circuit/server-scripts/generate_witness.sh",
+    "genProofServer": "bash ./circuit/server-scripts/generate_proof.sh",
+    "genKeyPhase2GrothServer": "bash ./circuit/server-scripts/generate_keys_phase2_groth16.sh",
+    "circuitStats": "bash ./circuit/scripts/circuit_stats.sh",
+    "genChunkedZkeyServer": "bash ./circuit/server-scripts/generate_chunked_keys_phase2_groth16.sh",
+    "genVkeyServer": "bash ./circuit/server-scripts/generate_verification_key.sh",
+    "uploadChunkedKeys": "python3 ./circuit/server-scripts/upload_to_s3.py"
   },
   "keywords": [],
   "author": "",

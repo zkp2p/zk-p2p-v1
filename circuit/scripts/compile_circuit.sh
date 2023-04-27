@@ -1,8 +1,8 @@
 cd circuit
 # Compile the circuit
-circom circuit.circom --r1cs --wasm --sym
+circom circuit.circom --wasm --r1cs --sym
 # View information about the circuit
-../node_modules/.bin/snarkjs r1cs info circuit.r1cs
+node --max-old-space-size=614400 ./../node_modules/.bin/snarkjs r1cs info circuit.r1cs
 # Export r1cs to json (To make it human redable)
 # Skipped
 # ./node_modules/.bin/snarkjs r1cs export json circuit.r1cs circuit.r1cs.json
