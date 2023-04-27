@@ -4,6 +4,7 @@ import App from "./App";
 import { WagmiConfig, createClient, configureChains, chain } from "wagmi";
 import { alchemyProvider } from 'wagmi/providers/alchemy'
 import { publicProvider } from "wagmi/providers/public";
+import { alchemyProvider } from 'wagmi/providers/alchemy'
 import {
   getDefaultWallets,
   RainbowKitProvider,

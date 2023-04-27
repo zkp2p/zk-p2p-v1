@@ -328,7 +328,7 @@ const getPublicKey = async (type, name, minBitLength, resolver) => {
     }
 
     if (!["rsa", "ed25519"].includes(keyType) || (entry?.parsed?.k && entry?.parsed?.k?.value?.toLowerCase() !== keyType)) {
-      let err = new Error("Unknown key type (${keyType})");
+      let err = new Error("Unknown key type (" + keyType + ")");
       err.code = "EINVALIDTYPE";
       err.rr = rr;
       throw err;

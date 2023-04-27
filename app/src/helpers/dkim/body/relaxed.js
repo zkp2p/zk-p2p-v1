@@ -1,7 +1,5 @@
 /* eslint no-control-regex: 0 */
 
-'use strict';
-
 const crypto = require('crypto');
 
 const CHAR_CR = 0x0d;

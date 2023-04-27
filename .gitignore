@@ -24,8 +24,8 @@ yarn-error.log
 
 contracts/Paypal*
 contracts/paypal*
-
 *.eml
 *.wtns
 
 .DS_Store
+*.eml

@@ -1,19 +1,19 @@
 // @ts-ignore
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useAsync, useMount, useUpdateEffect } from "react-use";
-// @ts-ignore
-// @ts-ignore
-import _, { add } from "lodash";
+
 // @ts-ignore
 import { generate_inputs, insert13Before10 } from "../scripts/generate_input";
-import styled, { CSSProperties } from "styled-components";
-import { sshSignatureToPubKey } from "../helpers/sshFormat";
-import { getIdFromHandle, getHandleFromId } from "../helpers/handleToVId";
-import { Link, useSearchParams } from "react-router-dom";
-import { dkimVerify } from "../helpers/dkim";
+import styled from "styled-components";
+// import { CSSProperties } from "styled-components";
+// import { sshSignatureToPubKey } from "../helpers/sshFormat";
+// import { getIdFromHandle } from "../helpers/handleToVId";
+import { getHandleFromId } from "../helpers/handleToVId";
+// import { Link, useSearchParams } from "react-router-dom";
+// import { dkimVerify } from "../helpers/dkim";
 import atob from "atob";
-import { downloadProofFiles, generateProof, verifyProof } from "../helpers/zkp";
-import { packedNBytesToString } from "../helpers/binaryFormat";
+// import { downloadProofFiles, generateProof, verifyProof } from "../helpers/zkp";
+// import { packedNBytesToString } from "../helpers/binaryFormat";
 import { LabeledTextArea } from "../components/LabeledTextArea";
 import { SingleLineInput } from "../components/SingleLineInput";
 import { ReadOnlyInput } from "../components/ReadOnlyInput";
@@ -25,12 +25,12 @@ import { CustomTable } from '../components/CustomTable';
 import { useAccount, useContractWrite, useContractRead, useNetwork, usePrepareContractWrite } from "wagmi";
 import { ProgressBar } from "../components/ProgressBar";
 import { abi } from "../helpers/ramp.abi";
-import { inputBuffer } from "../helpers/inputBuffer";
-import { isSetIterator } from "util/types";
+// import { inputBuffer } from "../helpers/inputBuffer";
+// import { isSetIterator } from "util/types";
 import { contractAddresses } from "../helpers/deployed_addresses";
 var Buffer = require("buffer/").Buffer; // note: the trailing slash is important!
 
-const generate_input = require("../scripts/generate_input");
+// const generate_input = require("../scripts/generate_input");
 
 enum FormState {
   DEFAULT = "DEFAULT",
@@ -69,27 +69,27 @@ interface OnRampOrderClaim {
 
 export const MainPage: React.FC<{}> = (props) => {
   // raw user inputs
-  const filename = "email";
+  // const filename = "email";
 
   /*
     App State
   */
 
-  const [emailSignals, setEmailSignals] = useState<string>("");
+  // const [emailSignals, setEmailSignals] = useState<string>("");
   const [publicSignals, setPublicSignals] = useState<string>(localStorage.publicSignals || "");
   const [displayMessage, setDisplayMessage] = useState<string>("Generate Proof");
-  const [emailHeader, setEmailHeader] = useState<string>("");
+  // const [emailHeader, setEmailHeader] = useState<string>("");
   const { address } = useAccount();
   const [ethereumAddress, setEthereumAddress] = useState<string>(address ?? "");
   
-  const [verificationMessage, setVerificationMessage] = useState("");
-  const [verificationPassed, setVerificationPassed] = useState(false);
+  const [verificationMessage] = useState("");
+  const [verificationPassed] = useState(false);
   // const [lastAction, setLastAction] = useState<"" | "sign" | "verify" | "send">("");
   const [showBrowserWarning, setShowBrowserWarning] = useState<boolean>(false);
-  const [downloadProgress, setDownloadProgress] = useState<number>(0);
+  const [downloadProgress] = useState<number>(0);
   
   // ----- new state -----
-  const [lastAction, setLastAction] = useState<"" | "new" | "create" | "claim" | "cancel" | "complete" | "sign">("");
+  // const [lastAction, setLastAction] = useState<"" | "new" | "create" | "claim" | "cancel" | "complete" | "sign">("");
   const [newOrderAmount, setNewOrderAmount] = useState<number>(0);
   const [newOrderMaxAmount, setNewOrderMaxAmount] = useState<number>(0);
   const [actionState, setActionState] = useState<FormState>(FormState.DEFAULT);
@@ -116,7 +116,7 @@ export const MainPage: React.FC<{}> = (props) => {
     }
   }, [emailFull, ethereumAddress]);
 
-  const { chain, chains } = useNetwork()
+  const { chain } = useNetwork()
   console.log("Chain: ", chain);
 
   const circuitInputs = value || {};
@@ -168,7 +168,7 @@ export const MainPage: React.FC<{}> = (props) => {
 
   const orderClaimsTableHeaders = ['Taker', 'Venmo Handle', 'Expiration'];
   const orderClaimsTableData = orderClaims.map((orderClaim) => [
-    formatAddressForTable(contractAddresses['goerli']["ramp"]), // TODO: should we return the claimer address?
+    formatAddressForTable(contractAddresses["goerli"]["ramp"]), // TODO: should we return the claimer address?
     getHandleFromId(orderClaim.venmoId),
     formattedExpiration(orderClaim.expirationTimestamp),
   ]);
@@ -193,7 +193,7 @@ export const MainPage: React.FC<{}> = (props) => {
   }
 
   function formatAddressForTable(addressToFormat: string) {
-    if (addressToFormat == address) {
+    if (addressToFormat === address) {
       return "You";
     } else {
       const prefix = addressToFormat.substring(0, 4);
@@ -217,7 +217,7 @@ export const MainPage: React.FC<{}> = (props) => {
     isError: isReadAllOrdersError,
     refetch: refetchAllOrders,
   } = useContractRead({
-    addressOrName: contractAddresses['goerli']["ramp"], // TODO: enable other networks
+    addressOrName: contractAddresses["goerli"]["ramp"], // TODO: enable other networks
     contractInterface: abi,
     functionName: 'getAllOrders',
   });
@@ -229,7 +229,7 @@ export const MainPage: React.FC<{}> = (props) => {
     isError: isReadOrderClaimsError,
     refetch: refetchClaimedOrders,
   } = useContractRead({
-    addressOrName: contractAddresses['goerli']["ramp"], // TODO: enable other networks
+    addressOrName: contractAddresses["goerli"]["ramp"], // TODO: enable other networks
     contractInterface: abi,
     functionName: 'getClaimsForOrder',
     args: [selectedOrder.orderId],
@@ -239,35 +239,9 @@ export const MainPage: React.FC<{}> = (props) => {
     Contract Writes
   */
 
-  // register(uint256 _venmoId) external
-  const { config: writeRegisterOrderConfig } = usePrepareContractWrite({
-    addressOrName: contractAddresses['goerli']["ramp"], // TODO: enable other networks
-    contractInterface: abi,
-    functionName: 'register',
-    args: ['645716473020416186'],
-    onError: (error: { message: any }) => {
-      console.error(error.message);
-    },
-  });
-
-  const {
-    data: newRegistrationData,
-    isLoading: isWriteRegistrationLoading,
-    isSuccess: isWriteRegistrationSuccess,
-    write: writeRegister
-  } = useContractWrite(writeRegisterOrderConfig);
-  // console.log(
-  //   "Create new order txn details:",
-  //   writeRegister,
-  //   newRegistrationData,
-  //   isWriteRegistrationLoading,
-  //   isWriteRegistrationSuccess,
-  //   writeRegisterOrderConfig
-  // ); 
-
   // postOrder(uint256 _amount, uint256 _maxAmountToPay) external onlyRegisteredUser() 
   const { config: writeCreateOrderConfig } = usePrepareContractWrite({
-    addressOrName: contractAddresses['goerli']["ramp"], // TODO: enable other networks
+    addressOrName: contractAddresses["goerli"]["ramp"], // TODO: enable other networks
     contractInterface: abi,
     functionName: 'postOrder',
     args: [formatAmountsForTransactionParameter(newOrderAmount), formatAmountsForTransactionParameter(newOrderMaxAmount)],
@@ -277,9 +251,9 @@ export const MainPage: React.FC<{}> = (props) => {
   });
 
   const {
-    data: newOrderData,
+    // data: newOrderData,
     isLoading: isWriteNewOrderLoading,
-    isSuccess: isWriteNewOrderSuccess,
+    // isSuccess: isWriteNewOrderSuccess,
     write: writeNewOrder
   } = useContractWrite(writeCreateOrderConfig);
   // console.log(
@@ -293,7 +267,7 @@ export const MainPage: React.FC<{}> = (props) => {
 
   // claimOrder(uint256 _orderNonce) external  onlyRegisteredUser()
   const { config: writeClaimOrderConfig } = usePrepareContractWrite({
-    addressOrName: contractAddresses['goerli']["ramp"], // TODO: enable other networks
+    addressOrName: contractAddresses["goerli"]["ramp"], // TODO: enable other networks
     contractInterface: abi,
     functionName: 'claimOrder',
     args: [selectedOrder.orderId],
@@ -303,9 +277,9 @@ export const MainPage: React.FC<{}> = (props) => {
   });
 
   const {
-    data: claimOrderData,
+    // data: claimOrderData,
     isLoading: isWriteClaimOrderLoading,
-    isSuccess: isWriteClaimOrderSuccess,
+    // isSuccess: isWriteClaimOrderSuccess,
     write: writeClaimOrder
   } = useContractWrite(writeClaimOrderConfig);
   // console.log(
@@ -331,7 +305,7 @@ export const MainPage: React.FC<{}> = (props) => {
 
   // onRamp( uint256 _orderId, uint256 _offRamper, VenmoId, bytes calldata _proof) external onlyRegisteredUser()
   const { config: writeCompleteOrderConfig } = usePrepareContractWrite({
-    addressOrName: contractAddresses['goerli']["ramp"], // TODO: enable other networks
+    addressOrName: contractAddresses["goerli"]["ramp"], // TODO: enable other networks
     contractInterface: abi,
     functionName: 'onRamp',
     args: [
@@ -344,9 +318,9 @@ export const MainPage: React.FC<{}> = (props) => {
   });
 
   const {
-    data: completeOrderData,
+    // data: completeOrderData,
     isLoading: isWriteCompleteOrderLoading,
-    isSuccess: isWriteCompleteOrderSuccess,
+    // isSuccess: isWriteCompleteOrderSuccess,
     write: writeCompleteOrder
   } = useContractWrite(writeCompleteOrderConfig);
   // console.log(
@@ -494,18 +468,18 @@ export const MainPage: React.FC<{}> = (props) => {
     | "sending-on-chain"
     | "sent"
   >("not-started");
-  const [zkeyStatus, setzkeyStatus] = useState<Record<string, string>>({
-    a: "not started",
-    b: "not started",
-    c: "not started",
-    d: "not started",
-    e: "not started",
-    f: "not started",
-    g: "not started",
-    h: "not started",
-    i: "not started",
-    k: "not started",
-  });
+  // const [zkeyStatus, setzkeyStatus] = useState<Record<string, string>>({
+  //   a: "not started",
+  //   b: "not started",
+  //   c: "not started",
+  //   d: "not started",
+  //   e: "not started",
+  //   f: "not started",
+  //   g: "not started",
+  //   h: "not started",
+  //   i: "not started",
+  //   k: "not started",
+  // });
   const [stopwatch, setStopwatch] = useState<Record<string, number>>({
     startedDownloading: 0,
     finishedDownloading: 0,
@@ -526,7 +500,7 @@ export const MainPage: React.FC<{}> = (props) => {
 
   useMount(() => {
     function handleKeyDown() {
-      setLastAction("");
+      // setLastAction("");
     }
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
@@ -559,9 +533,6 @@ export const MainPage: React.FC<{}> = (props) => {
   const handleOrderRowClick = (rowData: any[]) => {
     const [rowIndex] = rowData;
     const orderToSelect = orders[rowIndex];
-
-    // console.log("Selected order: ", orderToSelect)
-    // console.log(orders)
 
     if (orderToSelect.sender === address) {
       setActionState(FormState.UPDATE);
@@ -598,11 +569,17 @@ export const MainPage: React.FC<{}> = (props) => {
       </div>
       <Main>
         <Column>
-          <SubHeader>Orders</SubHeader>
-          <CustomTable headers={orderTableHeaders} data={orderTableData} onRowClick={handleOrderRowClick} selectedRow={selectedOrder.orderId - 1}/>
+          <SubHeader>Orders1</SubHeader>
+          <CustomTable
+            headers={orderTableHeaders}
+            data={orderTableData}
+            onRowClick={handleOrderRowClick}
+            selectedRow={selectedOrder.orderId - 1}
+            rowsPerPage={10}
+          />
           <Button
             onClick={async () => {
-              setLastAction("new");
+              // setLastAction("new");
               setSelectedOrderClaim({} as OnRampOrderClaim);
               setSelectedOrder({} as OnRampOrder);
               setActionState(FormState.NEW);
@@ -632,7 +609,7 @@ export const MainPage: React.FC<{}> = (props) => {
               <Button
                 disabled={isWriteNewOrderLoading}
                 onClick={async () => {
-                  setLastAction("create");
+                  // setLastAction("create");
                   setActionState(FormState.NEW);
                   writeNewOrder?.();
                 }}
@@ -663,7 +640,7 @@ export const MainPage: React.FC<{}> = (props) => {
                 <Button
                   disabled={isWriteClaimOrderLoading}
                   onClick={async () => {
-                    setLastAction("claim");
+                    // setLastAction("claim");
                     writeClaimOrder?.();
                   }}
                 >
@@ -680,7 +657,13 @@ export const MainPage: React.FC<{}> = (props) => {
               <H3>
                 Select Claim and Complete
               </H3>
-              <CustomTable headers={orderClaimsTableHeaders} data={orderClaimsTableData} onRowClick={handleOrderClaimRowClick} selectedRow={getIndexForSelectedClaim(selectedOrderClaim)}/>
+              <CustomTable
+                headers={orderClaimsTableHeaders}
+                data={orderClaimsTableData}
+                onRowClick={handleOrderClaimRowClick}
+                selectedRow={getIndexForSelectedClaim(selectedOrderClaim)}
+                rowsPerPage={3}
+              />
               <LabeledTextArea
                 label="Full Email with Headers"
                 value={emailFull}
@@ -783,10 +766,10 @@ export const MainPage: React.FC<{}> = (props) => {
 
                     // alert("Done generating proof");
                     setProof(JSON.stringify(proof));
-                    let kek = publicSignals.map((x: string) => BigInt(x));
-                    let soln = packedNBytesToString(kek.slice(0, 12));
-                    let soln2 = packedNBytesToString(kek.slice(12, 147));
-                    let soln3 = packedNBytesToString(kek.slice(147, 150));
+                    // let kek = publicSignals.map((x: string) => BigInt(x));
+                    // let soln = packedNBytesToString(kek.slice(0, 12));
+                    // let soln2 = packedNBytesToString(kek.slice(12, 147));
+                    // let soln3 = packedNBytesToString(kek.slice(147, 150));
                     // setPublicSignals(`From: ${soln}\nTo: ${soln2}\nUsername: ${soln3}`);
                     setPublicSignals(JSON.stringify(publicSignals));
 
@@ -794,7 +777,7 @@ export const MainPage: React.FC<{}> = (props) => {
                       setStatus("error-failed-to-prove");
                       return;
                     }
-                    setLastAction("sign");
+                    // setLastAction("sign");
                     setDisplayMessage("Finished computing ZK proof");
                     setStatus("done");
                     try {
@@ -811,7 +794,7 @@ export const MainPage: React.FC<{}> = (props) => {
                 <Button
                   disabled={proof.length === 0 || publicSignals.length === 0 || isWriteCompleteOrderLoading}
                   onClick={async () => {
-                    setLastAction("cancel");
+                    // setLastAction("cancel");
 
                     console.log(proof);
                     console.log(publicSignals);

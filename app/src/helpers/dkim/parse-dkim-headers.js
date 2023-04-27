@@ -1,5 +1,3 @@
-'use strict';
-
 // NB! fails to properly parse nested comments (should be rare enough though)
 
 const valueParser = str => {
@@ -88,6 +86,9 @@ const valueParser = str => {
                     }
 
                     break;
+
+                default:
+                    throw Error("Unknown state in value '" + state + "'");
             }
         }
 
@@ -227,6 +228,9 @@ const headerParser = buf => {
                     }
 
                     break;
+
+                default:
+                    throw Error("Unknown state in header '" + state + "'");
             }
         }
 
