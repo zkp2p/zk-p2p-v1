@@ -58,9 +58,11 @@ export const NewOrderForm: React.FC<NewOrderFormProps> = ({
       <NumberedStep step={2}>
         If this is your first time or if you are on a new browser, you'll be prompted to sign a message to encrypt Venmo handles
       </NumberedStep>
+      <hr />
       <SingleLineInput
-        label="Amount"
+        label="Amount (USDC)"
         value={newOrderAmount}
+        placeholder={'0'}
         onChange={(e) => {
           setNewOrderAmount(e.currentTarget.value);
         }}

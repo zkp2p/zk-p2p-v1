@@ -5,9 +5,10 @@ import { Col } from "./Layout";
 export const SingleLineInput: React.FC<{
   label: string;
   value: any;
+  placeholder: string;
   onChange: (e: any) => void;
   readOnly?: boolean;
-}> = ({ label, onChange, value, readOnly = false }) => {
+}> = ({ label, value, placeholder, onChange, readOnly = false }) => {
   return (
     <InputContainer>
       <label
@@ -20,7 +21,7 @@ export const SingleLineInput: React.FC<{
       <Input
         onChange={onChange}
         value={value}
-        placeholder={label}
+        placeholder={placeholder}
         readOnly={readOnly}
       />
     </InputContainer>

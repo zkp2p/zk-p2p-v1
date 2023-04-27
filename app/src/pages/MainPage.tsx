@@ -17,6 +17,7 @@ import { downloadProofFiles, generateProof, verifyProof } from "../helpers/zkp";
 import { LabeledTextArea } from "../components/LabeledTextArea";
 import { ReadOnlyInput } from "../components/ReadOnlyInput";
 import { NewOrderForm } from "../components/NewOrderForm";
+import { ClaimOrderForm } from "../components/ClaimOrderForm";
 import { Button } from "../components/Button";
 import { Col, Row } from "../components/Layout";
 // import { NumberedStep } from "../components/NumberedStep";
@@ -58,8 +59,9 @@ interface OnRampOrder {
   orderId: number;
   sender: string;
   amount: number;
-  maxAmount: number;
+  maxAmount: number; // Removed when updated contract goes live
   status: OrderStatus;
+  encryptingKey: string;
 }
 
 enum OrderClaimStatus {
@@ -100,6 +102,11 @@ export const MainPage: React.FC<{}> = (props) => {
   // const [lastAction, setLastAction] = useState<"" | "new" | "create" | "claim" | "cancel" | "complete" | "sign">("");
   const [newOrderAmount, setNewOrderAmount] = useState<number>(0);
   const [newOrderVenmoIdEncryptingKey, setNewOrderVenmoIdEncryptingKey] = useState<string>('');
+
+  const [claimOrderVenmoHandle, setClaimOrderVenmoHandle] = useState<string>('');
+  const [claimOrderRequestedAmount, setClaimOrderRequestedAmount] = useState<number>(0);
+  const [claimOrderEncryptedVenmoHandle, setClaimOrderEncryptedVenmoHandle] = useState<string>('');
+  const [claimOrderHashedVenmoHandle, setClaimOrderHashedVenmoHandle] = useState<string>('');
   
   const [actionState, setActionState] = useState<FormState>(FormState.DEFAULT);
   const [selectedOrder, setSelectedOrder] = useState<OnRampOrder>({} as OnRampOrder);
@@ -256,7 +263,7 @@ export const MainPage: React.FC<{}> = (props) => {
     args: [
       formatAmountsForTransactionParameter(newOrderAmount),
       formatAmountsForTransactionParameter(newOrderAmount)
-
+      // newOrderVenmoIdEncryptingKey
     ],
     onError: (error: { message: any }) => {
       console.error(error.message);
@@ -264,9 +271,7 @@ export const MainPage: React.FC<{}> = (props) => {
   });
 
   const {
-    // data: newOrderData,
     isLoading: isWriteNewOrderLoading,
-    // isSuccess: isWriteNewOrderSuccess,
     write: writeNewOrder
   } = useContractWrite(writeCreateOrderConfig);
 
@@ -284,9 +289,7 @@ export const MainPage: React.FC<{}> = (props) => {
   });
 
   const {
-    // data: claimOrderData,
     isLoading: isWriteClaimOrderLoading,
-    // isSuccess: isWriteClaimOrderSuccess,
     write: writeClaimOrder
   } = useContractWrite(writeClaimOrderConfig);
 
@@ -320,9 +323,7 @@ export const MainPage: React.FC<{}> = (props) => {
   });
 
   const {
-    // data: completeOrderData,
     isLoading: isWriteCompleteOrderLoading,
-    // isSuccess: isWriteCompleteOrderSuccess,
     write: writeCompleteOrder
   } = useContractWrite(writeCompleteOrderConfig);
 
@@ -348,6 +349,7 @@ export const MainPage: React.FC<{}> = (props) => {
         const amount = orderContractData[2].toString();
         const maxAmount = orderContractData[3].toString();
         const status = orderContractData[4];
+        const encryptingKey = '0x0B8EBCC49Abe3E1Cae4c0364C25507241DdfFbbd';
 
         const order: OnRampOrder = {
           orderId,
@@ -355,14 +357,12 @@ export const MainPage: React.FC<{}> = (props) => {
           amount,
           maxAmount,
           status,
+          encryptingKey
         };
-
-        // console.log('Adding order to sanitizedOrders:', order);
 
         sanitizedOrders.push(order);
       }
 
-      // Update orders state
       setOrders(sanitizedOrders);
     }
   }, [allOrders, isReadAllOrdersLoading, isReadAllOrdersError]);
@@ -393,11 +393,8 @@ export const MainPage: React.FC<{}> = (props) => {
         // console.log('Fetched order claim data:', claimsData);
 
         const venmoId = claimsData[0].toString();
-        console.log(venmoId);
         const status = claimsData[1];
-        console.log(status);
         const expirationTimestamp = claimsData[2].toString();
-        console.log(expirationTimestamp);
         
         const orderClaim: OnRampOrderClaim = {
           venmoId,
@@ -405,12 +402,9 @@ export const MainPage: React.FC<{}> = (props) => {
           expirationTimestamp
         };
 
-        console.log('Adding order claims to sanitizedOrderClaims:', orderClaim);
-
         sanitizedOrderClaims.push(orderClaim);
       }
 
-      // Update order claims state
       setOrderClaims(sanitizedOrderClaims);
     }
   }, [orderClaimsData, isReadOrderClaimsLoading, isReadOrderClaimsError]);
@@ -556,7 +550,7 @@ export const MainPage: React.FC<{}> = (props) => {
       </div>
       <Main>
         <Column>
-          <SubHeader>Orders1</SubHeader>
+          <SubHeader>Orders</SubHeader>
           <CustomTable
             headers={orderTableHeaders}
             data={orderTableData}
@@ -587,33 +581,16 @@ export const MainPage: React.FC<{}> = (props) => {
             />
           )}
           {actionState === FormState.CLAIM && (
-            <ConditionalContainer>
-              <ReadOnlyInput
-                label="Sender"
-                value={selectedOrder.sender}
-              />
-              <ReadOnlyInput
-                label="Amount"
-                value={formatAmountsForUSDC(selectedOrder.amount)}
-              />
-              <ReadOnlyInput
-                label="Max Amount"
-                value={formatAmountsForUSDC(selectedOrder.maxAmount)}
-              />
-              <ReadOnlyInput
-                label="Venmo Handle (Send Request for Amount Here)"
-                // value={selectedOrder.sender}
-                value = "@Alex-Soong"
-              />
-                <Button
-                  disabled={isWriteClaimOrderLoading}
-                  onClick={async () => {
-                    writeClaimOrder?.();
-                  }}
-                >
-                  Claim Order
-                </Button>
-            </ConditionalContainer>
+            <ClaimOrderForm
+              senderAddress={selectedOrder.sender}
+              senderRequestedAmount={formatAmountsForUSDC(selectedOrder.amount)}
+              venmoHandle={claimOrderVenmoHandle}
+              setVenmoHandle={setClaimOrderVenmoHandle}
+              requestedUSDAmount={claimOrderRequestedAmount}
+              setRequestedUSDAmount={setClaimOrderRequestedAmount}
+              writeClaimOrder={writeClaimOrder}
+              isWriteClaimOrderLoading={isWriteClaimOrderLoading}
+            />
           )}
           {actionState === FormState.UPDATE && (
             <ConditionalContainer>
