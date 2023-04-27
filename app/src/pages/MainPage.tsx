@@ -69,7 +69,7 @@ interface OnRampOrderClaim {
 
 export const MainPage: React.FC<{}> = (props) => {
   // raw user inputs
-  // const filename = "email";
+  const filename = "circuit";
 
   /*
     App State

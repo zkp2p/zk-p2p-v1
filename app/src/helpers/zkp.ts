@@ -89,8 +89,9 @@ export async function generateProof(input: any, filename: string) {
   // TODO: figure out how to generate this s.t. it passes build
   console.log("generating proof for input");
   console.log(input);
-  const { proof, publicSignals } = await snarkjs.groth16.fullProve(input, `${loadURL}${filename}.wasm`, `${loadURL}${filename}.zkey`);
+  const { proof, publicSignals } = await snarkjs.groth16.fullProve(input, `${loadURL}${filename}.wasm`, `${filename}.zkey`);
   console.log(`Generated proof ${JSON.stringify(proof)}`);
+  console.log(`Generated public signals ${JSON.stringify(publicSignals)}`);
 
   return {
     proof,
