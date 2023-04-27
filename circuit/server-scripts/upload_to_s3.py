@@ -6,7 +6,7 @@ import gzip
 import argparse
 
 # Set up the client for the AWS S3 service
-s3 = boto3.client('s3')  # Ask Aayush for the access key and secret access key
+s3 = boto3.client('s3')
 
 parser = argparse.ArgumentParser(description='Upload files to S3 bucket')
 parser.add_argument('--bucket_name', type=str, default='zk-p2p-onramp', help='Name of the S3 bucket')
@@ -14,6 +14,7 @@ parser.add_argument('--bucket_name', type=str, default='zk-p2p-onramp', help='Na
 # parser.add_argument('--circuit_name', type=str, default='email', help='Name of the circuit (i.e. the foldername in build_dir/)')
 parser.add_argument('--prefix_to_tar', type=str, default='circuit.zkey', help='Prefix to match for files in order to compress to a .tar.gz and upload')
 parser.add_argument('--prefix', type=str, default='vkey.json,circuit.wasm', help='Comma-seperated prefixes to upload without compression')
+parser.add_argument('--dirs', type=str, default='', help='Comma-separated list of directories to upload from')
 args = parser.parse_args()
 bucket_name = args.bucket_name
 # build_dir = args.build_dir
@@ -32,7 +33,8 @@ def upload_to_s3(filename, dir=""):
     with open(dir + filename, 'rb') as file:
         print("Starting upload...")
         s3.upload_fileobj(file, bucket_name, filename, ExtraArgs={
-                          'ACL': 'public-read', 'ContentType': 'binary/octet-stream'})
+                        #   'ACL': 'public-read', 'ContentType': 'binary/octet-stream'
+        })
         print("Done uploading ", filename, "!")
 
 
