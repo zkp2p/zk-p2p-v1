@@ -17,10 +17,9 @@ export const NumberedStep: React.FC<{
 
 const NumberedStepContainer = styled(Row)`
   background: rgba(255, 255, 255, 0.05);
-  width: 100%;
   gap: 1rem;
   border-radius: 4px;
-  padding: 8px;
+  padding: 12px 16px;
   color: #fff;
 `;
 

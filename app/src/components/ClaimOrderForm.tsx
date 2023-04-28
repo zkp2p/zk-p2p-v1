@@ -7,7 +7,6 @@ import { NumberedStep } from "../components/NumberedStep";
 import { ReadOnlyInput } from "../components/ReadOnlyInput";
 import { SingleLineInput } from "../components/SingleLineInput";
 
-import EthCrypto from 'eth-crypto';
 
 
 interface ClaimOrderFormProps {
@@ -22,36 +21,6 @@ interface ClaimOrderFormProps {
 }
  
 export const ClaimOrderForm: React.FC<ClaimOrderFormProps> = ({ senderAddress, senderRequestedAmount, venmoHandle, setVenmoHandle, requestedUSDAmount, setRequestedUSDAmount, writeClaimOrder, isWriteClaimOrderLoading }) => {
-  async function encryptWithPublicKey(text: string, publicKey: string) {
-    const entropy = Buffer.from('', 'utf-8');
-    const identity = EthCrypto.createIdentity(entropy);
-    console.log('Generated identity:');
-    console.log(identity);
-    
-    console.log('Passed in:');
-    console.log(text);
-    console.log(publicKey);
-
-    const genPublicKey = EthCrypto.publicKeyByPrivateKey('')
-    console.log('Generated Pubkey:');
-    console.log(genPublicKey);
-
-    const encrypted = await EthCrypto.encryptWithPublicKey(genPublicKey, text);
-    const encryptedString = EthCrypto.cipher.stringify(encrypted);
-    
-    console.log('Encrypted message:')
-    console.log(encryptedString);
-
-    const privateKey = '';
-    const encryptedObject = EthCrypto.cipher.parse(encryptedString);
-    const decrypted = await EthCrypto.decryptWithPrivateKey(privateKey, encryptedObject);
-
-    console.log('Decrypted message:')
-    console.log(decrypted);
-
-    return encryptedString;
-  };
-
   return (
     <ClaimOrderFormContainer>
       <SelectedOrderContainer>
@@ -76,9 +45,9 @@ export const ClaimOrderForm: React.FC<ClaimOrderFormProps> = ({ senderAddress, s
       </NumberedStep>
       <hr />
       <SingleLineInput
-        label="Venmo Handle"
+        label="Venmo ID"
         value={venmoHandle}
-        placeholder={'Your-Venmo-Handle'}
+        placeholder={'1234567891011121314'}
         onChange={(e) => {
           setVenmoHandle(e.currentTarget.value);
         }}
@@ -94,9 +63,7 @@ export const ClaimOrderForm: React.FC<ClaimOrderFormProps> = ({ senderAddress, s
       <Button
         disabled={isWriteClaimOrderLoading}
         onClick={async () => {
-          await encryptWithPublicKey('0x0B8EBCC49Abe3E1Cae4c0364C25507241DdfFbbd', venmoHandle)
-
-          // writeClaimOrder?.();
+          writeClaimOrder?.();
         }}
         >
         ClaimOrder
@@ -107,11 +74,9 @@ export const ClaimOrderForm: React.FC<ClaimOrderFormProps> = ({ senderAddress, s
 
 const SelectedOrderContainer = styled(Col)`
   background: rgba(255, 255, 255, 0.1);
-  width: 100%;
   gap: 1rem;
   border-radius: 4px;
   padding: 1rem;
-  margin: 0 -1rem;
   color: #fff;
 `;
 
