@@ -103,10 +103,9 @@ export const MainPage: React.FC<{}> = (props) => {
   const [newOrderAmount, setNewOrderAmount] = useState<number>(0);
   const [newOrderVenmoIdEncryptingKey, setNewOrderVenmoIdEncryptingKey] = useState<string>('');
 
-  const [claimOrderVenmoHandle, setClaimOrderVenmoHandle] = useState<string>('');
-  const [claimOrderRequestedAmount, setClaimOrderRequestedAmount] = useState<number>(0);
   const [claimOrderEncryptedVenmoHandle, setClaimOrderEncryptedVenmoHandle] = useState<string>('');
   const [claimOrderHashedVenmoHandle, setClaimOrderHashedVenmoHandle] = useState<string>('');
+  const [claimOrderRequestedAmount, setClaimOrderRequestedAmount] = useState<number>(0);
   
   const [actionState, setActionState] = useState<FormState>(FormState.DEFAULT);
   const [selectedOrder, setSelectedOrder] = useState<OnRampOrder>({} as OnRampOrder);
@@ -262,8 +261,8 @@ export const MainPage: React.FC<{}> = (props) => {
     functionName: 'postOrder',
     args: [
       formatAmountsForTransactionParameter(newOrderAmount),
-      formatAmountsForTransactionParameter(newOrderAmount)
-      // newOrderVenmoIdEncryptingKey
+      formatAmountsForTransactionParameter(newOrderAmount)  // TODO: Replace when new contract is deployed
+      // newOrderVenmoIdEncryptingKey                       // TODO: Update when new contract is deployed
     ],
     onError: (error: { message: any }) => {
       console.error(error.message);
@@ -282,7 +281,13 @@ export const MainPage: React.FC<{}> = (props) => {
     addressOrName: contractAddresses["goerli"]["ramp"],
     contractInterface: abi,
     functionName: 'claimOrder',
-    args: [selectedOrder.orderId],
+    args: [
+      selectedOrder.orderId
+      // formatAmountsForTransactionParameter(claimOrderRequestedAmount)  // TODO: Update when new contract is deployed
+      // claimOrderEncryptedVenmoHandle,                                  // TODO: Update when new contract is deployed
+      // claimOrderHashedVenmoHandle                                      // TODO: Update when new contract is deployed
+
+    ],
     onError: (error: { message: any }) => {
       console.error(error.message);
     },
@@ -582,12 +587,12 @@ export const MainPage: React.FC<{}> = (props) => {
           )}
           {actionState === FormState.CLAIM && (
             <ClaimOrderForm
-              senderAddress={selectedOrder.sender}
-              senderRequestedAmount={formatAmountsForUSDC(selectedOrder.amount)}
-              venmoHandle={claimOrderVenmoHandle}
-              setVenmoHandle={setClaimOrderVenmoHandle}
-              requestedUSDAmount={claimOrderRequestedAmount}
+              senderEncryptingKey={selectedOrder.encryptingKey}
+              senderAddressDisplay={selectedOrder.sender}
+              senderRequestedAmountDisplay={formatAmountsForUSDC(selectedOrder.amount)}
               setRequestedUSDAmount={setClaimOrderRequestedAmount}
+              setEncryptedVenmoHandle={setClaimOrderEncryptedVenmoHandle}
+              setHashedVenmoHandle={setClaimOrderHashedVenmoHandle}
               writeClaimOrder={writeClaimOrder}
               isWriteClaimOrderLoading={isWriteClaimOrderLoading}
             />
