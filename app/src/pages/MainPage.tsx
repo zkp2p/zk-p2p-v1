@@ -349,7 +349,7 @@ export const MainPage: React.FC<{}> = (props) => {
         const amount = orderContractData[2].toString();
         const maxAmount = orderContractData[3].toString();
         const status = orderContractData[4];
-        const encryptingKey = '0x0B8EBCC49Abe3E1Cae4c0364C25507241DdfFbbd';
+        const encryptingKey = 'a19eb5cdd6b3fce15832521908e4f66817e9ea8728dde4469f517072616a590be610c8af6d616fa77806b4d3ac1176634f78cd29266b4bdae4110ac3cdeb9231';
 
         const order: OnRampOrder = {
           orderId,
