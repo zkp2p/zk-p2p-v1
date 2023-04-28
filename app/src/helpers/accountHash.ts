@@ -21,3 +21,26 @@ export const getPublicKeyFromAccount = (account: string): string => {
 
   return identity.publicKey;
 }
+
+export async function encryptMessage(message: string, publicKey: string) {
+  const encrypted = await EthCrypto.encryptWithPublicKey(publicKey, message);
+  const encryptedString = EthCrypto.cipher.stringify(encrypted);
+
+  // console.log('Encrypted message:');
+  // console.log(encrypted);
+
+  return encryptedString;
+}
+
+export async function decryptMessageWithAccount(encrypted: string, account: string) {
+  const entropy = Buffer.from(account, 'utf-8');
+  const privateKey = EthCrypto.createIdentity(entropy).privateKey;
+
+  const encryptedObject = EthCrypto.cipher.parse(encrypted);
+  const decrypted = EthCrypto.decryptWithPrivateKey(privateKey, encryptedObject);
+
+  // console.log('Decrypted message:');
+  // console.log(decrypted);
+
+  return decrypted;
+}

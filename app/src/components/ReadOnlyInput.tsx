@@ -7,11 +7,7 @@ export const ReadOnlyInput: React.FC<{
 }> = ({ label, value }) => {
   return (
     <InputContainer>
-      <label
-        style={{
-          color: "rgba(255, 255, 255, 0.8)",
-        }}
-      >
+      <label>
         {label}
       </label>
       <Input value={value} placeholder={label} readOnly={true} />
@@ -36,4 +32,5 @@ const Input = styled.input`
   user-select: none;
   -webkit-user-select: none;
   pointer-events: none;
+  opacity: 0.6;
 `;
