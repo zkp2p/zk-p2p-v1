@@ -12,7 +12,7 @@ import { getHandleFromId } from "../helpers/handleToVId";
 // import { Link, useSearchParams } from "react-router-dom";
 // import { dkimVerify } from "../helpers/dkim";
 import atob from "atob";
-// import { downloadProofFiles, generateProof, verifyProof } from "../helpers/zkp";
+import { downloadProofFiles, generateProof, verifyProof } from "../helpers/zkp";
 // import { packedNBytesToString } from "../helpers/binaryFormat";
 import { LabeledTextArea } from "../components/LabeledTextArea";
 import { ReadOnlyInput } from "../components/ReadOnlyInput";
@@ -22,7 +22,14 @@ import { Col, Row } from "../components/Layout";
 // import { NumberedStep } from "../components/NumberedStep";
 import { TopBanner } from "../components/TopBanner";
 import { CustomTable } from '../components/CustomTable';
-import { useAccount, useContractWrite, useContractRead, useNetwork, usePrepareContractWrite } from "wagmi";
+import {
+  useAccount, 
+  useContractWrite, 
+  useContractRead, 
+  useNetwork, 
+  usePrepareContractWrite,
+  useSignMessage
+} from "wagmi";
 import { ProgressBar } from "../components/ProgressBar";
 import { abi } from "../helpers/ramp.abi";
 // import { inputBuffer } from "../helpers/inputBuffer";
@@ -87,7 +94,7 @@ export const MainPage: React.FC<{}> = (props) => {
   const [verificationPassed] = useState(false);
   // const [lastAction, setLastAction] = useState<"" | "sign" | "verify" | "send">("");
   const [showBrowserWarning, setShowBrowserWarning] = useState<boolean>(false);
-  const [downloadProgress] = useState<number>(0);
+  const [downloadProgress, setDownloadProgress] = useState<number>(0);
   
   // ----- new state -----
   // const [lastAction, setLastAction] = useState<"" | "new" | "create" | "claim" | "cancel" | "complete" | "sign">("");
@@ -170,7 +177,7 @@ export const MainPage: React.FC<{}> = (props) => {
 
   const orderClaimsTableHeaders = ['Taker', 'Venmo Handle', 'Expiration'];
   const orderClaimsTableData = orderClaims.map((orderClaim) => [
-    formatAddressForTable(contractAddresses["goerli"]["ramp"]), // TODO: should we return the claimer address?
+    formatAddressForTable(contractAddresses["goerli"]["ramp"]),
     getHandleFromId(orderClaim.venmoId),
     formattedExpiration(orderClaim.expirationTimestamp),
   ]);
@@ -219,7 +226,7 @@ export const MainPage: React.FC<{}> = (props) => {
     isError: isReadAllOrdersError,
     refetch: refetchAllOrders,
   } = useContractRead({
-    addressOrName: contractAddresses["goerli"]["ramp"], // TODO: enable other networks
+    addressOrName: contractAddresses["goerli"]["ramp"],
     contractInterface: abi,
     functionName: 'getAllOrders',
   });
@@ -231,7 +238,7 @@ export const MainPage: React.FC<{}> = (props) => {
     isError: isReadOrderClaimsError,
     refetch: refetchClaimedOrders,
   } = useContractRead({
-    addressOrName: contractAddresses["goerli"]["ramp"], // TODO: enable other networks
+    addressOrName: contractAddresses["goerli"]["ramp"],
     contractInterface: abi,
     functionName: 'getClaimsForOrder',
     args: [selectedOrder.orderId],
@@ -243,12 +250,13 @@ export const MainPage: React.FC<{}> = (props) => {
 
   // postOrder(uint256 _amount, uint256 _maxAmountToPay) external onlyRegisteredUser() 
   const { config: writeCreateOrderConfig } = usePrepareContractWrite({
-    addressOrName: contractAddresses["goerli"]["ramp"], // TODO: enable other networks
+    addressOrName: contractAddresses["goerli"]["ramp"],
     contractInterface: abi,
     functionName: 'postOrder',
     args: [
       formatAmountsForTransactionParameter(newOrderAmount),
       formatAmountsForTransactionParameter(newOrderAmount)
+
     ],
     onError: (error: { message: any }) => {
       console.error(error.message);
@@ -266,7 +274,7 @@ export const MainPage: React.FC<{}> = (props) => {
   // claimOrder(uint256 _orderNonce) external  onlyRegisteredUser()
   //
   const { config: writeClaimOrderConfig } = usePrepareContractWrite({
-    addressOrName: contractAddresses["goerli"]["ramp"], // TODO: enable other networks
+    addressOrName: contractAddresses["goerli"]["ramp"],
     contractInterface: abi,
     functionName: 'claimOrder',
     args: [selectedOrder.orderId],
@@ -299,7 +307,7 @@ export const MainPage: React.FC<{}> = (props) => {
   };
 
   const { config: writeCompleteOrderConfig } = usePrepareContractWrite({
-    addressOrName: contractAddresses["goerli"]["ramp"], // TODO: enable other networks
+    addressOrName: contractAddresses["goerli"]["ramp"],
     contractInterface: abi,
     functionName: 'onRamp',
     args: [
@@ -570,12 +578,12 @@ export const MainPage: React.FC<{}> = (props) => {
           <SubHeader>{formHeaderText}</SubHeader>
           {actionState === FormState.NEW && (
             <NewOrderForm
-              writeNewOrder={writeNewOrder}
-              isWriteNewOrderLoading={isWriteNewOrderLoading}
+              loggedInWalletAddress={ethereumAddress}
               newOrderAmount={newOrderAmount}
               setNewOrderAmount={setNewOrderAmount}
-              venmoIdEncryptingKey={newOrderVenmoIdEncryptingKey}
               setVenmoIdEncryptingKey={setNewOrderVenmoIdEncryptingKey}
+              writeNewOrder={writeNewOrder}
+              isWriteNewOrderLoading={isWriteNewOrderLoading}
             />
           )}
           {actionState === FormState.CLAIM && (
@@ -668,9 +676,9 @@ export const MainPage: React.FC<{}> = (props) => {
                     console.log("buffFormArray", Buffer.from(formattedArray.buffer));
                     console.log("buffFormArray", formattedArray.toString());
 
-                    let input = "";
+                    let input = null;
                     try {
-                      input = await generate_input.generate_inputs(Buffer.from(formattedArray.buffer), "1235"); // TODO order ID
+                      input = await generate_inputs(Buffer.from(formattedArray.buffer), "1235"); // TODO order ID
                       // input = inputBuffer
                       // input = ""
                     } catch (e) {

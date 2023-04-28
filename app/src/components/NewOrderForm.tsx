@@ -1,29 +1,62 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
+import { useSignMessage } from 'wagmi'
 
 import { Button } from "../components/Button";
 import { Col } from "../components/Layout";
 import { NumberedStep } from "../components/NumberedStep";
 import { SingleLineInput } from "../components/SingleLineInput";
+import { generateAccountFromSignature, getPublicKeyFromAccount } from '../helpers/accountHash';
 
 
 interface NewOrderFormProps {
+  loggedInWalletAddress: string;
   newOrderAmount: number;
   setNewOrderAmount: (amount: number) => void;
-  venmoIdEncryptingKey: string;
   setVenmoIdEncryptingKey: (key: string) => void;
   writeNewOrder?: () => void;
   isWriteNewOrderLoading: boolean;
 }
+
  
-export const NewOrderForm: React.FC<NewOrderFormProps> = ({ newOrderAmount, setNewOrderAmount, venmoIdEncryptingKey, setVenmoIdEncryptingKey, writeNewOrder, isWriteNewOrderLoading }) => {
+export const NewOrderForm: React.FC<NewOrderFormProps> = ({
+  loggedInWalletAddress,
+  newOrderAmount,
+  setNewOrderAmount,
+  setVenmoIdEncryptingKey,
+  writeNewOrder,
+  isWriteNewOrderLoading
+}) => {
+  const accountHashKey = `accountHash_${loggedInWalletAddress}`;
+  const [accountHash, setAccountHash] = useState<string>(localStorage.getItem(accountHashKey) || "");
+
+  const {
+    data: signedMessageSignature,
+    signMessage,
+  } = useSignMessage({
+    message: 'You are signing a message that will be used to encrypt Venmo handles.',
+  })
+
+  useEffect(() => {
+    if (signedMessageSignature) {
+      const accountHash = generateAccountFromSignature(signedMessageSignature);
+      setAccountHash(accountHash);
+      localStorage.setItem(accountHashKey, accountHash);
+    }
+  }, [accountHashKey, signedMessageSignature])
+
+  useEffect(() => {
+    const accountHash = localStorage.getItem(accountHashKey);
+    setAccountHash(accountHash || "");
+  }, [accountHashKey, loggedInWalletAddress]);
+
   return (
     <NewOrderFormContainer>
       <NumberedStep step={1}>
-        Specify an amount to on-ramp.
+        Specify an amount to on-ramp
       </NumberedStep>
       <NumberedStep step={2}>
-        Provide a public key that will be used to encrypt Venmo handles. You should use a separate asymmetric key pair than your on-ramping account.
+        If this is your first time or if you are on a new browser, you'll be prompted to sign a message to encrypt Venmo handles
       </NumberedStep>
       <SingleLineInput
         label="Amount"
@@ -32,17 +65,16 @@ export const NewOrderForm: React.FC<NewOrderFormProps> = ({ newOrderAmount, setN
           setNewOrderAmount(e.currentTarget.value);
         }}
       />
-      <SingleLineInput
-        label="Encrypting Public Key"
-        value={venmoIdEncryptingKey}
-        onChange={(e) => {
-          setVenmoIdEncryptingKey(e.currentTarget.value);
-        }}
-      />
       <Button
         disabled={isWriteNewOrderLoading}
         onClick={async () => {
-          writeNewOrder?.();
+          if (accountHash === "") {
+            await signMessage();
+          } else {
+            const publicKey = getPublicKeyFromAccount(accountHash);
+            setVenmoIdEncryptingKey(publicKey);
+            writeNewOrder?.();
+          }
         }}
         >
         Create
