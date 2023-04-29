@@ -4,6 +4,10 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import { Verifier } from "./Verifier.sol";
 
+// Todo: 
+// 1. Add nullifier logic.
+// 2. Add claimId to signals.
+
 contract Ramp is Verifier {
     
     /* ============ Enums ============ */
@@ -26,40 +30,33 @@ contract Ramp is Verifier {
 
     struct Order {
         address onRamper;
+        address onRamperEncryptPublicKey;
         uint256 amountToReceive;
         uint256 maxAmountToPay;
         OrderStatus status;
-        address[] claimers;  
     }
 
     struct OrderClaim {
-        uint256 venmoId;
+        address offRamper;
+        uint256 venmoId;                        // hash of offRamperVenmoId
         ClaimStatus status;
+        uint256 encryptedOffRamperVenmoId;        // encrypt(offRamperVenmoId, onRamperEncryptPublicKey)
         uint256 claimExpirationTime;
+        uint256 minAmountToPay;
     }
 
     struct OrderWithId {
         uint256 id;
-        address onRamper;
-        uint256 amountToReceive;
-        uint256 maxAmountToPay;
-        OrderStatus status;
-        address[] claimers;  
+        Order order;
     }
 
     /* ============ Modifiers ============ */
 
-    modifier onlyRegisteredUser() {
-        require(userToVenmoId[msg.sender] != 0, "User is not registered");
-        _;
-    }
-
     /* ============ Public Variables ============ */
 
-    uint256 public constant rsaModulusChunksLen = 17;
-    uint16 public constant bodyLen = 9;
-    uint16 public constant msgLen = 26;
-    uint16 public constant bytesInPackedBytes = 7;  // 7 bytes in a packed item returned from circom
+    uint256 private constant rsaModulusChunksLen = 17;
+    uint16 private constant msgLen = 22;
+    uint16 private constant bytesInPackedBytes = 7;  // 7 bytes in a packed item returned from circom
 
     /* ============ Public Variables ============ */
 
@@ -67,10 +64,11 @@ contract Ramp is Verifier {
     uint256[rsaModulusChunksLen] public venmoMailserverKeys;
 
     uint256 public orderNonce;
-    mapping(address=>uint256) public userToVenmoId;
-    mapping(uint256=>address) public venmoIdToUser;
+    mapping(uint256=>uint256) public orderClaimNonce;
+
     mapping(uint256=>Order) public orders;
-    mapping(uint256=>mapping(address=>OrderClaim)) public orderClaims;
+    mapping(uint256=>mapping(uint256=>bool)) public orderClaimedByVenmoId;
+    mapping(uint256=>mapping(uint256=>OrderClaim)) public orderClaims;
 
     /* ============ External Functions ============ */
 
@@ -83,44 +81,54 @@ contract Ramp is Verifier {
 
     /* ============ External Functions ============ */
 
-    function register(uint256 _venmoId) external {
-        require(userToVenmoId[msg.sender] == 0, "User is already registered");
-        userToVenmoId[msg.sender] = _venmoId;
-        venmoIdToUser[_venmoId] = msg.sender;
-    }
 
-    function postOrder(uint256 _amount, uint256 _maxAmountToPay) external onlyRegisteredUser() {
+    function postOrder(uint256 _amount, uint256 _maxAmountToPay, address _encryptPublicKey) 
+        external 
+    {
         require(_amount != 0, "Amount can't be 0");
         require(_maxAmountToPay != 0, "Max amount can't be 0");
         
         Order memory order = Order({
             onRamper: msg.sender,
+            onRamperEncryptPublicKey: _encryptPublicKey,
             amountToReceive: _amount,
             maxAmountToPay: _maxAmountToPay,
-            status: OrderStatus.Open,
-            claimers: new address[](0)
+            status: OrderStatus.Open
         });
 
         orders[orderNonce] = order;
         orderNonce++;
+
+        // Todo: Can return order id for the on-ramper to know their order id.
     }
 
     function claimOrder(
-        uint256 _orderNonce
+        uint256 _venmoId,
+        uint256 _orderNonce,
+        uint256 _encryptedVenmoId,
+        uint256 _minAmountToPay
     )
         external 
-        onlyRegisteredUser()
     {
         require(orders[_orderNonce].status == OrderStatus.Open, "Order has already been filled, canceled, or doesn't exist");
-        require(orderClaims[_orderNonce][msg.sender].status == ClaimStatus.Unsubmitted, "Order has already been claimed by caller");
+        require(!orderClaimedByVenmoId[_orderNonce][_venmoId], "Order has already been claimed by Venmo ID");
+        // Todo: This can be sybilled. What are the implications of this?
         require(msg.sender != orders[_orderNonce].onRamper, "Can't claim your own order");
 
-        orderClaims[_orderNonce][msg.sender] = OrderClaim({
-            venmoId: userToVenmoId[msg.sender],
+        OrderClaim memory claim = OrderClaim({
+            offRamper: msg.sender,
+            venmoId: _venmoId,
+            encryptedOffRamperVenmoId: _encryptedVenmoId,
+            minAmountToPay: _minAmountToPay,
             status: ClaimStatus.Submitted,
             claimExpirationTime: block.timestamp + 1 days
         });
-        orders[_orderNonce].claimers.push(msg.sender);
+
+        uint256 claimNonce = orderClaimNonce[_orderNonce];
+        orderClaims[_orderNonce][claimNonce] = claim;
+        orderClaimNonce[_orderNonce] = claimNonce + 1;
+
+        orderClaimedByVenmoId[_orderNonce][_venmoId] = true;
 
         usdc.transferFrom(msg.sender, address(this), orders[_orderNonce].amountToReceive);
     }
@@ -129,27 +137,33 @@ contract Ramp is Verifier {
         uint256[2] memory _a,
         uint256[2][2] memory _b,
         uint256[2] memory _c,
-        uint256[msgLen] memory _signals
+        uint256[msgLen] memory _signals, 
+        uint256 claimId
     )
         external
-        onlyRegisteredUser()
     {
         // Verify that proof generated by onRamper is valid
-        (uint256 onRamperVenmoId, uint256 offRamperVenmoId, uint256 orderId) = _verifyAndParseOnRampProof(_a, _b, _c, _signals);
+        (uint256 offRamperVenmoId, uint256 amount, uint256 orderId) = _verifyAndParseOnRampProof(_a, _b, _c, _signals);
 
         // require it is an open order
         require(orders[orderId].status == OrderStatus.Open, "Order has already been filled, canceled, or doesn't exist");
 
-        // Require that the off-ramper has submitted a claim
-        address offRamperAddress = venmoIdToUser[offRamperVenmoId];
-        require(orderClaims[orderId][offRamperAddress].status == ClaimStatus.Submitted,
+        // Require that the claim exists
+        require(orderClaims[orderId][claimId].status == ClaimStatus.Submitted,
             "Claim was never submitted, has been used, or has been clawed back"
         );
 
-        // Require that the on-ramper is the one who fulfilled the venmo request
-        require(userToVenmoId[orders[orderId].onRamper] == onRamperVenmoId, "On-ramper venmoId does not match proof");
+        // Require that the off-ramper was paid
+        require(orderClaims[orderId][claimId].venmoId == offRamperVenmoId, 
+            "Off-ramper paid does not match the claimer"
+        );
 
-        orderClaims[orderId][offRamperAddress].status = ClaimStatus.Used;
+        // Require that the amount paid by on-ramper >= minAskAmount of the off-ramper
+        require(amount >= orderClaims[orderId][claimId].minAmountToPay, "Amount paid off-chain is too low");
+
+        // Update order claim status
+        orderClaims[orderId][offRamperVenmoId].status = ClaimStatus.Used;
+        // Update order filled status
         orders[orderId].status = OrderStatus.Filled;
 
         usdc.transfer(orders[orderId].onRamper, orders[orderId].amountToReceive);
@@ -162,11 +176,16 @@ contract Ramp is Verifier {
         orders[_orderId].status = OrderStatus.Canceled;
     }
 
-    function clawback(uint256 _orderId) external {
+    function clawback(uint256 _orderId, uint256 _claimId) external {
+        // Ensure the depositor address and clawback address are same
+        require(
+            orderClaims[_orderId][_claimId].offRamper == msg.sender,
+            "Invalid caller"
+        );
         // If a claim was never submitted (Unopened), was used to fill order (Used), or was already clawed back (Clawback) then
         // calling address cannot clawback funds
         require(
-            orderClaims[_orderId][msg.sender].status == ClaimStatus.Submitted,
+            orderClaims[_orderId][_claimId].status == ClaimStatus.Submitted,
             "Msg.sender has not submitted claim, already clawed back claim, or claim was used to fill order"
         );
 
@@ -174,21 +193,21 @@ contract Ramp is Verifier {
         // we need to check is that the claim was not already clawed back (which is done above). Similarly, if the order was filled
         // we only need to check that the caller is not the claimer who's order was used to fill the order (also checked above).
         if (orders[_orderId].status == OrderStatus.Open) {
-            require(orderClaims[_orderId][msg.sender].claimExpirationTime < block.timestamp, "Order claim has not expired");
+            require(orderClaims[_orderId][_claimId].claimExpirationTime < block.timestamp, "Order claim has not expired");
         }
 
-        orderClaims[_orderId][msg.sender].status = ClaimStatus.Clawback;
+        orderClaims[_orderId][_claimId].status = ClaimStatus.Clawback;
         usdc.transfer(msg.sender, orders[_orderId].amountToReceive);
     }
 
     /* ============ View Functions ============ */
 
     function getClaimsForOrder(uint256 _orderId) external view returns (OrderClaim[] memory) {
-        address[] memory claimers = orders[_orderId].claimers;
+        uint256 claimNonce = orderClaimNonce[_orderId];
 
-        OrderClaim[] memory orderClaimsArray = new OrderClaim[](claimers.length);
-        for (uint256 i = 0; i < claimers.length; i++) {
-            orderClaimsArray[i] = orderClaims[_orderId][claimers[i]];
+        OrderClaim[] memory orderClaimsArray = new OrderClaim[](claimNonce);
+        for (uint256 i = 0; i < claimNonce; i++) {
+            orderClaimsArray[i] = orderClaims[_orderId][i];
         }
 
         return orderClaimsArray;
@@ -199,11 +218,7 @@ contract Ramp is Verifier {
         for (uint256 i = 1; i < orderNonce; i++) {
             ordersArray[i - 1] = OrderWithId({
                 id: i,
-                onRamper: orders[i].onRamper,
-                amountToReceive: orders[i].amountToReceive,
-                maxAmountToPay: orders[i].maxAmountToPay,
-                status: orders[i].status,
-                claimers: orders[i].claimers
+                order: orders[i]
             });
         }
 
@@ -220,28 +235,28 @@ contract Ramp is Verifier {
     )
         internal
         view
-        returns (uint256 onRamperVenmoId, uint256 offRamperVenmoId, uint256 orderId)
-    {
-        // 3 public signals are the masked packed message bytes, 17 are the modulus.
-        uint256[3][3] memory bodySignals;
-        // bodySignals[0] = onRamperVenmoId, bodySignals[1] = offRamperVenmoId, bodySignals[2] = orderId
-        for (uint256 i = 0; i < 3; i++) {
-            for (uint256 j = 0; j < 3; j++) {
-                bodySignals[i][j] = signals[i * 3 + j];
-            }
-        }
-
-        // msg_len-17 public signals are the masked message bytes, 17 are the modulus.
-        // Signals: [9:26] -> Modulus, 
-        for (uint256 i = bodyLen; i < msgLen - 1; i++) {
-            require(signals[i] == venmoMailserverKeys[i - bodyLen], "Invalid: RSA modulus not matched");
-        }
-
+        returns (uint256 offRamperVenmoId, uint256 usdAmount, uint256 orderId)
+    {   
         require(verifyProof(a, b, c, signals), "Invalid Proof"); // checks effects iteractions, this should come first
 
-        onRamperVenmoId = _stringToUint256(_convertPackedBytesToBytes(bodySignals[0], bytesInPackedBytes * 3));
-        offRamperVenmoId = _stringToUint256(_convertPackedBytesToBytes(bodySignals[1], bytesInPackedBytes * 3));
-        orderId = _stringToUint256(_convertPackedBytesToBytes(bodySignals[2], bytesInPackedBytes * 3));
+        // Signals [0] is offRamper Venmo ID
+        offRamperVenmoId = signals[0];
+
+        // Signals [1:3] are packed amount value
+        uint256[3] memory amountSignals;
+        for (uint256 i = 1; i < 4; i++) {
+            amountSignals[i - 1] = signals[i];
+        }
+        uint256 amount = _stringToUint256(_convertPackedBytesToBytes(amountSignals, bytesInPackedBytes * 3));
+        usdAmount = amount * 10 ** 6;
+
+        // Signals [4:21] are modulus.
+        for (uint256 i = 4; i < msgLen - 1; i++) {
+            require(signals[i] == venmoMailserverKeys[i - 4], "Invalid: RSA modulus not matched");
+        }
+
+        // Signals [22] is orderId
+        orderId = signals[msgLen - 1];
     }
 
     // Unpacks uint256s into bytes and then extracts the non-zero characters
