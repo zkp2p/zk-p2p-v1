@@ -50,26 +50,9 @@ describe("Ramp", function () {
         ramp = await Ramp.deploy(venmoRsaKey, fakeUSDC.address);
     });
 
-    describe("register", function () {
-        const venmoId = BigNumber.from(1234567890);
-
-        it("registers a user and their venmo id", async function () {
-            await ramp.connect(onRamper).register(venmoId);
-
-            const storedVenmoId = await ramp.userToVenmoId(onRamper.address);
-            const storedUser = await ramp.venmoIdToUser(venmoId);
-            expect(storedVenmoId).to.equal(venmoId);
-            expect(storedUser).to.equal(onRamper.address);
-        });
-    });
-
     describe("postOrder", function () {
         let amount = BigNumber.from(100000000); // $100
-        let maxAmountToPay = BigNumber.from(101000000); // $101
-
-        beforeEach(async function () {
-            await ramp.connect(onRamper).register(BigNumber.from(1234567890));
-        });
+        let maxAmountToPay = BigNumber.from(110000000); // $110
 
         it("stores an order", async function () {
             const orderId = await ramp.orderNonce();
@@ -80,7 +63,7 @@ describe("Ramp", function () {
             expect(unopenedOrder.maxAmountToPay).to.equal(ZERO);
             expect(unopenedOrder.status).to.equal(0);
 
-            await ramp.connect(onRamper).postOrder(amount, maxAmountToPay);
+            await ramp.connect(onRamper).postOrder(amount, maxAmountToPay, onRamper.address);
 
             const openOrder = await ramp.orders(orderId);
 
@@ -90,7 +73,7 @@ describe("Ramp", function () {
         });
     });
 
-    describe("claimOrder", function () {
+    describe.skip("claimOrder", function () {
         let amount = BigNumber.from(100000000); // $100
         let maxAmountToPay = BigNumber.from(101000000); // $101
         let onRamperVenmoId = BigNumber.from(1234567890);
@@ -172,7 +155,7 @@ describe("Ramp", function () {
         });
     });
 
-    describe("cancelOrder", function () {
+    describe.skip("cancelOrder", function () {
         let amount = BigNumber.from(100000000); // $100
         let maxAmountToPay = BigNumber.from(101000000); // $101
         let onRamperVenmoId = BigNumber.from(1234567890);
@@ -195,32 +178,28 @@ describe("Ramp", function () {
         });
     });
 
-    describe.only("onRamp", function () {
-        let amount = BigNumber.from(100000000); // $100
-        let maxAmountToPay = BigNumber.from(101000000); // $101
-        let onRamperVenmoId = BigNumber.from("1168869611798528966");
-        let offRamperVenmoId = BigNumber.from("645716473020416186");
-        let orderId=42;
+    describe("onRamp", function () {
+        let amount = BigNumber.from(29000000); // $29 (on ramper's perspective)
+        let maxAmountToPay = BigNumber.from(32000000); // $20 (from on-ramper's perspective)
+        let minAmountToPay = BigNumber.from(30000000); // $30 (off-ramper's bidding)
+        let claimId = BigNumber.from(0);
+        let offRamperVenmoId = BigNumber.from("14286706241468003283295067045089601281912688124398815891602745783310727407967");
+        let orderId=1;
 
-        let a = ["0x2103407ea4cf27ed53d91f0496b8f9d8a90cae070b37699c99ea9eff7a4bd273", "0x256fbf5b06f498069a1aa3cc2fefee0c4bbed862a9bfea0637ca6fb2eefb35e1"];
-        let b = [["0x293d3d189f7f3d116871b6c1e0edaa130c4b6dc23743a1eb42a130bfa180979e", "0x1e07a640032553efc0c26e21f6edaa5b6690b1c47a1e65253a95cbb4db909d1a"],["0x221107159e98eb4636f23846381a9501b53569bcbc67f8e5f90268271b3913aa", "0x235482db81b1e217d105d9535588e1de82923de69f0383dc9bed4cf6f66e356b"]];
-        let c = ["0x2675b250073123a3f820ceb634c3f1c680de66b11aa1c9506d2cff1b7170d718", "0x2e564c8158265f8a7202592c454eccd0eecc9afd0ce37a8ad63f9067424c2406"];
-        let signals = ["0x0000000000000000000000000000000000000000000000000039363838363131","0x0000000000000000000000000000000000000000000000000035383937313136","0x0000000000000000000000000000000000000000000000000000003636393832","0x0000000000000000000000000000000000000000000000000034363137353436","0x0000000000000000000000000000000000000000000000000031343032303337","0x0000000000000000000000000000000000000000000000000000000036383136","0x0000000000000000000000000000000000000000000000000000000000003234","0x0000000000000000000000000000000000000000000000000000000000000000","0x0000000000000000000000000000000000000000000000000000000000000000","0x000000000000000000000000000000000083a043f3f512cb0e9efb506011e359","0x0000000000000000000000000000000000c2e52cefcd800a155366e0207f2563","0x0000000000000000000000000000000000f3576e6387ca2c770760edd72b0fae","0x00000000000000000000000000000000019143a1fc85a71614784b98ff4b16c0","0x00000000000000000000000000000000007bbd0dfb9ef73cf08f4036e24a6b72","0x000000000000000000000000000000000119d3bd704f04dc4f74482cdc239dc7","0x0000000000000000000000000000000001d083a581190a93434412d791fa7fd1","0x000000000000000000000000000000000064350c632569b077ed7b300d3a4051","0x00000000000000000000000000000000000000000000000000a879c82b6c5e0a","0x0000000000000000000000000000000000000000000000000000000000000000","0x0000000000000000000000000000000000000000000000000000000000000000","0x0000000000000000000000000000000000000000000000000000000000000000","0x0000000000000000000000000000000000000000000000000000000000000000","0x0000000000000000000000000000000000000000000000000000000000000000","0x0000000000000000000000000000000000000000000000000000000000000000","0x0000000000000000000000000000000000000000000000000000000000000000","0x0000000000000000000000000000000000000000000000000000000000000000"];
+        let a = ["0x05f34ff4b36a95c3edd17bb02fb39a2560b282459cd91cd00a0fca2ceed8d9e2", "0x09dec8e8a3b5fc5d32496fa2b412ebe53ed2bda8046f1c47a2ad80abb7c0c70a"];
+        let b = [["0x0d7de7a45604b118248f16c79a5c78d11d30898898a428cf07b9d7bdf722baba", "0x07a3e20a8861b3fda2c4525b6b484cee4b40822451dc8db2324f1bb515d41df5"],["0x1e92254eccc0f5c3e95f8645557204302341d454c9a8d17f7f0a5bfc05e02808", "0x17c3d119796e3d9b04165ac8823f774d4855a462bfef52456ae28c2b5231f2e7"]];
+        let c = ["0x003e17fe3fe5e011c72c1e78a760e3b8b0baba5c55e296da5c0561e3a5c36586", "0x0732deb1229407fab505bc7b3313c88c0fb7cf67275267324d42f55fbde06cfa"];
+        let signals = ["0x1f95fd3aa3a0f764e2eae57d17816218da1f577ce7722e51249e2f28fa5a695f","0x0000000000000000000000000000000000000000000000000000000000003033","0x0000000000000000000000000000000000000000000000000000000000000000","0x0000000000000000000000000000000000000000000000000000000000000000","0x000000000000000000000000000000000083a043f3f512cb0e9efb506011e359","0x0000000000000000000000000000000000c2e52cefcd800a155366e0207f2563","0x0000000000000000000000000000000000f3576e6387ca2c770760edd72b0fae","0x00000000000000000000000000000000019143a1fc85a71614784b98ff4b16c0","0x00000000000000000000000000000000007bbd0dfb9ef73cf08f4036e24a6b72","0x000000000000000000000000000000000119d3bd704f04dc4f74482cdc239dc7","0x0000000000000000000000000000000001d083a581190a93434412d791fa7fd1","0x000000000000000000000000000000000064350c632569b077ed7b300d3a4051","0x00000000000000000000000000000000000000000000000000a879c82b6c5e0a","0x0000000000000000000000000000000000000000000000000000000000000000","0x0000000000000000000000000000000000000000000000000000000000000000","0x0000000000000000000000000000000000000000000000000000000000000000","0x0000000000000000000000000000000000000000000000000000000000000000","0x0000000000000000000000000000000000000000000000000000000000000000","0x0000000000000000000000000000000000000000000000000000000000000000","0x0000000000000000000000000000000000000000000000000000000000000000","0x0000000000000000000000000000000000000000000000000000000000000000","0x0000000000000000000000000000000000000000000000000000000000000001"];
+
 
         beforeEach(async function () {
-            await ramp.connect(onRamper).register(onRamperVenmoId);
-            await ramp.connect(offRamper).register(offRamperVenmoId);
-
-            for (let i = 0; i < 44; i++) {
-                await ramp.connect(onRamper).postOrder(amount, maxAmountToPay);
-            }
-
+            await ramp.connect(onRamper).postOrder(amount, maxAmountToPay, onRamper.address);
             await fakeUSDC.connect(offRamper).approve(ramp.address, amount);
-            await ramp.connect(offRamper).claimOrder(orderId);
+            await ramp.connect(offRamper).claimOrder(offRamperVenmoId, orderId, "69", minAmountToPay);
         });
 
         it("sets the order to filled", async function () {
-            await ramp.connect(onRamper).onRamp(a, b, c, signals);
+            await ramp.connect(onRamper).onRamp(a, b, c, signals, claimId);
 
             const order = await ramp.orders(orderId)
 
@@ -231,7 +210,7 @@ describe("Ramp", function () {
             const preOnRampBalance = await fakeUSDC.balanceOf(onRamper.address);
             const preRampBalance = await fakeUSDC.balanceOf(ramp.address);
 
-            await ramp.connect(onRamper).onRamp(a, b, c, signals);
+            await ramp.connect(onRamper).onRamp(a, b, c, signals, claimId);
 
             const postOnRampBalance = await fakeUSDC.balanceOf(onRamper.address);
             const postRampBalance = await fakeUSDC.balanceOf(ramp.address);
@@ -241,7 +220,7 @@ describe("Ramp", function () {
         });
     });
 
-    describe("clawback", function () {
+    describe.skip("clawback", function () {
         let amount = BigNumber.from(100000000); // $100
         let maxAmountToPay = BigNumber.from(101000000); // $101
         let onRamperVenmoId = BigNumber.from(1234567890);

@@ -235,7 +235,7 @@ contract Ramp is Verifier {
     )
         internal
         view
-        returns (uint256 offRamperVenmoId, uint256 amount, uint256 orderId)
+        returns (uint256 offRamperVenmoId, uint256 usdAmount, uint256 orderId)
     {   
         require(verifyProof(a, b, c, signals), "Invalid Proof"); // checks effects iteractions, this should come first
 
@@ -245,10 +245,11 @@ contract Ramp is Verifier {
         // Signals [1:3] are packed amount value
         uint256[3] memory amountSignals;
         for (uint256 i = 1; i < 4; i++) {
-            amountSignals[i] = signals[i + 1];
+            amountSignals[i - 1] = signals[i];
         }
-        amount = _stringToUint256(_convertPackedBytesToBytes(amountSignals, bytesInPackedBytes * 3));
-    
+        uint256 amount = _stringToUint256(_convertPackedBytesToBytes(amountSignals, bytesInPackedBytes * 3));
+        usdAmount = amount * 10 ** 6;
+
         // Signals [4:21] are modulus.
         for (uint256 i = 4; i < msgLen - 1; i++) {
             require(signals[i] == venmoMailserverKeys[i - 4], "Invalid: RSA modulus not matched");
