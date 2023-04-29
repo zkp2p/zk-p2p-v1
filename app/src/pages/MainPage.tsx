@@ -24,7 +24,6 @@ import { abi } from "../helpers/ramp.abi";
 import { contractAddresses } from "../helpers/deployed_addresses";
 import { OnRampOrder, OnRampOrderClaim } from "../helpers/types";
 
-
 enum FormState {
   DEFAULT = "DEFAULT",
   NEW = "NEW",
@@ -61,7 +60,6 @@ export const MainPage: React.FC<{}> = (props) => {
   // fetched on-chain state
   const [fetchedOrders, setFetchedOrders] = useState<OnRampOrder[]>([]);
   const [fetchedOrderClaims, setFetchedOrderClaims] = useState<OnRampOrderClaim[]>([]);
-
 
   const { chain } = useNetwork()
   console.log("Chain: ", chain);
@@ -152,8 +150,8 @@ export const MainPage: React.FC<{}> = (props) => {
     functionName: 'postOrder',
     args: [
       formatAmountsForTransactionParameter(newOrderAmount),
-      formatAmountsForTransactionParameter(newOrderAmount)  // TODO: Replace when new contract is deployed
-      // newOrderVenmoIdEncryptingKey                       // TODO: Update when new contract is deployed
+      formatAmountsForTransactionParameter(newOrderAmount)                // TODO: Replace when new contract is deployed
+      // newOrderVenmoIdEncryptingKey                                     // TODO: Update when new contract is deployed
     ],
     onError: (error: { message: any }) => {
       console.error(error.message);
@@ -213,6 +211,7 @@ export const MainPage: React.FC<{}> = (props) => {
       ...reformatProofForChain(submitOrderProof),
       submitOrderPublicSignals ? JSON.parse(submitOrderPublicSignals) : null
       // selectedOrder.id                                                 // TODO: Update when new contract is deployed
+      // selectedOrderClaim.id                                            // TODO: Update when new contract is deployed
     ],
     onError: (error: { message: any }) => {
       console.error(error.message);
@@ -347,6 +346,7 @@ export const MainPage: React.FC<{}> = (props) => {
     } else {
       setActionState(FormState.CLAIM);
     }
+    // setActionState(FormState.UPDATE);
 
     setSelectedOrderClaim({} as OnRampOrderClaim);
     setSelectedOrder(orderToSelect);

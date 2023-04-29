@@ -12,7 +12,7 @@ import { insert13Before10 } from "../scripts/generate_input";
 import { inputBuffer } from "../helpers/inputBuffer";
 import { packedNBytesToString } from "../helpers/binaryFormat";
 
-const generate_inputs = require("../scripts/generate_input");
+const generate_input = require("../scripts/generate_input");
 
 
 interface SubmitOrderGenerateProofFormProps {
@@ -68,7 +68,7 @@ export const SubmitOrderGenerateProofForm: React.FC<SubmitOrderGenerateProofForm
   // computed state
   const { value, error } = useAsync(async () => {
     try {
-      const circuitInputs = await generate_inputs(Buffer.from(atob(emailFull)), "1235"); // TODO order ID
+      const circuitInputs = await generate_input.generate_inputs(Buffer.from(atob(emailFull)), "1235"); // TODO: selected order ID
       return circuitInputs;
     } catch (e) {
       return {};
@@ -121,6 +121,7 @@ export const SubmitOrderGenerateProofForm: React.FC<SubmitOrderGenerateProofForm
             setStatus("generating-input");
 
             const formattedArray = await insert13Before10(Uint8Array.from(Buffer.from(emailFull)));
+
             // Due to a quirk in carriage return parsing in JS, we need to manually edit carriage returns to match DKIM parsing
             console.log("formattedArray", formattedArray);
             console.log("buffFormArray", Buffer.from(formattedArray.buffer));
@@ -128,7 +129,7 @@ export const SubmitOrderGenerateProofForm: React.FC<SubmitOrderGenerateProofForm
 
             let input = "";
             try {
-              input = await generate_inputs(Buffer.from(formattedArray.buffer));
+              input = await generate_input.generate_inputs(Buffer.from(formattedArray.buffer), "12345"); // TODO: selected order id
             } catch (e) {
               console.log("Error generating input", e);
               setDisplayMessage("Prove");
@@ -144,6 +145,7 @@ export const SubmitOrderGenerateProofForm: React.FC<SubmitOrderGenerateProofForm
             /*
               Download proving files
             */
+            console.time("zk-dl");
             recordTimeForActivity("startedDownloading");
             setDisplayMessage("Downloading compressed proving files... (this may take a few minutes)");
             setStatus("downloading-proof-files");
@@ -181,12 +183,12 @@ export const SubmitOrderGenerateProofForm: React.FC<SubmitOrderGenerateProofForm
             let soln = packedNBytesToString(kek.slice(0, 12));
             let soln2 = packedNBytesToString(kek.slice(12, 147));
             let soln3 = packedNBytesToString(kek.slice(147, 150));
-            setPublicSignals(`From: ${soln}\nTo: ${soln2}\nUsername: ${soln3}`);
+            // setPublicSignals(`From: ${soln}\nTo: ${soln2}\nUsername: ${soln3}`);
             
             /*
-            Set public signals
+              Set public signals
             */
-           setPublicSignals(JSON.stringify(publicSignals));
+           setPublicSignals(JSON.stringify(publicSignals)); // 
            setSubmitOrderPublicSignals(JSON.stringify(publicSignals));
 
             if (!circuitInputs) {
