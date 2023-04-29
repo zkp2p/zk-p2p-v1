@@ -6,7 +6,7 @@ import { Button } from "../components/Button";
 import { Col, SubHeader } from "../components/Layout";
 import { NumberedStep } from "../components/NumberedStep";
 import { SingleLineInput } from "../components/SingleLineInput";
-import { generateAccountFromSignature, getPublicKeyFromAccount } from '../helpers/accountHash';
+import { generateAccountFromSignature, getPublicKeyFromAccount } from '../helpers/messagEncryption';
 
 
 interface NewOrderFormProps {

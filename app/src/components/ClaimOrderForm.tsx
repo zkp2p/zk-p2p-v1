@@ -7,8 +7,8 @@ import { NumberedStep } from "../components/NumberedStep";
 import { ReadOnlyInput } from "../components/ReadOnlyInput";
 import { SingleLineInput } from "../components/SingleLineInput";
 
-import { encryptMessage } from "../helpers/accountHash";
-import { initializePoseidon, poseidon } from "../helpers/poseidonHash";
+import { encryptMessage } from "../helpers/messagEncryption";
+import { generateVenmoIdHash } from "../helpers/venmoHash";
 
 
 interface ClaimOrderFormProps {
@@ -83,10 +83,10 @@ export const ClaimOrderForm: React.FC<ClaimOrderFormProps> = ({
           setEncryptedVenmoHandle(encryptedVenmoId);
           console.log(encryptedVenmoId);
 
-          // Generate Poseidon hash of the venmo id
-          await initializePoseidon();
-          const hashedVenmoId = poseidon([venmoIdInput]);
+          // Generate hash of the venmo id
+          const hashedVenmoId = await generateVenmoIdHash(venmoIdInput);
           setHashedVenmoHandle(hashedVenmoId);
+          console.log(hashedVenmoId);
 
           // Set the requested USD amount
           setRequestedUSDAmount(requestedUSDAmountInput);

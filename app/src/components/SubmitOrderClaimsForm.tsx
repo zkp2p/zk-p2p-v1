@@ -6,7 +6,7 @@ import { Col, SubHeader } from "./Layout";
 import { CustomTable } from './CustomTable';
 
 import { OnRampOrderClaim } from "../helpers/types";
-import { decryptMessageWithAccount } from '../helpers/accountHash';
+import { decryptMessageWithAccount } from '../helpers/messagEncryption';
 
 
 interface SubmitOrderClaimsFormProps {
