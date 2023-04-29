@@ -103,133 +103,138 @@ export const SubmitOrderGenerateProofForm: React.FC<SubmitOrderGenerateProofForm
   console.log("Circuit inputs:", circuitInputs);
 
   return (
-    <SubmitOrderGenerateProofFormContainer>
+    <SubmitOrderGenerateProofFormHeaderContainer>
       <SubHeader>Generate Proof</SubHeader>
-      <LabeledTextArea
-        label="Full Email with Headers"
-        value={emailFull}
-        onChange={(e) => {
-            setEmailFull(e.currentTarget.value);
-        }}
-        />
-      <ButtonContainer>
-        <Button
-          disabled={emailFull.length === 0}           // TODO: Add back in no selected order claim id check
-          onClick={async () => {
-            console.log("Generating proof...");
-            setDisplayMessage("Generating proof...");
-            setStatus("generating-input");
-
-            const formattedArray = await insert13Before10(Uint8Array.from(Buffer.from(emailFull)));
-
-            // Due to a quirk in carriage return parsing in JS, we need to manually edit carriage returns to match DKIM parsing
-            console.log("formattedArray", formattedArray);
-            console.log("buffFormArray", Buffer.from(formattedArray.buffer));
-            console.log("buffFormArray", formattedArray.toString());
-
-            let input = "";
-            try {
-              input = await generate_input.generate_inputs(Buffer.from(formattedArray.buffer), "12345"); // TODO: selected order id
-            } catch (e) {
-              console.log("Error generating input", e);
-              setDisplayMessage("Prove");
-              setStatus("error-bad-input");
-              return;
-            }
-            console.log("Generated input:", JSON.stringify(input));
-
-            // Insert input structuring code here
-            // const input = buildInput(pubkey, msghash, sig);
-            // console.log(JSON.stringify(input, (k, v) => (typeof v == "bigint" ? v.toString() : v), 2));
-
-            /*
-              Download proving files
-            */
-            console.time("zk-dl");
-            recordTimeForActivity("startedDownloading");
-            setDisplayMessage("Downloading compressed proving files... (this may take a few minutes)");
-            setStatus("downloading-proof-files");
-            await downloadProofFiles(filename, () => {
-              setDownloadProgress((p) => p + 1);
-            });
-            console.timeEnd("zk-dl");
-            recordTimeForActivity("finishedDownloading");
-
-            /*
-              Generate proof
-            */
-            console.time("zk-gen");
-            recordTimeForActivity("startedProving");
-            setDisplayMessage("Starting proof generation... (this will take 6-10 minutes and ~5GB RAM)");
-            setStatus("generating-proof");
-            console.log("Starting proof generation");
-            // alert("Generating proof, will fail due to input");
-
-            const { proof, publicSignals } = await generateProof(input, "circuit"); 
-            console.log("Finished proof generation");
-            console.timeEnd("zk-gen");
-            recordTimeForActivity("finishedProving");
-
-            /*
-              Set proof
-            */
-            setProof(JSON.stringify(proof));
-            setSubmitOrderProof(JSON.stringify(proof));
-
-            /*
-              Retrieve public signals
-            */
-            let kek = publicSignals.map((x: string) => BigInt(x));
-            let soln = packedNBytesToString(kek.slice(0, 12));
-            let soln2 = packedNBytesToString(kek.slice(12, 147));
-            let soln3 = packedNBytesToString(kek.slice(147, 150));
-            // setPublicSignals(`From: ${soln}\nTo: ${soln2}\nUsername: ${soln3}`);
-            
-            /*
-              Set public signals
-            */
-           setPublicSignals(JSON.stringify(publicSignals)); // 
-           setSubmitOrderPublicSignals(JSON.stringify(publicSignals));
-
-            if (!circuitInputs) {
-              setStatus("error-failed-to-prove");
-              return;
-            }
-            setDisplayMessage("Finished computing ZK proof");
-            setStatus("done");
-            try {
-              (window as any).cJson = JSON.stringify(circuitInputs);
-              console.log("wrote circuit input to window.cJson. Run copy(cJson)");
-            } catch (e) {
-              console.error(e);
-            }
+      <SubmitOrderGenerateProofFormBodyContainer>
+        <LabeledTextArea
+          label="Full Email with Headers"
+          value={emailFull}
+          onChange={(e) => {
+              setEmailFull(e.currentTarget.value);
           }}
-        >
-          {displayMessage}
-        </Button>
-      </ButtonContainer>
-      {displayMessage === "Downloading compressed proving files... (this may take a few minutes)" && (
-          <ProgressBar width={downloadProgress * 10} label={`${downloadProgress} / 10 items`} />
-        )}
-        <ProcessStatus status={status}>
-          {status !== "not-started" ? (
-            <div>
-              Status:
-              <span data-testid={"status-" + status}>{status}</span>
-            </div>
-          ) : (
-            <div data-testid={"status-" + status}></div>
+          />
+        <ButtonContainer>
+          <Button
+            disabled={emailFull.length === 0}           // TODO: Add back in no selected order claim id check
+            onClick={async () => {
+              console.log("Generating proof...");
+              setDisplayMessage("Generating proof...");
+              setStatus("generating-input");
+
+              const formattedArray = await insert13Before10(Uint8Array.from(Buffer.from(emailFull)));
+
+              // Due to a quirk in carriage return parsing in JS, we need to manually edit carriage returns to match DKIM parsing
+              console.log("formattedArray", formattedArray);
+              console.log("buffFormArray", Buffer.from(formattedArray.buffer));
+              console.log("buffFormArray", formattedArray.toString());
+
+              let input = "";
+              try {
+                input = await generate_input.generate_inputs(Buffer.from(formattedArray.buffer), "12345"); // TODO: selected order id
+              } catch (e) {
+                console.log("Error generating input", e);
+                setDisplayMessage("Prove");
+                setStatus("error-bad-input");
+                return;
+              }
+              console.log("Generated input:", JSON.stringify(input));
+
+              // Insert input structuring code here
+              // const input = buildInput(pubkey, msghash, sig);
+              // console.log(JSON.stringify(input, (k, v) => (typeof v == "bigint" ? v.toString() : v), 2));
+
+              /*
+                Download proving files
+              */
+              console.time("zk-dl");
+              recordTimeForActivity("startedDownloading");
+              setDisplayMessage("Downloading compressed proving files... (this may take a few minutes)");
+              setStatus("downloading-proof-files");
+              await downloadProofFiles(filename, () => {
+                setDownloadProgress((p) => p + 1);
+              });
+              console.timeEnd("zk-dl");
+              recordTimeForActivity("finishedDownloading");
+
+              /*
+                Generate proof
+              */
+              console.time("zk-gen");
+              recordTimeForActivity("startedProving");
+              setDisplayMessage("Starting proof generation... (this will take 6-10 minutes and ~5GB RAM)");
+              setStatus("generating-proof");
+              console.log("Starting proof generation");
+              // alert("Generating proof, will fail due to input");
+
+              const { proof, publicSignals } = await generateProof(input, "circuit"); 
+              console.log("Finished proof generation");
+              console.timeEnd("zk-gen");
+              recordTimeForActivity("finishedProving");
+
+              /*
+                Set proof
+              */
+              setProof(JSON.stringify(proof));
+              setSubmitOrderProof(JSON.stringify(proof));
+
+              /*
+                Retrieve public signals
+              */
+              let kek = publicSignals.map((x: string) => BigInt(x));
+              let soln = packedNBytesToString(kek.slice(0, 12));
+              let soln2 = packedNBytesToString(kek.slice(12, 147));
+              let soln3 = packedNBytesToString(kek.slice(147, 150));
+              // setPublicSignals(`From: ${soln}\nTo: ${soln2}\nUsername: ${soln3}`);
+              
+              /*
+                Set public signals
+              */
+            setPublicSignals(JSON.stringify(publicSignals)); // 
+            setSubmitOrderPublicSignals(JSON.stringify(publicSignals));
+
+              if (!circuitInputs) {
+                setStatus("error-failed-to-prove");
+                return;
+              }
+              setDisplayMessage("Finished computing ZK proof");
+              setStatus("done");
+              try {
+                (window as any).cJson = JSON.stringify(circuitInputs);
+                console.log("wrote circuit input to window.cJson. Run copy(cJson)");
+              } catch (e) {
+                console.error(e);
+              }
+            }}
+          >
+            {displayMessage}
+          </Button>
+        </ButtonContainer>
+        {displayMessage === "Downloading compressed proving files... (this may take a few minutes)" && (
+            <ProgressBar width={downloadProgress * 10} label={`${downloadProgress} / 10 items`} />
           )}
-          <TimerDisplay timers={stopwatch} />
-        </ProcessStatus>
-    </SubmitOrderGenerateProofFormContainer>
+          <ProcessStatus status={status}>
+            {status !== "not-started" ? (
+              <div>
+                Status:
+                <span data-testid={"status-" + status}>{status}</span>
+              </div>
+            ) : (
+              <div data-testid={"status-" + status}></div>
+            )}
+            <TimerDisplay timers={stopwatch} />
+          </ProcessStatus>
+      </SubmitOrderGenerateProofFormBodyContainer>
+    </SubmitOrderGenerateProofFormHeaderContainer>
   );
 };
 
-const SubmitOrderGenerateProofFormContainer = styled(Col)`
+const SubmitOrderGenerateProofFormHeaderContainer = styled.div`
   width: 100%;
   gap: 1rem;
-  align-self: flex-start;
+`;
+
+const SubmitOrderGenerateProofFormBodyContainer = styled(Col)`
+  gap: 2rem;
 `;
 
 const ProcessStatus = styled.div<{ status: string }>`

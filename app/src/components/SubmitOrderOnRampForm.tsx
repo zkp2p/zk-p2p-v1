@@ -24,37 +24,42 @@ export const SubmitOrderOnRampForm: React.FC<SubmitOrderOnRampFormProps> = ({
   isWriteCompleteOrderLoading
 }) => {
   return (
-    <SubmitOrderOnRampFormContainer>
+    <SubmitOrderOnRampFormHeaderContainer>
       <SubHeader>Submit Proof</SubHeader>
-      <LabeledTextArea
-        label="Proof Output"
-        value={proof}
-        onChange={(e) => {
-          setSubmitOrderProof(e.currentTarget.value);
-        }}
-      />
-      <LabeledTextArea
-        label="Public Signals"
-        value={publicSignals}
-        secret
-        onChange={(e) => {
-          setSubmitOrderPublicSignals(e.currentTarget.value);
-        }}
-      />
-      <Button
-        disabled={proof.length === 0 || publicSignals.length === 0 || isWriteCompleteOrderLoading}
-        onClick={async () => {
-          writeCompleteOrder?.();
-        }}
-      >
-        Submit and Claim
-      </Button>
-    </SubmitOrderOnRampFormContainer>
+      <SubmitOrderOnRampFormBodyContainer>
+        <LabeledTextArea
+          label="Proof Output"
+          value={proof}
+          onChange={(e) => {
+            setSubmitOrderProof(e.currentTarget.value);
+          }}
+        />
+        <LabeledTextArea
+          label="Public Signals"
+          value={publicSignals}
+          secret
+          onChange={(e) => {
+            setSubmitOrderPublicSignals(e.currentTarget.value);
+          }}
+        />
+        <Button
+          disabled={proof.length === 0 || publicSignals.length === 0 || isWriteCompleteOrderLoading}
+          onClick={async () => {
+            writeCompleteOrder?.();
+          }}
+        >
+          Submit and Claim
+        </Button>
+      </SubmitOrderOnRampFormBodyContainer>
+    </SubmitOrderOnRampFormHeaderContainer>
   );
 };
 
-const SubmitOrderOnRampFormContainer = styled(Col)`
+const SubmitOrderOnRampFormHeaderContainer = styled.div`
   width: 100%;
   gap: 1rem;
-  align-self: flex-start;
+`;
+
+const SubmitOrderOnRampFormBodyContainer = styled(Col)`
+  gap: 2rem;
 `;

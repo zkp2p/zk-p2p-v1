@@ -79,31 +79,36 @@ export const SubmitOrderClaimsForm: React.FC<SubmitOrderClaimsFormProps> = ({
   }
 
   return (
-    <SubmitOrderClaimsFormContainer>
+    <SubmitOrderClaimsFormHeaderContainer>
       <SubHeader>Select Claim</SubHeader>
-      <CustomTable
-        headers={tableHeaders}
-        data={tableData}
-        onRowClick={async(rowData: any[]) => {
-          const [rowIndex] = rowData;
-          const orderClaimToSelect = orderClaims[rowIndex];
-          setSelectedOrderClaim(orderClaimToSelect);
-        }}
-        selectedRow={getIndexForSelectedClaim(currentlySelectedOrderClaim)}
-        rowsPerPage={3}
-      />
-      <Button
-        disabled={false}
-        onClick={toggleVenmoIds}
-        >
-        {venmoIdsVisible ? 'Hide Venmo Handles' : 'Decrypt Venmo Handles'}
-      </Button>
-    </SubmitOrderClaimsFormContainer>
+      <SubmitOrderClaimsFormBodyContainer>
+        <CustomTable
+          headers={tableHeaders}
+          data={tableData}
+          onRowClick={async(rowData: any[]) => {
+            const [rowIndex] = rowData;
+            const orderClaimToSelect = orderClaims[rowIndex];
+            setSelectedOrderClaim(orderClaimToSelect);
+          }}
+          selectedRow={getIndexForSelectedClaim(currentlySelectedOrderClaim)}
+          rowsPerPage={3}
+        />
+        <Button
+          disabled={false}
+          onClick={toggleVenmoIds}
+          >
+          {venmoIdsVisible ? 'Hide Venmo Handles' : 'Decrypt Venmo Handles'}
+        </Button>
+      </SubmitOrderClaimsFormBodyContainer>
+    </SubmitOrderClaimsFormHeaderContainer>
   );
 };
 
-const SubmitOrderClaimsFormContainer = styled(Col)`
+const SubmitOrderClaimsFormHeaderContainer = styled.div`
   width: 100%;
   gap: 1rem;
-  align-self: flex-start;
+`;
+
+const SubmitOrderClaimsFormBodyContainer = styled(Col)`
+  gap: 2rem;
 `;

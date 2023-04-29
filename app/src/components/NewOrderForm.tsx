@@ -51,43 +51,53 @@ export const NewOrderForm: React.FC<NewOrderFormProps> = ({
   }, [accountHashKey, loggedInWalletAddress]);
 
   return (
-    <NewOrderFormContainer>
+    <NewOrderFormHeaderContainer>
       <SubHeader>New Order</SubHeader>
-      <NumberedStep step={1}>
-        Specify an amount to on-ramp
-      </NumberedStep>
-      <NumberedStep step={2}>
-        If this is your first time or if you are on a new browser, you'll be prompted to sign a message to encrypt Venmo handles
-      </NumberedStep>
-      <hr />
-      <SingleLineInput
-        label="Amount (USDC)"
-        value={newOrderAmount}
-        placeholder={'0'}
-        onChange={(e) => {
-          setNewOrderAmount(e.currentTarget.value);
-        }}
-      />
-      <Button
-        disabled={isWriteNewOrderLoading}
-        onClick={async () => {
-          if (accountHash === "") {
-            await signMessage();
-          } else {
-            const publicKey = getPublicKeyFromAccount(accountHash);
-            setVenmoIdEncryptingKey(publicKey);
-            writeNewOrder?.();
-          }
-        }}
-        >
-        Create
-      </Button>
-    </NewOrderFormContainer>
+      <NewOrderFormBodyContainer>
+        <NumberedInputContainer>
+          <NumberedStep step={1}>
+            Specify an amount to on-ramp
+          </NumberedStep>
+          <NumberedStep step={2}>
+            If this is your first time or if you are on a new browser, you'll be prompted to sign a message to encrypt Venmo handles
+          </NumberedStep>
+        </NumberedInputContainer>
+        <SingleLineInput
+          label="Amount (USDC)"
+          value={newOrderAmount}
+          placeholder={'0'}
+          onChange={(e) => {
+            setNewOrderAmount(e.currentTarget.value);
+          }}
+        />
+        <Button
+          disabled={isWriteNewOrderLoading}
+          onClick={async () => {
+            if (accountHash === "") {
+              await signMessage();
+            } else {
+              const publicKey = getPublicKeyFromAccount(accountHash);
+              setVenmoIdEncryptingKey(publicKey);
+              writeNewOrder?.();
+            }
+          }}
+          >
+          Create
+        </Button>
+      </NewOrderFormBodyContainer>
+    </NewOrderFormHeaderContainer>
   );
 };
 
-const NewOrderFormContainer = styled(Col)`
+const NewOrderFormHeaderContainer = styled.div`
   width: 100%;
   gap: 1rem;
-  align-self: flex-start;
+`;
+
+const NewOrderFormBodyContainer = styled(Col)`
+  gap: 2rem;
+`;
+
+const NumberedInputContainer = styled(Col)`
+  gap: 1rem;
 `;
