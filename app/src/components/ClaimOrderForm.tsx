@@ -2,13 +2,13 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 
 import { Button } from "../components/Button";
-import { Col, Row } from "../components/Layout";
+import { Col, SubHeader } from "../components/Layout";
 import { NumberedStep } from "../components/NumberedStep";
 import { ReadOnlyInput } from "../components/ReadOnlyInput";
 import { SingleLineInput } from "../components/SingleLineInput";
 
-import { encryptMessage } from "../helpers/accountHash";
-import { initializePoseidon, poseidon } from "../helpers/poseidonHash";
+import { encryptMessage } from "../helpers/messagEncryption";
+import { generateVenmoIdHash } from "../helpers/venmoHash";
 
 
 interface ClaimOrderFormProps {
@@ -36,66 +36,69 @@ export const ClaimOrderForm: React.FC<ClaimOrderFormProps> = ({
   const [requestedUSDAmountInput, setRequestedUSDAmountInput] = useState<number>(0);
 
   return (
-    <ClaimOrderFormContainer>
-      <SelectedOrderContainer>
-        <ReadOnlyInput
-          label="Order Creator"
-          value={senderAddressDisplay}
+    <ClaimOrderFormHeaderContainer>
+      <SubHeader>Claim Order</SubHeader>
+      <ClaimOrderBodyContainer>
+        <SelectedOrderContainer>
+          <ReadOnlyInput
+            label="Order Creator"
+            value={senderAddressDisplay}
+          />
+          <ReadOnlyInput
+            label="Amount (USDC)"
+            value={senderRequestedAmountDisplay}
+          />
+        </SelectedOrderContainer>
+        <NumberedInputContainer>
+          <NumberedStep step={1}>
+            Provide a Venmo Handle to receive USD at. This will be encrypted using the key provided by the on-ramper
+          </NumberedStep>
+          <NumberedStep step={2}>
+            Specify the USD amount for the user to send. This amount will be sent by the on-ramper through Venmo
+          </NumberedStep>
+          <NumberedStep step={3}>
+            Submit a claim on the order on-chain. This will lock {senderRequestedAmountDisplay} USDC for the user to claim with a proof
+          </NumberedStep>
+        </NumberedInputContainer>
+        <SingleLineInput
+          label="Venmo ID"
+          value={venmoIdInput}
+          placeholder={'1234567891011121314'}
+          onChange={(e) => {
+            setVenmoIdInput(e.currentTarget.value);
+          }}
         />
-        <ReadOnlyInput
-          label="Amount (USDC)"
-          value={senderRequestedAmountDisplay}
+        <SingleLineInput
+          label="USD Amount to send"
+          value={requestedUSDAmountInput}
+          placeholder={'0'}
+          onChange={(e) => {
+            setRequestedUSDAmountInput(e.currentTarget.value);
+          }}
         />
-      </SelectedOrderContainer>
-      <hr />
-      <NumberedStep step={1}>
-        Provide a Venmo Handle to receive USD at. This will be encrypted using the key provided by the on-ramper
-      </NumberedStep>
-      <NumberedStep step={2}>
-        Specify the USD amount for the user to send. This amount will be sent by the on-ramper through Venmo
-      </NumberedStep>
-      <NumberedStep step={3}>
-        Submit a claim on the order on-chain. This will lock {senderRequestedAmountDisplay} USDC for the user to claim with a proof
-      </NumberedStep>
-      <hr />
-      <SingleLineInput
-        label="Venmo ID"
-        value={venmoIdInput}
-        placeholder={'1234567891011121314'}
-        onChange={(e) => {
-          setVenmoIdInput(e.currentTarget.value);
-        }}
-      />
-      <SingleLineInput
-        label="USD Amount to send"
-        value={requestedUSDAmountInput}
-        placeholder={'0'}
-        onChange={(e) => {
-          setRequestedUSDAmountInput(e.currentTarget.value);
-        }}
-      />
-      <Button
-        disabled={isWriteClaimOrderLoading}
-        onClick={async () => {
-          // Sign venmo id with encrypting key from the order
-          const encryptedVenmoId = await encryptMessage(venmoIdInput, senderEncryptingKey);
-          setEncryptedVenmoHandle(encryptedVenmoId);
-          console.log(encryptedVenmoId);
+        <Button
+          disabled={isWriteClaimOrderLoading}
+          onClick={async () => {
+            // Sign venmo id with encrypting key from the order
+            const encryptedVenmoId = await encryptMessage(venmoIdInput, senderEncryptingKey);
+            setEncryptedVenmoHandle(encryptedVenmoId);
+            console.log(encryptedVenmoId);
 
-          // Generate Poseidon hash of the venmo id
-          await initializePoseidon();
-          const hashedVenmoId = poseidon([venmoIdInput]);
-          setHashedVenmoHandle(hashedVenmoId);
+            // Generate hash of the venmo id
+            const hashedVenmoId = await generateVenmoIdHash(venmoIdInput);
+            setHashedVenmoHandle(hashedVenmoId);
+            console.log(hashedVenmoId);
 
-          // Set the requested USD amount
-          setRequestedUSDAmount(requestedUSDAmountInput);
+            // Set the requested USD amount
+            setRequestedUSDAmount(requestedUSDAmountInput);
 
-          writeClaimOrder?.();
-        }}
-        >
-        ClaimOrder
-      </Button>
-    </ClaimOrderFormContainer>
+            writeClaimOrder?.();
+          }}
+          >
+          ClaimOrder
+        </Button>
+      </ClaimOrderBodyContainer>
+    </ClaimOrderFormHeaderContainer>
   );
 };
 
@@ -107,8 +110,14 @@ const SelectedOrderContainer = styled(Col)`
   color: #fff;
 `;
 
-const ClaimOrderFormContainer = styled(Col)`
-  width: 100%;
+const ClaimOrderFormHeaderContainer = styled.div`
   gap: 1rem;
-  align-self: flex-start;
+`;
+
+const ClaimOrderBodyContainer = styled(Col)`
+  gap: 2rem;
+`;
+
+const NumberedInputContainer = styled(Col)`
+  gap: 1rem;
 `;
