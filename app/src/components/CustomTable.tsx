@@ -27,7 +27,9 @@ export const CustomTable: React.FC<CustomTableProps> = ({ headers, data, onRowCl
         <thead>
           <tr>
             {headers.map((header, index) => (
-              <TableHeader key={index}>{header}</TableHeader>
+              <TableHeader key={index}>
+                {header
+              }</TableHeader>
             ))}
           </tr>
         </thead>
@@ -42,9 +44,15 @@ export const CustomTable: React.FC<CustomTableProps> = ({ headers, data, onRowCl
         </tbody>
       </StyledTable>
       <PaginationContainer>
-        <PaginationButton disabled={currentPage === 0} onClick={() => handleChangePage(currentPage - 1)}>Previous</PaginationButton>
-        <PageInfo>{currentPage + 1} of {totalPages}</PageInfo>
-        <PaginationButton disabled={currentPage === totalPages - 1} onClick={() => handleChangePage(currentPage + 1)}>Next</PaginationButton>
+        <PaginationButton disabled={currentPage === 0} onClick={() => handleChangePage(currentPage - 1)}>
+          &#8249;
+        </PaginationButton>
+        <PageInfo>
+          {currentPage + 1} of {totalPages}
+        </PageInfo>
+        <PaginationButton disabled={currentPage === totalPages - 1} onClick={() => handleChangePage(currentPage + 1)}>
+          &#8250;
+        </PaginationButton>
       </PaginationContainer>
     </TableContainer>
   );
@@ -92,7 +100,7 @@ const TableCell = styled.td`
 
 const PaginationContainer = styled.div`
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
   padding: 16px;
 `;
@@ -101,6 +109,7 @@ const PaginationButton = styled.button`
   background-color: rgba(0, 0, 0, 0.5);
   color: white;
   padding: 8px 16px;
+  margin: 0 16px;
   border: none;
   border-radius: 4px;
   cursor: pointer;
