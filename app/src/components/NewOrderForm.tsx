@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import { useSignMessage } from 'wagmi'
 
 import { Button } from "../components/Button";
-import { Col } from "../components/Layout";
+import { Col, SubHeader } from "../components/Layout";
 import { NumberedStep } from "../components/NumberedStep";
 import { SingleLineInput } from "../components/SingleLineInput";
 import { generateAccountFromSignature, getPublicKeyFromAccount } from '../helpers/accountHash';
@@ -52,6 +52,7 @@ export const NewOrderForm: React.FC<NewOrderFormProps> = ({
 
   return (
     <NewOrderFormContainer>
+      <SubHeader>New Order</SubHeader>
       <NumberedStep step={1}>
         Specify an amount to on-ramp
       </NumberedStep>

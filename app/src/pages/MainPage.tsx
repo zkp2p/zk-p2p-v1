@@ -1,26 +1,16 @@
 // @ts-ignore
 import React, { useEffect, useState } from "react";
-import { useAsync, useMount, useUpdateEffect } from "react-use";
+import { useMount } from "react-use";
 
 // @ts-ignore
-import { generate_inputs, insert13Before10 } from "../scripts/generate_input";
 import styled from "styled-components";
-// import { CSSProperties } from "styled-components";
-// import { sshSignatureToPubKey } from "../helpers/sshFormat";
-// import { getIdFromHandle } from "../helpers/handleToVId";
-import { getHandleFromId } from "../helpers/handleToVId";
-// import { Link, useSearchParams } from "react-router-dom";
-// import { dkimVerify } from "../helpers/dkim";
-import atob from "atob";
-import { downloadProofFiles, generateProof, verifyProof } from "../helpers/zkp";
-// import { packedNBytesToString } from "../helpers/binaryFormat";
-import { LabeledTextArea } from "../components/LabeledTextArea";
-import { ReadOnlyInput } from "../components/ReadOnlyInput";
 import { NewOrderForm } from "../components/NewOrderForm";
 import { ClaimOrderForm } from "../components/ClaimOrderForm";
+import { SubmitOrderClaimsForm } from "../components/SubmitOrderClaimsForm";
+import { SubmitOrderGenerateProofForm } from "../components/SubmitOrderGenerateProofForm";
+import { SubmitOrderOnRampForm } from "../components/SubmitOrderOnRampForm";
 import { Button } from "../components/Button";
-import { Col, Row } from "../components/Layout";
-// import { NumberedStep } from "../components/NumberedStep";
+import { Header, SubHeader } from "../components/Layout";
 import { TopBanner } from "../components/TopBanner";
 import { CustomTable } from '../components/CustomTable';
 import {
@@ -29,17 +19,11 @@ import {
   useContractRead, 
   useNetwork, 
   usePrepareContractWrite,
-  useSignMessage
 } from "wagmi";
-import { ProgressBar } from "../components/ProgressBar";
 import { abi } from "../helpers/ramp.abi";
-// import { inputBuffer } from "../helpers/inputBuffer";
-// import { isSetIterator } from "util/types";
 import { contractAddresses } from "../helpers/deployed_addresses";
+import { OnRampOrder, OnRampOrderClaim } from "../helpers/types";
 
-var Buffer = require("buffer/").Buffer; // note: the trailing slash is important!
-
-// const generate_input = require("../scripts/generate_input");
 
 enum FormState {
   DEFAULT = "DEFAULT",
@@ -48,106 +32,39 @@ enum FormState {
   UPDATE = "UPDATE",
 }
 
-enum OrderStatus {
-  UNOPENED = "unopened",
-  OPEN = "open",
-  FILLED = "filled",
-  CANCELLED = "cancelled",
-}
-
-interface OnRampOrder {
-  orderId: number;
-  sender: string;
-  amount: number;
-  maxAmount: number; // Removed when updated contract goes live
-  status: OrderStatus;
-  encryptingKey: string;
-}
-
-enum OrderClaimStatus {
-  UNSUBMITTED = "unsubmitted",
-  SUBMITTED = "submitted",
-  USED = "used",
-  CLAWBACK = "clawback"
-}
-
-interface OnRampOrderClaim {
-  venmoId: string;
-  status: OrderClaimStatus;
-  expirationTimestamp: number;
-}
 
 export const MainPage: React.FC<{}> = (props) => {
-  // raw user inputs
-  const filename = "circuit";
-
   /*
     App State
   */
 
-  // const [emailSignals, setEmailSignals] = useState<string>("");
-  const [publicSignals, setPublicSignals] = useState<string>(localStorage.publicSignals || "");
-  const [displayMessage, setDisplayMessage] = useState<string>("Generate Proof");
-  // const [emailHeader, setEmailHeader] = useState<string>("");
   const { address } = useAccount();
   const [ethereumAddress, setEthereumAddress] = useState<string>(address ?? "");
-  
-  const [verificationMessage] = useState("");
-  const [verificationPassed] = useState(false);
-  // const [lastAction, setLastAction] = useState<"" | "sign" | "verify" | "send">("");
   const [showBrowserWarning, setShowBrowserWarning] = useState<boolean>(false);
-  const [downloadProgress, setDownloadProgress] = useState<number>(0);
   
-  // ----- new state -----
-  // const [lastAction, setLastAction] = useState<"" | "new" | "create" | "claim" | "cancel" | "complete" | "sign">("");
+  // ----- application state -----
+  const [actionState, setActionState] = useState<FormState>(FormState.DEFAULT);
+  const [selectedOrder, setSelectedOrder] = useState<OnRampOrder>({} as OnRampOrder);
+  const [selectedOrderClaim, setSelectedOrderClaim] = useState<OnRampOrderClaim >({} as OnRampOrderClaim);
+  
+  // ----- transaction state -----
   const [newOrderAmount, setNewOrderAmount] = useState<number>(0);
   const [newOrderVenmoIdEncryptingKey, setNewOrderVenmoIdEncryptingKey] = useState<string>('');
 
   const [claimOrderEncryptedVenmoHandle, setClaimOrderEncryptedVenmoHandle] = useState<string>('');
   const [claimOrderHashedVenmoHandle, setClaimOrderHashedVenmoHandle] = useState<string>('');
   const [claimOrderRequestedAmount, setClaimOrderRequestedAmount] = useState<number>(0);
-  
-  const [actionState, setActionState] = useState<FormState>(FormState.DEFAULT);
-  const [selectedOrder, setSelectedOrder] = useState<OnRampOrder>({} as OnRampOrder);
-  const [selectedOrderClaim, setSelectedOrderClaim] = useState<OnRampOrderClaim >({} as OnRampOrderClaim);
-  const [emailFull, setEmailFull] = useState<string>(localStorage.emailFull || "");
-  const [proof, setProof] = useState<string>(localStorage.proof || "");
 
-  // ----- temporary hackathon state -----
-  const [inputProof, setInputProof] = useState<string>(localStorage.inputProof || "");
-  const [inputPublicSignals, setInputPublicSignals] = useState<string>(localStorage.publicSignals || "");
+  const [submitOrderPublicSignals, setSubmitOrderPublicSignals] = useState<string>('');
+  const [submitOrderProof, setSubmitOrderProof] = useState<string>('');
   
-  // fetched state
-  const [orders, setOrders] = useState<OnRampOrder[]>([]);
-  const [orderClaims, setOrderClaims] = useState<OnRampOrderClaim[]>([]);
+  // fetched on-chain state
+  const [fetchedOrders, setFetchedOrders] = useState<OnRampOrder[]>([]);
+  const [fetchedOrderClaims, setFetchedOrderClaims] = useState<OnRampOrderClaim[]>([]);
 
-  // computed state
-  const { value, error } = useAsync(async () => {
-    try {
-      const circuitInputs = await generate_inputs(Buffer.from(atob(emailFull)), "1235"); // TODO order ID
-      return circuitInputs;
-    } catch (e) {
-      return {};
-    }
-  }, [emailFull, ethereumAddress]);
 
   const { chain } = useNetwork()
   console.log("Chain: ", chain);
-
-  const circuitInputs = value || {};
-  console.log("Circuit inputs:", circuitInputs);
-
-  function formattedExpiration(unixTimestamp: number): string {
-    const currentTimestamp = Math.floor(Date.now() / 1000);
-  
-    if (currentTimestamp > unixTimestamp) {
-      return "Expired";
-    } else {
-      const date = new Date(unixTimestamp * 1000);
-      const formattedDate = date.toLocaleString();
-      return formattedDate;
-    }
-  }
 
   const getOrderStatusString = (order: OnRampOrder) => {
     switch (Number(order.status)) {
@@ -172,40 +89,18 @@ export const MainPage: React.FC<{}> = (props) => {
     return adjustedAmount;
   };
 
-  // table state
+  // order table state
   const orderTableHeaders = ['Sender', 'Token Amount', 'Max', 'Status'];
-  const orderTableData = orders.map((order) => [
+  const orderTableData = fetchedOrders.map((order) => [
     formatAddressForTable(order.sender),
     formatAmountsForUSDC(order.amount),
     formatAmountsForUSDC(order.maxAmount),
     getOrderStatusString(order),
   ]);
 
-  const orderClaimsTableHeaders = ['Taker', 'Venmo Handle', 'Expiration'];
-  const orderClaimsTableData = orderClaims.map((orderClaim) => [
-    formatAddressForTable(contractAddresses["goerli"]["ramp"]),
-    getHandleFromId(orderClaim.venmoId),
-    formattedExpiration(orderClaim.expirationTimestamp),
-  ]);
-
   /*
     Misc Helpers
   */
-
-  let formHeaderText;
-  switch (actionState) {
-    case FormState.NEW: // Maker creates a new order
-      formHeaderText = "New Order";
-      break;
-    case FormState.CLAIM: // Taker selects an order to claim it
-      formHeaderText = "Claim Order";
-      break;
-    case FormState.UPDATE: // Maker selects their order to cancel or complete it
-      formHeaderText = "Complete or Cancel Order";
-      break;
-    default: // Form loads with no order selected
-      formHeaderText = "Create or Select an Order";
-  }
 
   function formatAddressForTable(addressToFormat: string) {
     if (addressToFormat === address) {
@@ -215,10 +110,6 @@ export const MainPage: React.FC<{}> = (props) => {
       const suffix = addressToFormat.substring(addressToFormat.length - 4);
       return `${prefix}...${suffix}`;
     }
-  }
-
-  function getIndexForSelectedClaim(claim: OnRampOrderClaim): number {
-    return orderClaims.findIndex((orderClaim) => orderClaim.venmoId === claim.venmoId);
   }
 
   /*
@@ -319,8 +210,9 @@ export const MainPage: React.FC<{}> = (props) => {
     contractInterface: abi,
     functionName: 'onRamp',
     args: [
-      ...reformatProofForChain(proof),
-      publicSignals ? JSON.parse(publicSignals) : null
+      ...reformatProofForChain(submitOrderProof),
+      submitOrderPublicSignals ? JSON.parse(submitOrderPublicSignals) : null
+      // selectedOrder.id                                                 // TODO: Update when new contract is deployed
     ],
     onError: (error: { message: any }) => {
       console.error(error.message);
@@ -338,16 +230,10 @@ export const MainPage: React.FC<{}> = (props) => {
 
   // Fetch Orders
   useEffect(() => {
-    console.log('Attempting to set orders...');
-
     if (!isReadAllOrdersLoading && !isReadAllOrdersError && allOrders) {
-      // console.log('Fetched orders...');
-      
       const sanitizedOrders: OnRampOrder[] = [];
       for (let i = 0; i < allOrders.length; i++) {
         const orderContractData = allOrders[i];
-
-        // console.log('Fetched order data:', orderContractData);
 
         const orderId = orderContractData[0];
         const sender = orderContractData[1];
@@ -368,18 +254,14 @@ export const MainPage: React.FC<{}> = (props) => {
         sanitizedOrders.push(order);
       }
 
-      setOrders(sanitizedOrders);
+      setFetchedOrders(sanitizedOrders);
     }
   }, [allOrders, isReadAllOrdersLoading, isReadAllOrdersError]);
 
   useEffect(() => {
-    console.log('Refetching orders... 1');
-
     const intervalId = setInterval(() => {
-      console.log('Refetching orders...2');
-
       refetchAllOrders();
-    }, 10000); // Refetch every 10 seconds
+    }, 1000000); // Refetch every 1000 seconds
 
     return () => {
       clearInterval(intervalId);
@@ -389,38 +271,39 @@ export const MainPage: React.FC<{}> = (props) => {
   // Fetch Order Claims
   useEffect(() => {
     if (!isReadOrderClaimsLoading && !isReadOrderClaimsError && orderClaimsData) {
-      // console.log('Fetched order claims');
-      
       const sanitizedOrderClaims: OnRampOrderClaim[] = [];
       for (let i = 0; i < orderClaimsData.length; i++) {
         const claimsData = orderClaimsData[i];
 
-        // console.log('Fetched order claim data:', claimsData);
-
         const venmoId = claimsData[0].toString();
         const status = claimsData[1];
         const expirationTimestamp = claimsData[2].toString();
+
+        const requestedAmount = 10;
+        const encryptedVenmoHandle = "ffbe561f64308242b6a9ba573c3cdf5e02de60494c23a4b56668ab40db4bf1ba82d49c6d1af289abfb58eaaeb1826096c2ba1025fbce9c14fda51789d01e0c9c393d5e9b0bcb75fd530434b3c963ff8466a811c686cdd7531bf2c551b8fcab3af34b839f95d500abe83879abf42f9d4918";
+        const hashedVenmoHandle = "0x24506DC1918183960Ac04dB859EB293B115952af";
         
         const orderClaim: OnRampOrderClaim = {
           venmoId,
           status,
-          expirationTimestamp
+          expirationTimestamp,
+          requestedAmount,
+          encryptedVenmoHandle,
+          hashedVenmoHandle
         };
 
         sanitizedOrderClaims.push(orderClaim);
       }
 
-      setOrderClaims(sanitizedOrderClaims);
+      setFetchedOrderClaims(sanitizedOrderClaims);
     }
   }, [orderClaimsData, isReadOrderClaimsLoading, isReadOrderClaimsError]);
 
   useEffect(() => {
     if (selectedOrder) {
       const intervalId = setInterval(() => {
-        // console.log('Refetching order claims...');
-
         refetchClaimedOrders();
-      }, 10000); // Refetch every 10 seconds
+      }, 1000000); // Refetch every 1000 seconds
   
       return () => {
         clearInterval(intervalId);
@@ -443,43 +326,6 @@ export const MainPage: React.FC<{}> = (props) => {
       setEthereumAddress("");
     }
   }, [address]);
-  const [status, setStatus] = useState<
-    | "not-started"
-    | "generating-input"
-    | "downloading-proof-files"
-    | "generating-proof"
-    | "error-bad-input"
-    | "error-failed-to-download"
-    | "error-failed-to-prove"
-    | "done"
-    | "sending-on-chain"
-    | "sent"
-  >("not-started");
-  // const [zkeyStatus, setzkeyStatus] = useState<Record<string, string>>({
-  //   a: "not started",
-  //   b: "not started",
-  //   c: "not started",
-  //   d: "not started",
-  //   e: "not started",
-  //   f: "not started",
-  //   g: "not started",
-  //   h: "not started",
-  //   i: "not started",
-  //   k: "not started",
-  // });
-  const [stopwatch, setStopwatch] = useState<Record<string, number>>({
-    startedDownloading: 0,
-    finishedDownloading: 0,
-    startedProving: 0,
-    finishedProving: 0,
-  });
-
-  const recordTimeForActivity = (activity: string) => {
-    setStopwatch((prev) => ({
-      ...prev,
-      [activity]: Date.now(),
-    }));
-  };
 
   /*
     Additional Listeners
@@ -492,33 +338,9 @@ export const MainPage: React.FC<{}> = (props) => {
     return () => window.removeEventListener("keydown", handleKeyDown);
   });
 
-  // local storage stuff
-  useUpdateEffect(() => {
-    if (value) {
-      if (localStorage.emailFull !== emailFull) {
-        console.info("Wrote email to localStorage");
-        localStorage.emailFull = emailFull;
-      }
-    }
-    if (proof) {
-      if (localStorage.proof !== proof) {
-        console.info("Wrote proof to localStorage");
-        localStorage.proof = proof;
-      }
-    }
-    if (publicSignals) {
-      if (localStorage.publicSignals !== publicSignals) {
-        console.info("Wrote publicSignals to localStorage");
-        localStorage.publicSignals = publicSignals;
-      }
-    }
-  }, [value]);
-
-  if (error) console.error(error);
-
   const handleOrderRowClick = (rowData: any[]) => {
     const [rowIndex] = rowData;
-    const orderToSelect = orders[rowIndex];
+    const orderToSelect = fetchedOrders[rowIndex];
 
     if (orderToSelect.sender === address) {
       setActionState(FormState.UPDATE);
@@ -526,21 +348,8 @@ export const MainPage: React.FC<{}> = (props) => {
       setActionState(FormState.CLAIM);
     }
 
-    console.log("Printing selected order id:")
-    console.log(orderToSelect.orderId.toString());
-
     setSelectedOrderClaim({} as OnRampOrderClaim);
     setSelectedOrder(orderToSelect);
-  };
-
-  const handleOrderClaimRowClick = (rowData: any[]) => {
-    const [rowIndex] = rowData;
-    const orderClaimToSelect = orderClaims[rowIndex];
-
-    // This does nothing for now, we are recording the selected row to pass the order id into proving
-    console.log("Selected order claim: ", orderClaimToSelect)
-
-    setSelectedOrderClaim(orderClaimToSelect);
   };
 
   /*
@@ -573,290 +382,92 @@ export const MainPage: React.FC<{}> = (props) => {
             New Order
           </Button>
         </Column>
-        <Column>
-          <SubHeader>{formHeaderText}</SubHeader>
+        <Wrapper>
           {actionState === FormState.NEW && (
-            <NewOrderForm
-              loggedInWalletAddress={ethereumAddress}
-              newOrderAmount={newOrderAmount}
-              setNewOrderAmount={setNewOrderAmount}
-              setVenmoIdEncryptingKey={setNewOrderVenmoIdEncryptingKey}
-              writeNewOrder={writeNewOrder}
-              isWriteNewOrderLoading={isWriteNewOrderLoading}
-            />
+            <Column>
+              <NewOrderForm
+                loggedInWalletAddress={ethereumAddress}
+                newOrderAmount={newOrderAmount}
+                setNewOrderAmount={setNewOrderAmount}
+                setVenmoIdEncryptingKey={setNewOrderVenmoIdEncryptingKey}
+                writeNewOrder={writeNewOrder}
+                isWriteNewOrderLoading={isWriteNewOrderLoading}
+              />
+            </Column>
           )}
           {actionState === FormState.CLAIM && (
-            <ClaimOrderForm
-              senderEncryptingKey={selectedOrder.encryptingKey}
-              senderAddressDisplay={selectedOrder.sender}
-              senderRequestedAmountDisplay={formatAmountsForUSDC(selectedOrder.amount)}
-              setRequestedUSDAmount={setClaimOrderRequestedAmount}
-              setEncryptedVenmoHandle={setClaimOrderEncryptedVenmoHandle}
-              setHashedVenmoHandle={setClaimOrderHashedVenmoHandle}
-              writeClaimOrder={writeClaimOrder}
-              isWriteClaimOrderLoading={isWriteClaimOrderLoading}
-            />
+            <Column>
+              <ClaimOrderForm
+                senderEncryptingKey={selectedOrder.encryptingKey}
+                senderAddressDisplay={selectedOrder.sender}
+                senderRequestedAmountDisplay={formatAmountsForUSDC(selectedOrder.amount)}
+                setRequestedUSDAmount={setClaimOrderRequestedAmount}
+                setEncryptedVenmoHandle={setClaimOrderEncryptedVenmoHandle}
+                setHashedVenmoHandle={setClaimOrderHashedVenmoHandle}
+                writeClaimOrder={writeClaimOrder}
+                isWriteClaimOrderLoading={isWriteClaimOrderLoading}
+              />
+            </Column>
           )}
           {actionState === FormState.UPDATE && (
             <ConditionalContainer>
-              <ReadOnlyInput
-                label="Amount (USDC)"
-                value={formatAmountsForUSDC(selectedOrder.amount)}
-              />
-              <H3>
-                Select Claim and Complete
-              </H3>
-              <CustomTable
-                headers={orderClaimsTableHeaders}
-                data={orderClaimsTableData}
-                onRowClick={handleOrderClaimRowClick}
-                selectedRow={getIndexForSelectedClaim(selectedOrderClaim)}
-                rowsPerPage={3}
-              />
-              <LabeledTextArea
-                label="Full Email with Headers"
-                value={emailFull}
-                onChange={(e) => {
-                  setEmailFull(e.currentTarget.value);
-                }}
-              />
-              <H3>
-                Proof
-              </H3>
-              <LabeledTextArea
-                label="Proof Output"
-                value={inputProof}
-                onChange={(e) => {
-                  // setProof(e.currentTarget.value);
-                  setInputProof(e.currentTarget.value);
-                }}
-                warning={verificationMessage}
-                warningColor={verificationPassed ? "green" : "red"}
-              />
-              <LabeledTextArea
-                label="Public Signals"
-                value={inputPublicSignals}
-                secret
-                onChange={(e) => {
-                  // setPublicSignals(e.currentTarget.value);
-                  setInputPublicSignals(e.currentTarget.value);
-                }}
-                // warning={
-                // }
-              />
-              <ButtonContainer>
-                <Button
-                  // disabled={emailFull.length === 0 || !selectedOrderClaim}
-                  onClick={async () => {
-                    console.log("Generating proof...");
-                    setDisplayMessage("Generating proof...");
-                    setStatus("generating-input");
-
-                    const formattedArray = await insert13Before10(Uint8Array.from(Buffer.from(emailFull)));
-                    // Due to a quirk in carriage return parsing in JS, we need to manually edit carriage returns to match DKIM parsing
-                    console.log("formattedArray", formattedArray);
-                    console.log("buffFormArray", Buffer.from(formattedArray.buffer));
-                    console.log("buffFormArray", formattedArray.toString());
-
-                    let input = null;
-                    try {
-                      input = await generate_inputs(Buffer.from(formattedArray.buffer), "1235"); // TODO order ID
-                      // input = inputBuffer
-                      // input = ""
-                    } catch (e) {
-                      console.log("Error generating input", e);
-                      setDisplayMessage("Prove");
-                      setStatus("error-bad-input");
-                      return;
-                    }
-                    console.log("Generated input:", JSON.stringify(input));
-
-                    // Insert input structuring code here
-                    // const input = buildInput(pubkey, msghash, sig);
-                    // console.log(JSON.stringify(input, (k, v) => (typeof v == "bigint" ? v.toString() : v), 2));
-
-                    /*
-                      Download proving files
-                    */
-                    console.time("zk-dl");
-                    recordTimeForActivity("startedDownloading");
-                    setDisplayMessage("Downloading compressed proving files... (this may take a few minutes)");
-                    setStatus("downloading-proof-files");
-                    await downloadProofFiles(filename, () => {
-                      setDownloadProgress((p) => p + 1);
-                    });
-                    console.timeEnd("zk-dl");
-                    recordTimeForActivity("finishedDownloading");
-
-                    /*
-                      Generate proof
-                    */
-                    console.time("zk-gen");
-                    recordTimeForActivity("startedProving");
-                    setDisplayMessage("Starting proof generation... (this will take 6-10 minutes and ~5GB RAM)");
-                    setStatus("generating-proof");
-                    console.log("Starting proof generation");
-                    // alert("Generating proof, will fail due to input");
-
-                    const { proof, publicSignals } = await generateProof(input, "circuit"); 
-                    // const proof = JSON.parse(`{"pi_a":["11085549688134726611150668540316880174659412339988080564703955228381423383254","10764560936774569561507953473055258281269875641315110458189885027430599227931","1"],"pi_b":[["1652351732733835594290426025273481121922973119332515211203377506562979313179","3331499860590706998327509944446821922577464202175999797314203077137501408618"],["5458914108714346890570069128843899252513570499415944280659595267796268262091","16984180778412929730507913588139847520925451119909239694733069369857547223112"],["1","0"]],"pi_c":["10563739695688687522984101191441695778164716170984181738506960046076767863468","19062263244482863555090591167988832524860354662683990422026033566204064004079","1"],"protocol":"groth16"}`);
-                    // const publicSignals = JSON.parse(`["16103688761651505","14979992155926838","232837953586","14696283796485174","13849655463916343","909652278","12852","0","0","683441457792668103047675496834917209","1011953822609495209329257792734700899","1263501452160533074361275552572837806","2083482795601873989011209904125056704","642486996853901942772546774764252018","1463330014555221455251438998802111943","2411895850618892594706497264082911185","520305634984671803945830034917965905","47421696716332554","0","0","0","0","0","0","0","0"]`);            
-
-                    // const proof = JSON.parse(inputProof);
-                    // const publicSignals = JSON.parse(inputPublicSignals);
-
-                    console.log("Finished proof generation");
-                    console.timeEnd("zk-gen");
-                    recordTimeForActivity("finishedProving");
-
-                    /*
-                      Retrieve public signals
-                    */
-
-                    // alert("Done generating proof");
-                    setProof(JSON.stringify(proof));
-                    // let kek = publicSignals.map((x: string) => BigInt(x));
-                    // let soln = packedNBytesToString(kek.slice(0, 12));
-                    // let soln2 = packedNBytesToString(kek.slice(12, 147));
-                    // let soln3 = packedNBytesToString(kek.slice(147, 150));
-                    // setPublicSignals(`From: ${soln}\nTo: ${soln2}\nUsername: ${soln3}`);
-                    setPublicSignals(JSON.stringify(publicSignals));
-
-                    if (!circuitInputs) {
-                      setStatus("error-failed-to-prove");
-                      return;
-                    }
-                    setDisplayMessage("Finished computing ZK proof");
-                    setStatus("done");
-                    try {
-                      (window as any).cJson = JSON.stringify(circuitInputs);
-                      console.log("wrote circuit input to window.cJson. Run copy(cJson)");
-                    } catch (e) {
-                      console.error(e);
-                    }
-                  }}
-                  style={{ marginRight: "16px" }}
-                >
-                  {displayMessage}
-                </Button>
-                <Button
-                  disabled={proof.length === 0 || publicSignals.length === 0 || isWriteCompleteOrderLoading}
-                  onClick={async () => {
-
-                    console.log(proof);
-                    console.log(publicSignals);
-
-                    console.log(...reformatProofForChain(proof));
-                    console.log(publicSignals ? JSON.parse(publicSignals) : null);
-
-                    writeCompleteOrder?.();
-                  }}
-                >
-                  Submit Proof and Claim
-                </Button>
-              </ButtonContainer>
-              {displayMessage === "Downloading compressed proving files... (this may take a few minutes)" && (
-                  <ProgressBar width={downloadProgress * 10} label={`${downloadProgress} / 10 items`} />
-                )}
-                <ProcessStatus status={status}>
-                  {status !== "not-started" ? (
-                    <div>
-                      Status:
-                      <span data-testid={"status-" + status}>{status}</span>
-                    </div>
-                  ) : (
-                    <div data-testid={"status-" + status}></div>
-                  )}
-                  <TimerDisplay timers={stopwatch} />
-                </ProcessStatus>
+              <Column>
+                <SubmitOrderClaimsForm
+                  loggedInWalletAddress={ethereumAddress}
+                  orderClaims={fetchedOrderClaims}
+                  currentlySelectedOrderClaim={selectedOrderClaim}
+                  setSelectedOrderClaim={setSelectedOrderClaim}
+                />
+              </Column>
+              <Column>
+                <SubmitOrderGenerateProofForm
+                  loggedInWalletAddress={ethereumAddress}
+                  setSubmitOrderProof={setSubmitOrderProof}
+                  setSubmitOrderPublicSignals={setSubmitOrderPublicSignals}
+                />
+              </Column>
+              <Column>
+                <SubmitOrderOnRampForm
+                  proof={submitOrderProof}
+                  publicSignals={submitOrderPublicSignals}
+                  setSubmitOrderProof={setSubmitOrderProof}
+                  setSubmitOrderPublicSignals={setSubmitOrderPublicSignals}
+                  writeCompleteOrder={writeCompleteOrder}
+                  isWriteCompleteOrderLoading={isWriteCompleteOrderLoading}
+                />
+              </Column>
             </ConditionalContainer>
           )}
-        </Column>
+        </Wrapper>
       </Main>
     </Container>
   );
 };
 
-const ProcessStatus = styled.div<{ status: string }>`
-  font-size: 8px;
-  padding: 8px;
-  border-radius: 8px;
-`;
-
-const ButtonContainer = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between; // Adjust the space between the buttons
-`;
-
-const TimerDisplayContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  font-size: 8px;
-`;
-
-const TimerDisplay = ({ timers }: { timers: Record<string, number> }) => {
-  return (
-    <TimerDisplayContainer>
-      {timers["startedDownloading"] && timers["finishedDownloading"] ? (
-        <div>
-          Zkey Download time:&nbsp;
-          <span data-testid="download-time">{timers["finishedDownloading"] - timers["startedDownloading"]}</span>ms
-        </div>
-      ) : (
-        <div></div>
-      )}
-      {timers["startedProving"] && timers["finishedProving"] ? (
-        <div>
-          Proof generation time:&nbsp;
-          <span data-testid="proof-time">{timers["finishedProving"] - timers["startedProving"]}</span>ms
-        </div>
-      ) : (
-        <div></div>
-      )}
-    </TimerDisplayContainer>
-  );
-};
-
-const Header = styled.span`
-  font-weight: 600;
-  margin-bottom: 1em;
-  color: #fff;
-  font-size: 2.25rem;
-  line-height: 2.5rem;
-  letter-spacing: -0.02em;
-`;
-
-const ConditionalContainer = styled(Col)`
-  width: 100%;
+const ConditionalContainer = styled.div`
+  display: grid;
   gap: 1rem;
   align-self: flex-start;
 `;
 
-const SubHeader = styled(Header)`
-  font-size: 1.7em;
-  margin-bottom: 16px;
-  color: rgba(255, 255, 255, 0.9);
+const Main = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
 `;
 
-const H3 = styled(SubHeader)`
-  font-size: 1.4em;
-  margin-bottom: -8px;
-`;
-
-const Main = styled(Row)`
-  width: 100%;
-  gap: 1rem;
-`;
-
-const Column = styled(Col)`
-  width: 100%;
+const Column = styled.div`
   gap: 1rem;
   align-self: flex-start;
   background: rgba(255, 255, 255, 0.1);
   padding: 1.5rem;
   border-radius: 4px;
   border: 1px solid rgba(255, 255, 255, 0.2);
+`;
+
+const Wrapper = styled.div`
+  gap: 1rem;
+  align-self: flex-start;
 `;
 
 const Container = styled.div`

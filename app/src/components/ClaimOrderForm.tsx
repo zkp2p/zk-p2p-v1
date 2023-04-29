@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 
 import { Button } from "../components/Button";
-import { Col, Row } from "../components/Layout";
+import { Col, SubHeader } from "../components/Layout";
 import { NumberedStep } from "../components/NumberedStep";
 import { ReadOnlyInput } from "../components/ReadOnlyInput";
 import { SingleLineInput } from "../components/SingleLineInput";
@@ -37,6 +37,7 @@ export const ClaimOrderForm: React.FC<ClaimOrderFormProps> = ({
 
   return (
     <ClaimOrderFormContainer>
+      <SubHeader>Claim Order</SubHeader>
       <SelectedOrderContainer>
         <ReadOnlyInput
           label="Order Creator"
