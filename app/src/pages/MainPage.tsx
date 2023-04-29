@@ -20,6 +20,7 @@ import {
   useNetwork, 
   usePrepareContractWrite,
 } from "wagmi";
+// import { abi } from "../helpers/ramp_legacy.abi";
 import { abi } from "../helpers/ramp.abi";
 import { contractAddresses } from "../helpers/deployed_addresses";
 import { OnRampOrder, OnRampOrderClaim } from "../helpers/types";
@@ -50,8 +51,8 @@ export const MainPage: React.FC<{}> = (props) => {
   const [newOrderAmount, setNewOrderAmount] = useState<number>(0);
   const [newOrderVenmoIdEncryptingKey, setNewOrderVenmoIdEncryptingKey] = useState<string>('');
 
-  const [claimOrderEncryptedVenmoHandle, setClaimOrderEncryptedVenmoHandle] = useState<string>('');
-  const [claimOrderHashedVenmoHandle, setClaimOrderHashedVenmoHandle] = useState<string>('');
+  const [claimOrderEncryptedVenmoId, setClaimOrderEncryptedVenmoId] = useState<string>('');
+  const [claimOrderHashedVenmoHandle, setClaimOrderHashedVenmoId] = useState<string>('');
   const [claimOrderRequestedAmount, setClaimOrderRequestedAmount] = useState<number>(0);
 
   const [submitOrderPublicSignals, setSubmitOrderPublicSignals] = useState<string>('');
@@ -90,9 +91,9 @@ export const MainPage: React.FC<{}> = (props) => {
   // order table state
   const orderTableHeaders = ['Sender', 'Token Amount', 'Max', 'Status'];
   const orderTableData = fetchedOrders.map((order) => [
-    formatAddressForTable(order.sender),
-    formatAmountsForUSDC(order.amount),
-    formatAmountsForUSDC(order.maxAmount),
+    formatAddressForTable(order.onRamper),
+    formatAmountsForUSDC(order.amountToReceive),
+    formatAmountsForUSDC(order.maxAmountToPay),
     getOrderStatusString(order),
   ]);
 
@@ -143,15 +144,18 @@ export const MainPage: React.FC<{}> = (props) => {
     Contract Writes
   */
 
-  // postOrder(uint256 _amount, uint256 _maxAmountToPay) external onlyRegisteredUser() 
+  //
+  // legacy: postOrder(uint256 _amount, uint256 _maxAmountToPay)
+  // new:    postOrder(uint256 _amount, uint256 _maxAmountToPay, address _encryptPublicKey)
+  //
   const { config: writeCreateOrderConfig } = usePrepareContractWrite({
     addressOrName: contractAddresses["goerli"]["ramp"],
     contractInterface: abi,
     functionName: 'postOrder',
     args: [
       formatAmountsForTransactionParameter(newOrderAmount),
-      formatAmountsForTransactionParameter(newOrderAmount)                // TODO: Replace when new contract is deployed
-      // newOrderVenmoIdEncryptingKey                                     // TODO: Update when new contract is deployed
+      formatAmountsForTransactionParameter(newOrderAmount),               // TODO: Pass in uint256
+      newOrderVenmoIdEncryptingKey
     ],
     onError: (error: { message: any }) => {
       console.error(error.message);
@@ -164,17 +168,18 @@ export const MainPage: React.FC<{}> = (props) => {
   } = useContractWrite(writeCreateOrderConfig);
 
   //
-  // claimOrder(uint256 _orderNonce) external  onlyRegisteredUser()
+  // legacy: claimOrder(uint256 _orderNonce)
+  // new:    claimOrder(uint256 _venmoId, uint256 _orderNonce, uint256 _encryptedVenmoId, uint256 _minAmountToPay)
   //
   const { config: writeClaimOrderConfig } = usePrepareContractWrite({
     addressOrName: contractAddresses["goerli"]["ramp"],
     contractInterface: abi,
     functionName: 'claimOrder',
     args: [
-      selectedOrder.orderId
-      // formatAmountsForTransactionParameter(claimOrderRequestedAmount)  // TODO: Update when new contract is deployed
-      // claimOrderEncryptedVenmoHandle,                                  // TODO: Update when new contract is deployed
-      // claimOrderHashedVenmoHandle                                      // TODO: Update when new contract is deployed
+      claimOrderHashedVenmoHandle,
+      selectedOrder.orderId,
+      claimOrderEncryptedVenmoId,
+      formatAmountsForTransactionParameter(claimOrderRequestedAmount)
 
     ],
     onError: (error: { message: any }) => {
@@ -189,7 +194,8 @@ export const MainPage: React.FC<{}> = (props) => {
 
 
   //
-  // onRamp( uint256 _orderId, uint256 _offRamper, VenmoId, bytes calldata _proof) external onlyRegisteredUser()
+  // legacy: onRamp( uint256 _orderId, uint256 _offRamper, VenmoId, bytes calldata _proof)
+  // new:    TBD
   //
   const reformatProofForChain = (proof: string) => {
     return [
@@ -235,19 +241,19 @@ export const MainPage: React.FC<{}> = (props) => {
         const orderContractData = allOrders[i];
 
         const orderId = orderContractData[0];
-        const sender = orderContractData[1];
-        const amount = orderContractData[2].toString();
-        const maxAmount = orderContractData[3].toString();
-        const status = orderContractData[4];
-        const encryptingKey = 'a19eb5cdd6b3fce15832521908e4f66817e9ea8728dde4469f517072616a590be610c8af6d616fa77806b4d3ac1176634f78cd29266b4bdae4110ac3cdeb9231';
+        const onRamper = orderContractData[1];
+        const onRamperEncryptPublicKey = orderContractData[2]; // 'a19eb5cdd6b3fce15832521908e4f66817e9ea8728dde4469f517072616a590be610c8af6d616fa77806b4d3ac1176634f78cd29266b4bdae4110ac3cdeb9231';
+        const amountToReceive = orderContractData[3].toString();
+        const maxAmountToPay = orderContractData[4].toString();
+        const status = orderContractData[5];
 
         const order: OnRampOrder = {
           orderId,
-          sender,
-          amount,
-          maxAmount,
+          onRamper,
+          onRamperEncryptPublicKey,
+          amountToReceive,
+          maxAmountToPay,
           status,
-          encryptingKey
         };
 
         sanitizedOrders.push(order);
@@ -274,21 +280,24 @@ export const MainPage: React.FC<{}> = (props) => {
       for (let i = 0; i < orderClaimsData.length; i++) {
         const claimsData = orderClaimsData[i];
 
-        const venmoId = claimsData[0].toString();
-        const status = claimsData[1];
-        const expirationTimestamp = claimsData[2].toString();
-
-        const requestedAmount = 10;
-        const encryptedVenmoHandle = "ffbe561f64308242b6a9ba573c3cdf5e02de60494c23a4b56668ab40db4bf1ba82d49c6d1af289abfb58eaaeb1826096c2ba1025fbce9c14fda51789d01e0c9c393d5e9b0bcb75fd530434b3c963ff8466a811c686cdd7531bf2c551b8fcab3af34b839f95d500abe83879abf42f9d4918";
-        const hashedVenmoHandle = "0x24506DC1918183960Ac04dB859EB293B115952af";
+        const claimId = claimsData[0];
+        const offRamper = claimsData[1];
+        // 1168869611798528966
+        const hashedVenmoId = claimsData[2]; // "13337356327024847092496142054524365451458378508942456549301307042014385930615";
+        const status = claimsData[3];
+        // 645716473020416186
+        const encryptedOffRamperVenmoId = claimsData[4]; // "ffbe561f64308242b6a9ba573c3cdf5e02de60494c23a4b56668ab40db4bf1ba82d49c6d1af289abfb58eaaeb1826096c2ba1025fbce9c14fda51789d01e0c9c393d5e9b0bcb75fd530434b3c963ff8466a811c686cdd7531bf2c551b8fcab3af34b839f95d500abe83879abf42f9d4918";
+        const claimExpirationTime = claimsData[4];
+        const minAmountToPay = claimsData[5];
         
         const orderClaim: OnRampOrderClaim = {
-          venmoId,
+          claimId,
+          offRamper,
+          hashedVenmoId,
           status,
-          expirationTimestamp,
-          requestedAmount,
-          encryptedVenmoHandle,
-          hashedVenmoHandle
+          encryptedOffRamperVenmoId,
+          claimExpirationTime,
+          minAmountToPay,
         };
 
         sanitizedOrderClaims.push(orderClaim);
@@ -341,7 +350,7 @@ export const MainPage: React.FC<{}> = (props) => {
     const [rowIndex] = rowData;
     const orderToSelect = fetchedOrders[rowIndex];
 
-    if (orderToSelect.sender === address) {
+    if (orderToSelect.onRamper === address) {
       setActionState(FormState.UPDATE);
     } else {
       setActionState(FormState.CLAIM);
@@ -398,12 +407,12 @@ export const MainPage: React.FC<{}> = (props) => {
           {actionState === FormState.CLAIM && (
             <Column>
               <ClaimOrderForm
-                senderEncryptingKey={selectedOrder.encryptingKey}
-                senderAddressDisplay={selectedOrder.sender}
-                senderRequestedAmountDisplay={formatAmountsForUSDC(selectedOrder.amount)}
+                senderEncryptingKey={selectedOrder.onRamperEncryptPublicKey}
+                senderAddressDisplay={selectedOrder.onRamper}
+                senderRequestedAmountDisplay={formatAmountsForUSDC(selectedOrder.amountToReceive)}
                 setRequestedUSDAmount={setClaimOrderRequestedAmount}
-                setEncryptedVenmoHandle={setClaimOrderEncryptedVenmoHandle}
-                setHashedVenmoHandle={setClaimOrderHashedVenmoHandle}
+                setEncryptedVenmoId={setClaimOrderEncryptedVenmoId}
+                setHashedVenmoId={setClaimOrderHashedVenmoId}
                 writeClaimOrder={writeClaimOrder}
                 isWriteClaimOrderLoading={isWriteClaimOrderLoading}
               />

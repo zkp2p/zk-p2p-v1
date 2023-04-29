@@ -4,14 +4,22 @@ export enum OrderStatus {
   FILLED = "filled",
   CANCELLED = "cancelled",
 }
+
+// struct Order {
+//   address onRamper;
+//   address onRamperEncryptPublicKey;
+//   uint256 amountToReceive;
+//   uint256 maxAmountToPay;
+//   OrderStatus status;
+// }
   
 export interface OnRampOrder {
   orderId: number;
-  sender: string;
-  amount: number;
-  maxAmount: number;                      // TODO: Remove when updated contract goes live
+  onRamper: string;
+  onRamperEncryptPublicKey: string;
+  amountToReceive: number;
+  maxAmountToPay: number;
   status: OrderStatus;
-  encryptingKey: string;
 }
 
 export enum OrderClaimStatus {
@@ -21,11 +29,21 @@ export enum OrderClaimStatus {
   CLAWBACK = "clawback"
 }
 
+// struct OrderClaim {
+//   address offRamper;
+//   uint256 venmoId;
+//   ClaimStatus status;
+//   uint256 encryptedOffRamperVenmoId;
+//   uint256 claimExpirationTime;
+//   uint256 minAmountToPay;
+// }
+
 export interface OnRampOrderClaim {
-  venmoId: string;                        // TODO: Remove when updated contract goes live
+  claimId: number;
+  offRamper: string;
+  hashedVenmoId: string;
   status: OrderClaimStatus;
-  expirationTimestamp: number;
-  requestedAmount: number;
-  encryptedVenmoHandle: string;
-  hashedVenmoHandle: string;
+  encryptedOffRamperVenmoId: string;
+  claimExpirationTime: number;
+  minAmountToPay: number;
 }

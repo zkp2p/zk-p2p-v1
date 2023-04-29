@@ -16,8 +16,8 @@ interface ClaimOrderFormProps {
   senderAddressDisplay: string;
   senderRequestedAmountDisplay: number;
   setRequestedUSDAmount: (key: number) => void;
-  setEncryptedVenmoHandle: (key: string) => void;
-  setHashedVenmoHandle: (key: string) => void;
+  setEncryptedVenmoId: (key: string) => void;
+  setHashedVenmoId: (key: string) => void;
   writeClaimOrder?: () => void;
   isWriteClaimOrderLoading: boolean;
 }
@@ -27,8 +27,8 @@ export const ClaimOrderForm: React.FC<ClaimOrderFormProps> = ({
   senderAddressDisplay,
   senderRequestedAmountDisplay,
   setRequestedUSDAmount,
-  setEncryptedVenmoHandle,
-  setHashedVenmoHandle,
+  setEncryptedVenmoId,
+  setHashedVenmoId,
   writeClaimOrder,
   isWriteClaimOrderLoading
 }) => {
@@ -81,12 +81,12 @@ export const ClaimOrderForm: React.FC<ClaimOrderFormProps> = ({
           onClick={async () => {
             // Sign venmo id with encrypting key from the order
             const encryptedVenmoId = await encryptMessage(venmoIdInput, senderEncryptingKey);
-            setEncryptedVenmoHandle(encryptedVenmoId);
+            setEncryptedVenmoId(encryptedVenmoId);
             console.log(encryptedVenmoId);
 
             // Generate hash of the venmo id
             const hashedVenmoId = await generateVenmoIdHash(venmoIdInput);
-            setHashedVenmoHandle(hashedVenmoId);
+            setHashedVenmoId(hashedVenmoId);
             console.log(hashedVenmoId);
 
             // Set the requested USD amount

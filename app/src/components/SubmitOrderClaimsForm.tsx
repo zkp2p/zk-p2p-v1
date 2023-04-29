@@ -32,8 +32,8 @@ export const SubmitOrderClaimsForm: React.FC<SubmitOrderClaimsFormProps> = ({
   const tableHeaders = ['Venmo Account', 'Requested Amount', 'Expiration'];
   const tableData = orderClaims.map((orderClaim, index) => [
     renderVenmoId(index),
-    orderClaim.requestedAmount,
-    formattedExpiration(orderClaim.expirationTimestamp),
+    orderClaim.minAmountToPay,
+    formattedExpiration(orderClaim.claimExpirationTime),
   ]);
 
   function renderVenmoId(index: number) {
@@ -58,7 +58,7 @@ export const SubmitOrderClaimsForm: React.FC<SubmitOrderClaimsFormProps> = ({
   }
 
   function getIndexForSelectedClaim(selectedClaim: OnRampOrderClaim): number {
-    return orderClaims.findIndex((orderClaim) => orderClaim.venmoId === selectedClaim.venmoId);
+    return orderClaims.findIndex((orderClaim) => orderClaim.claimId === selectedClaim.claimId);
   }
 
   useEffect(() => {
@@ -70,7 +70,7 @@ export const SubmitOrderClaimsForm: React.FC<SubmitOrderClaimsFormProps> = ({
     if (!venmoIdsVisible) {
       const decryptedIds = await Promise.all(
         orderClaims.map(async (orderClaim) => {
-          return await decryptMessageWithAccount(orderClaim.encryptedVenmoHandle, accountHash);
+          return await decryptMessageWithAccount(orderClaim.encryptedOffRamperVenmoId, accountHash);
         })
       );
       setDecryptedVenmoIds(decryptedIds);
