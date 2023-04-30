@@ -2,14 +2,16 @@ import styled from "styled-components";
 import { CenterAllDiv, Row } from "./Layout";
 
 export const NumberedStep: React.FC<{
-  step: number;
+  step?: number;
   children: React.ReactNode;
 }> = ({ step, children }) => {
   return (
     <NumberedStepContainer>
-      <NumberedStepLabel>
-        <span>{step}</span>
-      </NumberedStepLabel>
+      {step !== undefined && (
+        <NumberedStepLabel>
+          <span>{step}</span>
+        </NumberedStepLabel>
+      )}
       <NumberedStepText>{children}</NumberedStepText>
     </NumberedStepContainer>
   );
@@ -19,7 +21,7 @@ const NumberedStepContainer = styled(Row)`
   background: rgba(255, 255, 255, 0.05);
   gap: 1rem;
   border-radius: 4px;
-  padding: 12px 16px;
+  padding: 12px 24px;
   color: #fff;
 `;
 

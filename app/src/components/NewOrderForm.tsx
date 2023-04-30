@@ -34,7 +34,7 @@ export const NewOrderForm: React.FC<NewOrderFormProps> = ({
     data: signedMessageSignature,
     signMessage,
   } = useSignMessage({
-    message: 'You are signing a message that will be used to encrypt Venmo handles.',
+    message: 'You are signing a message to log into zkp2p.xyz.',
   })
 
   useEffect(() => {
@@ -54,17 +54,12 @@ export const NewOrderForm: React.FC<NewOrderFormProps> = ({
     <NewOrderFormHeaderContainer>
       <SubHeader>New Order</SubHeader>
       <NewOrderFormBodyContainer>
-        <NumberedInputContainer>
-          <NumberedStep step={1}>
-            Specify an amount to on-ramp
-          </NumberedStep>
-          <NumberedStep step={2}>
-            If this is your first time or if you are on a new browser, you'll be prompted to sign a message to encrypt Venmo handles
-          </NumberedStep>
-        </NumberedInputContainer>
+        <NumberedStep>
+          Specify an amount to on-ramp. If this is your first time or you are logged in to the same wallet from a different browser, you will be prompted to sign a message to register.
+        </NumberedStep>
         <SingleLineInput
           label="Amount (USDC)"
-          value={newOrderAmount}
+          value={newOrderAmount === 0 ? '' : newOrderAmount.toString()}
           placeholder={'0'}
           onChange={(e) => {
             setNewOrderAmount(e.currentTarget.value);
@@ -98,6 +93,3 @@ const NewOrderFormBodyContainer = styled(Col)`
   gap: 2rem;
 `;
 
-const NumberedInputContainer = styled(Col)`
-  gap: 1rem;
-`;

@@ -16,8 +16,8 @@ interface ClaimOrderFormProps {
   senderAddressDisplay: string;
   senderRequestedAmountDisplay: number;
   setRequestedUSDAmount: (key: number) => void;
-  setEncryptedVenmoHandle: (key: string) => void;
-  setHashedVenmoHandle: (key: string) => void;
+  setEncryptedVenmoId: (key: string) => void;
+  setHashedVenmoId: (key: string) => void;
   writeClaimOrder?: () => void;
   isWriteClaimOrderLoading: boolean;
 }
@@ -27,8 +27,8 @@ export const ClaimOrderForm: React.FC<ClaimOrderFormProps> = ({
   senderAddressDisplay,
   senderRequestedAmountDisplay,
   setRequestedUSDAmount,
-  setEncryptedVenmoHandle,
-  setHashedVenmoHandle,
+  setEncryptedVenmoId,
+  setHashedVenmoId,
   writeClaimOrder,
   isWriteClaimOrderLoading
 }) => {
@@ -50,43 +50,39 @@ export const ClaimOrderForm: React.FC<ClaimOrderFormProps> = ({
           />
         </SelectedOrderContainer>
         <NumberedInputContainer>
-          <NumberedStep step={1}>
-            Provide a Venmo Handle to receive USD at. This will be encrypted using the key provided by the on-ramper
-          </NumberedStep>
-          <NumberedStep step={2}>
-            Specify the USD amount for the user to send. This amount will be sent by the on-ramper through Venmo
-          </NumberedStep>
-          <NumberedStep step={3}>
-            Submit a claim on the order on-chain. This will lock {senderRequestedAmountDisplay} USDC for the user to claim with a proof
+          <NumberedStep>
+            Specify a Venmo ID to receive USD at [INSERT link to gist to retreive your Venmo ID] and a required USD amount to receive. Your Venmo ID will be encrypted using a key provided by the on-ramper. This will lock {senderRequestedAmountDisplay} fUSDC for the user to unlock with a proof.
           </NumberedStep>
         </NumberedInputContainer>
-        <SingleLineInput
-          label="Venmo ID"
-          value={venmoIdInput}
-          placeholder={'1234567891011121314'}
-          onChange={(e) => {
-            setVenmoIdInput(e.currentTarget.value);
-          }}
-        />
-        <SingleLineInput
-          label="USD Amount to send"
-          value={requestedUSDAmountInput}
-          placeholder={'0'}
-          onChange={(e) => {
-            setRequestedUSDAmountInput(e.currentTarget.value);
-          }}
-        />
+        <InputsContainer>
+          <SingleLineInput
+            label="Venmo ID"
+            value={venmoIdInput}
+            placeholder={'1234567891011121314'}
+            onChange={(e) => {
+              setVenmoIdInput(e.currentTarget.value);
+            }}
+          />
+          <SingleLineInput
+            label="USD Amount to Receive"
+            value={requestedUSDAmountInput === 0 ? '' : requestedUSDAmountInput.toString()}
+            placeholder={'0'}
+            onChange={(e) => {
+              setRequestedUSDAmountInput(e.currentTarget.value);
+            }}
+          />
+        </InputsContainer>
         <Button
           disabled={isWriteClaimOrderLoading}
           onClick={async () => {
             // Sign venmo id with encrypting key from the order
             const encryptedVenmoId = await encryptMessage(venmoIdInput, senderEncryptingKey);
-            setEncryptedVenmoHandle(encryptedVenmoId);
+            setEncryptedVenmoId(encryptedVenmoId);
             console.log(encryptedVenmoId);
 
             // Generate hash of the venmo id
             const hashedVenmoId = await generateVenmoIdHash(venmoIdInput);
-            setHashedVenmoHandle(hashedVenmoId);
+            setHashedVenmoId(hashedVenmoId);
             console.log(hashedVenmoId);
 
             // Set the requested USD amount
@@ -95,7 +91,7 @@ export const ClaimOrderForm: React.FC<ClaimOrderFormProps> = ({
             writeClaimOrder?.();
           }}
           >
-          ClaimOrder
+          Claim Order
         </Button>
       </ClaimOrderBodyContainer>
     </ClaimOrderFormHeaderContainer>
@@ -119,5 +115,9 @@ const ClaimOrderBodyContainer = styled(Col)`
 `;
 
 const NumberedInputContainer = styled(Col)`
+  gap: 1rem;
+`;
+
+const InputsContainer = styled(Col)`
   gap: 1rem;
 `;

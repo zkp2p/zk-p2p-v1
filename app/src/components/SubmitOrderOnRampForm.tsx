@@ -4,6 +4,7 @@ import styled from 'styled-components';
 import { Button } from "./Button";
 import { Col, SubHeader } from "./Layout";
 import { LabeledTextArea } from './LabeledTextArea';
+import { NumberedStep } from "../components/NumberedStep";
 
 
 interface SubmitOrderOnRampFormProps {
@@ -16,8 +17,8 @@ interface SubmitOrderOnRampFormProps {
 }
  
 export const SubmitOrderOnRampForm: React.FC<SubmitOrderOnRampFormProps> = ({
-  proof,                                  // TODO: add these to local storage by order and account id
-  publicSignals,                          // TODO: add these to local storage by order and account id
+  proof,                                                                  // TODO: add these to local storage by order and account id
+  publicSignals,                                                          // TODO: add these to local storage by order and account id
   setSubmitOrderPublicSignals,
   setSubmitOrderProof,
   writeCompleteOrder,
@@ -27,9 +28,13 @@ export const SubmitOrderOnRampForm: React.FC<SubmitOrderOnRampFormProps> = ({
     <SubmitOrderOnRampFormHeaderContainer>
       <SubHeader>Submit Proof</SubHeader>
       <SubmitOrderOnRampFormBodyContainer>
+          <NumberedStep>
+            Upon successful proof generation, both the proof and public inputs will be populated automatically. Prior to submission, select the correct order claim for the completed Venmo payment from table of claims above.
+          </NumberedStep>
         <LabeledTextArea
           label="Proof Output"
           value={proof}
+          disabled={true}
           onChange={(e) => {
             setSubmitOrderProof(e.currentTarget.value);
           }}
@@ -37,6 +42,7 @@ export const SubmitOrderOnRampForm: React.FC<SubmitOrderOnRampFormProps> = ({
         <LabeledTextArea
           label="Public Signals"
           value={publicSignals}
+          disabled={true}
           secret
           onChange={(e) => {
             setSubmitOrderPublicSignals(e.currentTarget.value);

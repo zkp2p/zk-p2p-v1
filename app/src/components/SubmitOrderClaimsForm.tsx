@@ -4,9 +4,11 @@ import styled from 'styled-components';
 import { Button } from "./Button";
 import { Col, SubHeader } from "./Layout";
 import { CustomTable } from './CustomTable';
+import { NumberedStep } from "../components/NumberedStep";
 
 import { OnRampOrderClaim } from "../helpers/types";
 import { decryptMessageWithAccount } from '../helpers/messagEncryption';
+import { formatAmountsForUSDC } from '../helpers/tableFormatters';
 
 
 interface SubmitOrderClaimsFormProps {
@@ -32,8 +34,8 @@ export const SubmitOrderClaimsForm: React.FC<SubmitOrderClaimsFormProps> = ({
   const tableHeaders = ['Venmo Account', 'Requested Amount', 'Expiration'];
   const tableData = orderClaims.map((orderClaim, index) => [
     renderVenmoId(index),
-    orderClaim.requestedAmount,
-    formattedExpiration(orderClaim.expirationTimestamp),
+    formatAmountsForUSDC(orderClaim.minAmountToPay),
+    formattedExpiration(orderClaim.claimExpirationTime),
   ]);
 
   function renderVenmoId(index: number) {
@@ -58,7 +60,7 @@ export const SubmitOrderClaimsForm: React.FC<SubmitOrderClaimsFormProps> = ({
   }
 
   function getIndexForSelectedClaim(selectedClaim: OnRampOrderClaim): number {
-    return orderClaims.findIndex((orderClaim) => orderClaim.venmoId === selectedClaim.venmoId);
+    return orderClaims.findIndex((orderClaim) => orderClaim.claimId === selectedClaim.claimId);
   }
 
   useEffect(() => {
@@ -70,7 +72,7 @@ export const SubmitOrderClaimsForm: React.FC<SubmitOrderClaimsFormProps> = ({
     if (!venmoIdsVisible) {
       const decryptedIds = await Promise.all(
         orderClaims.map(async (orderClaim) => {
-          return await decryptMessageWithAccount(orderClaim.encryptedVenmoHandle, accountHash);
+          return await decryptMessageWithAccount(orderClaim.encryptedOffRamperVenmoId, accountHash);
         })
       );
       setDecryptedVenmoIds(decryptedIds);
@@ -82,6 +84,9 @@ export const SubmitOrderClaimsForm: React.FC<SubmitOrderClaimsFormProps> = ({
     <SubmitOrderClaimsFormHeaderContainer>
       <SubHeader>Select Claim</SubHeader>
       <SubmitOrderClaimsFormBodyContainer>
+          <NumberedStep>
+            Complete one of the order claims below by sending the requested amount to the Venmo handle. Make sure you have e-mail receipts enabled on Venmo before sending the payment.
+          </NumberedStep>
         <CustomTable
           headers={tableHeaders}
           data={tableData}

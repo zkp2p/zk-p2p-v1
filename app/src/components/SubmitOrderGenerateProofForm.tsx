@@ -6,23 +6,26 @@ import { Button } from "./Button";
 import { Col, SubHeader } from "./Layout";
 import { LabeledTextArea } from './LabeledTextArea';
 import { ProgressBar } from "../components/ProgressBar";
+import { NumberedStep } from "../components/NumberedStep";
 
 import { downloadProofFiles, generateProof, verifyProof } from "../helpers/zkp";
 import { insert13Before10 } from "../scripts/generate_input";
-import { inputBuffer } from "../helpers/inputBuffer";
 import { packedNBytesToString } from "../helpers/binaryFormat";
+import { OnRampOrder } from "../helpers/types";
 
 const generate_input = require("../scripts/generate_input");
 
 
 interface SubmitOrderGenerateProofFormProps {
   loggedInWalletAddress: string;
+  selectedOrder: OnRampOrder;
   setSubmitOrderProof: (proof: string) => void;
   setSubmitOrderPublicSignals: (publicSignals: string) => void;
 }
  
 export const SubmitOrderGenerateProofForm: React.FC<SubmitOrderGenerateProofFormProps> = ({
   loggedInWalletAddress,
+  selectedOrder,
   setSubmitOrderProof,
   setSubmitOrderPublicSignals
 }) => {
@@ -68,7 +71,7 @@ export const SubmitOrderGenerateProofForm: React.FC<SubmitOrderGenerateProofForm
   // computed state
   const { value, error } = useAsync(async () => {
     try {
-      const circuitInputs = await generate_input.generate_inputs(Buffer.from(atob(emailFull)), "1235"); // TODO: selected order ID
+      const circuitInputs = await generate_input.generate_inputs(Buffer.from(atob(emailFull)), selectedOrder.orderId);
       return circuitInputs;
     } catch (e) {
       return {};
@@ -106,6 +109,9 @@ export const SubmitOrderGenerateProofForm: React.FC<SubmitOrderGenerateProofForm
     <SubmitOrderGenerateProofFormHeaderContainer>
       <SubHeader>Generate Proof</SubHeader>
       <SubmitOrderGenerateProofFormBodyContainer>
+          <NumberedStep>
+            Select 'Show original' from your confirmation email and paste the full content with headers below. When generating a proof for the first time, you will need to download proving keys. Please allot approximately 3 minutes for key downloading and 10 minutes for proof generation. Do not close your browser.
+          </NumberedStep>
         <LabeledTextArea
           label="Full Email with Headers"
           value={emailFull}
@@ -115,7 +121,7 @@ export const SubmitOrderGenerateProofForm: React.FC<SubmitOrderGenerateProofForm
           />
         <ButtonContainer>
           <Button
-            disabled={emailFull.length === 0}           // TODO: Add back in no selected order claim id check
+            disabled={emailFull.length === 0}                             // TODO: Add back in no selected order claim id check
             onClick={async () => {
               console.log("Generating proof...");
               setDisplayMessage("Generating proof...");
@@ -130,7 +136,7 @@ export const SubmitOrderGenerateProofForm: React.FC<SubmitOrderGenerateProofForm
 
               let input = "";
               try {
-                input = await generate_input.generate_inputs(Buffer.from(formattedArray.buffer), "12345"); // TODO: selected order id
+                input = await generate_input.generate_inputs(Buffer.from(formattedArray.buffer), selectedOrder.orderId);
               } catch (e) {
                 console.log("Error generating input", e);
                 setDisplayMessage("Prove");
