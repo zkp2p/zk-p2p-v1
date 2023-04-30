@@ -54,10 +54,10 @@ This is our [main circuit](./circuit/circuit.circom) written in circom and it pe
 * It extracts the venmo ID of the payee (user who was paid) from the email's body and hashes it.
 * It extracts the amount of USD transacted in the venmo email from the email's header and packs it into smaller chunks.
 * Public signals revealed by the circuit:
-    - RSA signature modulus against which the signature was checked. Is Venmo's DNS public key.
-    - Hash of the payee's Venmo ID
-    - Amount of USD paid to payee
-    - Order ID specified by the on-ramper generating the proof [To prevent frontrunning]
+    - RSA signature modulus against which the signature was checked. Is Venmo's DNS public key. [17 signals]
+    - Hash of the payee's Venmo ID [1 signal]
+    - Amount of USD paid to payee [3 signals]
+    - Order ID specified by the on-ramper generating the proof [To prevent frontrunning; 1 signal]
 
 Following table contains information about our main circuit:
 |Metric|Value|
