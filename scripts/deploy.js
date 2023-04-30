@@ -19,7 +19,7 @@ async function main() {
 
   console.log("FakeUSDC contract deployed to address:", fakeUSDC.address);
 
-  // const fakeUSDCAddress = "0xb685Bdc019DEE17D073746a88bF6a6cDDED8Ae70";
+  const fakeUSDCAddress = "0xf6426A1fdE02c3d6f10b4af107cDd7669574E74C";
   const venmoRsaKey = [
     "683441457792668103047675496834917209",
     "1011953822609495209329257792734700899",
