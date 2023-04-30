@@ -29,6 +29,7 @@ Twitter
 - Only institutional accounts have direct access to convert USDC or USDT to USD
 - Existing P2P solutions either require meeting in person (e.g., LocalBitcoins) or rely on a centralized intermediary (e.g., OTC desks)
 
+<!--
 ### High Level Flows
 
 There are 2 actors in the system: 1) off-rampers and 2) on-rampers:
@@ -54,7 +55,7 @@ There are currently 2 major flows in the protocol described below:
 5. Onramper completes request and downloads the confirmation email from Venmo. They generate a proof of the confirmation email and submit the transaction on-chain to unlock the escrow funds
 
 <img align="center" width="1715" alt="Screenshot 2023-04-02 at 1 39 16 PM" src="https://user-images.githubusercontent.com/6797244/229768914-236fdc83-76b5-4e54-925f-ae29e4ff6cd2.png">
-
+-->
 ### Usage
 This is WIP
 1. Clone the repo and run `yarn install` in both the root and `app` folders. Navigate to the app folder and run `yarn start`
