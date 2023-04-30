@@ -58,7 +58,7 @@ export const NewOrderForm: React.FC<NewOrderFormProps> = ({
           Specify an amount to on-ramp. If this is your first time or you are logged in to the same wallet from a different browser, you will be prompted to sign a message to register.
         </NumberedStep>
         <SingleLineInput
-          label="Amount (USDC)"
+          label="Amount USDC to Request"
           value={newOrderAmount === 0 ? '' : newOrderAmount.toString()}
           placeholder={'0'}
           onChange={(e) => {

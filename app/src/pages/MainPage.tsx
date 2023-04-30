@@ -74,7 +74,7 @@ export const MainPage: React.FC<{}> = (props) => {
   };
 
   // order table state
-  const orderTableHeaders = ['Sender', 'Token Amount', 'Max', 'Status'];
+  const orderTableHeaders = ['Creator', 'Token Amount', 'Max', 'Status'];
   const orderTableData = fetchedOrders.map((order) => [
     formatAddressForTable(order.onRamper),
     formatAmountsForUSDC(order.amountToReceive),
@@ -131,7 +131,7 @@ export const MainPage: React.FC<{}> = (props) => {
 
   //
   // legacy: postOrder(uint256 _amount, uint256 _maxAmountToPay)
-  // new:    postOrder(uint256 _amount, uint256 _maxAmountToPay, address _encryptPublicKey)
+  // new:    postOrder(uint256 _amount, uint256 _maxAmountToPay, bytes calldata _encryptPublicKey)
   //
   const { config: writeCreateOrderConfig } = usePrepareContractWrite({
     addressOrName: contractAddresses["goerli"]["ramp"],
@@ -140,7 +140,7 @@ export const MainPage: React.FC<{}> = (props) => {
     args: [
       formatAmountsForTransactionParameter(newOrderAmount),
       UINT256_MAX,
-      newOrderVenmoIdEncryptingKey
+      '0x' + newOrderVenmoIdEncryptingKey
     ],
     onError: (error: { message: any }) => {
       console.error(error.message);
@@ -154,7 +154,7 @@ export const MainPage: React.FC<{}> = (props) => {
 
   //
   // legacy: claimOrder(uint256 _orderNonce)
-  // new:    claimOrder(uint256 _venmoId, uint256 _orderNonce, uint256 _encryptedVenmoId, uint256 _minAmountToPay)
+  // new:    claimOrder(uint256 _venmoId, uint256 _orderNonce, bytes calldata _encryptedVenmoId, uint256 _minAmountToPay)
   //
   const { config: writeClaimOrderConfig } = usePrepareContractWrite({
     addressOrName: contractAddresses["goerli"]["ramp"],
@@ -163,7 +163,7 @@ export const MainPage: React.FC<{}> = (props) => {
     args: [
       claimOrderHashedVenmoHandle,
       selectedOrder.orderId,
-      claimOrderEncryptedVenmoId,
+      '0x' + claimOrderEncryptedVenmoId,
       formatAmountsForTransactionParameter(claimOrderRequestedAmount)
 
     ],
@@ -227,7 +227,7 @@ export const MainPage: React.FC<{}> = (props) => {
 
         const orderId = rawOrderData.id.toString();
         const onRamper = orderData.onRamper;
-        const onRamperEncryptPublicKey = orderData.onRamperEncryptPublicKey; // a19eb5cdd6b3fce15832521908e4f66817e9ea8728dde4469f517072616a590be610c8af6d616fa77806b4d3ac1176634f78cd29266b4bdae4110ac3cdeb9231
+        const onRamperEncryptPublicKey = orderData.onRamperEncryptPublicKey.substring(2);
         const amountToReceive = orderData.amountToReceive;
         const maxAmountToPay = orderData.maxAmountToPay;
         const status = orderData.status;
@@ -275,9 +275,9 @@ export const MainPage: React.FC<{}> = (props) => {
 
         const claimId = i;
         const offRamper = claimsData.offRamper.toString();
-        const hashedVenmoId = claimsData.venmoId; // 1168869611798528966 / 13337356327024847092496142054524365451458378508942456549301307042014385930615
+        const hashedVenmoId = claimsData.venmoId;
         const status = claimsData.status; 
-        const encryptedOffRamperVenmoId = claimsData.encryptedOffRamperVenmoId.toString(); // 645716473020416186 / ffbe561f64308242b6a9ba573c3cdf5e02de60494c23a4b56668ab40db4bf1ba82d49c6d1af289abfb58eaaeb1826096c2ba1025fbce9c14fda51789d01e0c9c393d5e9b0bcb75fd530434b3c963ff8466a811c686cdd7531bf2c551b8fcab3af34b839f95d500abe83879abf42f9d4918
+        const encryptedOffRamperVenmoId = claimsData.encryptedOffRamperVenmoId.substring(2);
         const claimExpirationTime = claimsData.claimExpirationTime.toString();
         const minAmountToPay = claimsData.minAmountToPay.toString();
 

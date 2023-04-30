@@ -45,13 +45,13 @@ export const ClaimOrderForm: React.FC<ClaimOrderFormProps> = ({
             value={senderAddressDisplay}
           />
           <ReadOnlyInput
-            label="Amount (USDC)"
+            label="Requested USDC Amount"
             value={senderRequestedAmountDisplay}
           />
         </SelectedOrderContainer>
         <NumberedInputContainer>
           <NumberedStep>
-            Specify a Venmo ID to receive USD at [INSERT link to gist to retreive your Venmo ID] and a required USD amount to receive. Your Venmo ID will be encrypted using a key provided by the on-ramper. This will lock {senderRequestedAmountDisplay} fUSDC for the user to unlock with a proof.
+            Specify a Venmo ID to receive USD at [INSERT link to gist to retreive your Venmo ID] and a required USD amount to receive. Your Venmo ID will be encrypted. Submitting this transaction will lock {senderRequestedAmountDisplay} fUSDC for the user to unlock with a proof of a completed Venmo transaction.
           </NumberedStep>
         </NumberedInputContainer>
         <InputsContainer>
