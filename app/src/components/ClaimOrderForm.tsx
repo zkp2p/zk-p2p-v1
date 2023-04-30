@@ -54,11 +54,14 @@ export const ClaimOrderForm: React.FC<ClaimOrderFormProps> = ({
         </SelectedOrderContainer>
         <NumberedInputContainer>
           <NumberedStep>
-            Specify a Venmo ID to receive USD at and a required USD amount to receive. Your Venmo ID will be encrypted.
-            Submitting this transaction will lock {senderRequestedAmountDisplay} fUSDC for the user to claim with a
-            proof of a completed Venmo transaction. If this is your first time, you will need to mint
-            (<StyledLink href="https://goerli.etherscan.io/address/0xf6426A1fdE02c3d6f10b4af107cDd7669574E74C">fUSDC</StyledLink>) and approve
-            spending to the ramp (<StyledLink href="https://goerli.etherscan.io/address/0x945D14a5c63769f4cf008a2994810940cc0DFd5C">smart contract</StyledLink>)
+            Specify a Venmo ID
+            (<StyledLink href="https://github.com/0xSachinK/zk-p2p-onramp/blob/main/README.md#venmo-id-instructions">instructions</StyledLink>)
+            to receive USD at and a required USD amount to receive. Your Venmo ID will be encrypted.
+            Submitting this transaction will escrow {senderRequestedAmountDisplay} fUSDC for the
+            on-ramper. If this is your first time, you will need to mint
+            <StyledLink href="https://goerli.etherscan.io/address/0xf6426A1fdE02c3d6f10b4af107cDd7669574E74C#writeContract">fUSDC</StyledLink>
+            and approve spending to the ramp
+            (<StyledLink href="https://goerli.etherscan.io/address/0x945D14a5c63769f4cf008a2994810940cc0DFd5C">smart contract</StyledLink>)
           </NumberedStep>
         </NumberedInputContainer>
         <InputsContainer>

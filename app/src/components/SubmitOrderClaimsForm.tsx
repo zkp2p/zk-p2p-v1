@@ -8,6 +8,7 @@ import { NumberedStep } from "../components/NumberedStep";
 
 import { OnRampOrderClaim } from "../helpers/types";
 import { decryptMessageWithAccount } from '../helpers/messagEncryption';
+import { generateVenmoIdHash } from "../helpers/venmoHash";
 import { formatAmountsForUSDC } from '../helpers/tableFormatters';
 
 
@@ -30,10 +31,12 @@ export const SubmitOrderClaimsForm: React.FC<SubmitOrderClaimsFormProps> = ({
 
   const [venmoIdsVisible, setVenmoIdsVisible] = useState<boolean>(false);
   const [decryptedVenmoIds, setDecryptedVenmoIds] = useState<string[]>([]);
+  const [hashedVenmoIds, setHashedVenmoIds] = useState<string[]>([]);
 
-  const tableHeaders = ['Venmo Account', 'Requested USD Amount', 'Expiration'];
+  const tableHeaders = ['Venmo Account', 'Verified', 'Requested USD Amount', 'Expiration'];
   const tableData = orderClaims.map((orderClaim, index) => [
     renderVenmoId(index),
+    renderVenmoHashConfirmation(index),
     formatAmountsForUSDC(orderClaim.minAmountToPay),
     formattedExpiration(orderClaim.claimExpirationTime),
   ]);
@@ -42,6 +45,22 @@ export const SubmitOrderClaimsForm: React.FC<SubmitOrderClaimsFormProps> = ({
     if (venmoIdsVisible && decryptedVenmoIds[index]) {
       const venmoLink = `https://venmo.com/code?user_id=${decryptedVenmoIds[index]}`;
       return <a href={venmoLink} target="_blank" rel="noopener noreferrer">{decryptedVenmoIds[index]}</a>;
+    } else {
+      return 'Encrypted';
+    }
+  }
+
+  function renderVenmoHashConfirmation(index: number) {
+    if (venmoIdsVisible && hashedVenmoIds[index]) {
+      const orderClaim = orderClaims[index];
+      const orderClaimHashedVenmoId = orderClaim.hashedVenmoId.toString();
+      const venmoHash = hashedVenmoIds[index];
+
+      if (orderClaimHashedVenmoId === venmoHash) {
+        return 'Matches';
+      } else {
+        return 'Does Not Match';
+      }
     } else {
       return 'Encrypted';
     }
@@ -70,12 +89,22 @@ export const SubmitOrderClaimsForm: React.FC<SubmitOrderClaimsFormProps> = ({
 
   async function toggleVenmoIds() {
     if (!venmoIdsVisible) {
+      // Decrypt the off-ramper Venmo IDs
       const decryptedIds = await Promise.all(
         orderClaims.map(async (orderClaim) => {
           return await decryptMessageWithAccount(orderClaim.encryptedOffRamperVenmoId, accountHash);
         })
       );
       setDecryptedVenmoIds(decryptedIds);
+      
+      // Hash the decrypted Venmo IDs to confirm they match the on-chain hashes
+      const hashedVenmoIds = await Promise.all(
+        decryptedIds.map(async (decryptedId) => {
+          const hashedId = await generateVenmoIdHash(decryptedId);
+          return hashedId;
+        })
+      );
+      setHashedVenmoIds(hashedVenmoIds);
     }
     setVenmoIdsVisible(!venmoIdsVisible);
   }
