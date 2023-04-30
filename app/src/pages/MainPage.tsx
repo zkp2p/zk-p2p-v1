@@ -10,7 +10,8 @@ import { SubmitOrderClaimsForm } from "../components/SubmitOrderClaimsForm";
 import { SubmitOrderGenerateProofForm } from "../components/SubmitOrderGenerateProofForm";
 import { SubmitOrderOnRampForm } from "../components/SubmitOrderOnRampForm";
 import { Button } from "../components/Button";
-import { Header, SubHeader } from "../components/Layout";
+import { NumberedStep } from "../components/NumberedStep";
+import { Col, Header, SubHeader } from "../components/Layout";
 import { TopBanner } from "../components/TopBanner";
 import { CustomTable } from '../components/CustomTable';
 import {
@@ -24,6 +25,8 @@ import {
 import { abi } from "../helpers/ramp.abi";
 import { contractAddresses } from "../helpers/deployed_addresses";
 import { OnRampOrder, OnRampOrderClaim } from "../helpers/types";
+import { UINT256_MAX } from "../helpers/constants";
+import { formatAmountsForUSDC, getOrderStatusString } from '../helpers/tableFormatters';
 
 enum FormState {
   DEFAULT = "DEFAULT",
@@ -64,24 +67,6 @@ export const MainPage: React.FC<{}> = (props) => {
 
   const { chain } = useNetwork()
   console.log("Chain: ", chain);
-
-  const getOrderStatusString = (order: OnRampOrder) => {
-    switch (Number(order.status)) {
-      case 1:
-        return "Open";
-      case 2:
-        return "Filled";
-      case 3:
-        return "Cancelled";
-      default:
-        return "The order has an invalid status.";
-    }
-  }
-
-  const formatAmountsForUSDC = (tokenAmount: number) => {
-    const adjustedAmount = tokenAmount / (10 ** 6);
-    return adjustedAmount;
-  };
 
   const formatAmountsForTransactionParameter = (tokenAmount: number) => {
     const adjustedAmount = tokenAmount * (10 ** 6);
@@ -154,7 +139,7 @@ export const MainPage: React.FC<{}> = (props) => {
     functionName: 'postOrder',
     args: [
       formatAmountsForTransactionParameter(newOrderAmount),
-      formatAmountsForTransactionParameter(newOrderAmount),               // TODO: Pass in uint256
+      UINT256_MAX,
       newOrderVenmoIdEncryptingKey
     ],
     onError: (error: { message: any }) => {
@@ -194,8 +179,8 @@ export const MainPage: React.FC<{}> = (props) => {
 
 
   //
-  // legacy: onRamp( uint256 _orderId, uint256 _offRamper, VenmoId, bytes calldata _proof)
-  // new:    TBD
+  // legacy: onRamp(uint256 _orderId, uint256 _offRamper, VenmoId, bytes calldata _proof)
+  // new:    onRamp(uint256[2] memory _a, uint256[2][2] memory _b, uint256[2] memory _c, uint256[msgLen] memory _signals, uint256 claimId)
   //
   const reformatProofForChain = (proof: string) => {
     return [
@@ -215,9 +200,8 @@ export const MainPage: React.FC<{}> = (props) => {
     functionName: 'onRamp',
     args: [
       ...reformatProofForChain(submitOrderProof),
-      submitOrderPublicSignals ? JSON.parse(submitOrderPublicSignals) : null
-      // selectedOrder.id                                                 // TODO: Update when new contract is deployed
-      // selectedOrderClaim.id                                            // TODO: Update when new contract is deployed
+      submitOrderPublicSignals ? JSON.parse(submitOrderPublicSignals) : null,
+      selectedOrderClaim.claimId
     ],
     onError: (error: { message: any }) => {
       console.error(error.message);
@@ -238,14 +222,23 @@ export const MainPage: React.FC<{}> = (props) => {
     if (!isReadAllOrdersLoading && !isReadAllOrdersError && allOrders) {
       const sanitizedOrders: OnRampOrder[] = [];
       for (let i = 0; i < allOrders.length; i++) {
-        const orderContractData = allOrders[i];
+        const rawOrderData = allOrders[i];
+        const orderData = rawOrderData.order;
 
-        const orderId = orderContractData[0];
-        const onRamper = orderContractData[1];
-        const onRamperEncryptPublicKey = orderContractData[2]; // 'a19eb5cdd6b3fce15832521908e4f66817e9ea8728dde4469f517072616a590be610c8af6d616fa77806b4d3ac1176634f78cd29266b4bdae4110ac3cdeb9231';
-        const amountToReceive = orderContractData[3].toString();
-        const maxAmountToPay = orderContractData[4].toString();
-        const status = orderContractData[5];
+        const orderId = rawOrderData.id.toString();
+        const onRamper = orderData.onRamper;
+        const onRamperEncryptPublicKey = orderData.onRamperEncryptPublicKey; // a19eb5cdd6b3fce15832521908e4f66817e9ea8728dde4469f517072616a590be610c8af6d616fa77806b4d3ac1176634f78cd29266b4bdae4110ac3cdeb9231
+        const amountToReceive = orderData.amountToReceive;
+        const maxAmountToPay = orderData.maxAmountToPay;
+        const status = orderData.status;
+
+        // console.log("Order: ");
+        // console.log(orderId);
+        // console.log(onRamper);
+        // console.log(onRamperEncryptPublicKey);
+        // console.log(amountToReceive);
+        // console.log(maxAmountToPay);
+        // console.log(status);
 
         const order: OnRampOrder = {
           orderId,
@@ -266,7 +259,7 @@ export const MainPage: React.FC<{}> = (props) => {
   useEffect(() => {
     const intervalId = setInterval(() => {
       refetchAllOrders();
-    }, 1000000); // Refetch every 1000 seconds
+    }, 15000); // Refetch every 15 seconds
 
     return () => {
       clearInterval(intervalId);
@@ -280,15 +273,22 @@ export const MainPage: React.FC<{}> = (props) => {
       for (let i = 0; i < orderClaimsData.length; i++) {
         const claimsData = orderClaimsData[i];
 
-        const claimId = claimsData[0];
-        const offRamper = claimsData[1];
-        // 1168869611798528966
-        const hashedVenmoId = claimsData[2]; // "13337356327024847092496142054524365451458378508942456549301307042014385930615";
-        const status = claimsData[3];
-        // 645716473020416186
-        const encryptedOffRamperVenmoId = claimsData[4]; // "ffbe561f64308242b6a9ba573c3cdf5e02de60494c23a4b56668ab40db4bf1ba82d49c6d1af289abfb58eaaeb1826096c2ba1025fbce9c14fda51789d01e0c9c393d5e9b0bcb75fd530434b3c963ff8466a811c686cdd7531bf2c551b8fcab3af34b839f95d500abe83879abf42f9d4918";
-        const claimExpirationTime = claimsData[4];
-        const minAmountToPay = claimsData[5];
+        const claimId = i;
+        const offRamper = claimsData.offRamper.toString();
+        const hashedVenmoId = claimsData.venmoId; // 1168869611798528966 / 13337356327024847092496142054524365451458378508942456549301307042014385930615
+        const status = claimsData.status; 
+        const encryptedOffRamperVenmoId = claimsData.encryptedOffRamperVenmoId.toString(); // 645716473020416186 / ffbe561f64308242b6a9ba573c3cdf5e02de60494c23a4b56668ab40db4bf1ba82d49c6d1af289abfb58eaaeb1826096c2ba1025fbce9c14fda51789d01e0c9c393d5e9b0bcb75fd530434b3c963ff8466a811c686cdd7531bf2c551b8fcab3af34b839f95d500abe83879abf42f9d4918
+        const claimExpirationTime = claimsData.claimExpirationTime.toString();
+        const minAmountToPay = claimsData.minAmountToPay.toString();
+
+        // console.log("Order claim: ");
+        // console.log(claimId);
+        // console.log(offRamper);
+        // console.log(hashedVenmoId);
+        // console.log(status);
+        // console.log(encryptedOffRamperVenmoId);
+        // console.log(claimExpirationTime);
+        // console.log(minAmountToPay);
         
         const orderClaim: OnRampOrderClaim = {
           claimId,
@@ -311,7 +311,7 @@ export const MainPage: React.FC<{}> = (props) => {
     if (selectedOrder) {
       const intervalId = setInterval(() => {
         refetchClaimedOrders();
-      }, 1000000); // Refetch every 1000 seconds
+      }, 15000); // Refetch every 15 seconds
   
       return () => {
         clearInterval(intervalId);
@@ -370,6 +370,14 @@ export const MainPage: React.FC<{}> = (props) => {
       {showBrowserWarning && <TopBanner message={"ZK P2P On-Ramp only works on Chrome or Chromium-based browsers."} />}
       <div className="title">
         <Header>ZK P2P On-Ramp From Venmo</Header>
+        <NumberedInputContainer>
+          <NumberedStep step={1}>
+            Step 1 Instructions: disclaimer this is an experimental application showcasing ZKP technology
+          </NumberedStep>
+          <NumberedStep step={2}>
+            Step 2 Instructions: when off-ramping, be prepared to look up your Venmo Id. You will also need to mint fUSDC from the contract directly and approve allowance to the smart contract
+          </NumberedStep>
+        </NumberedInputContainer>
       </div>
       <Main>
         <Column>
@@ -431,6 +439,7 @@ export const MainPage: React.FC<{}> = (props) => {
               <Column>
                 <SubmitOrderGenerateProofForm
                   loggedInWalletAddress={ethereumAddress}
+                  selectedOrder={selectedOrder}
                   setSubmitOrderProof={setSubmitOrderProof}
                   setSubmitOrderPublicSignals={setSubmitOrderPublicSignals}
                 />
@@ -512,4 +521,10 @@ const Container = styled.div`
       width: 500px;
     }
   }
+`;
+
+const NumberedInputContainer = styled(Col)`
+  gap: 1rem;
+  width: 65%;
+  margin-bottom: 2rem;
 `;
