@@ -17,8 +17,8 @@ interface SubmitOrderOnRampFormProps {
 }
  
 export const SubmitOrderOnRampForm: React.FC<SubmitOrderOnRampFormProps> = ({
-  proof,                                                                  // TODO: add these to local storage by order and account id
-  publicSignals,                                                          // TODO: add these to local storage by order and account id
+  proof,
+  publicSignals,
   setSubmitOrderPublicSignals,
   setSubmitOrderProof,
   writeCompleteOrder,
@@ -29,9 +29,9 @@ export const SubmitOrderOnRampForm: React.FC<SubmitOrderOnRampFormProps> = ({
       <SubHeader>Submit Proof</SubHeader>
       <SubmitOrderOnRampFormBodyContainer>
           <NumberedStep>
-            Upon successful proof generation above, both the proof and public inputs will be populated automatically.
-            Prior to submission, select the correct order claim for the Venmo payment you compelted from table of claims
-            above.
+            Upon successful proof generation above, both the proof and public inputs will be
+            populated automatically. Prior to submission, select the correct order claim for
+            the Venmo payment you completed from table of claims above.
           </NumberedStep>
         <LabeledTextArea
           label="Proof Output"

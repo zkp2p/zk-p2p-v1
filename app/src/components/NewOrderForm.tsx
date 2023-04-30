@@ -56,7 +56,7 @@ export const NewOrderForm: React.FC<NewOrderFormProps> = ({
       <NewOrderFormBodyContainer>
         <NumberedStep>
           Specify an amount to on-ramp. If this is your first time or you are logged in to the same wallet from a different
-          browser, you will be prompted to sign a message to register. This requires Goerli ETH to complete.
+          browser, you will be prompted to sign a message to register.
         </NumberedStep>
         <SingleLineInput
           label="Amount USDC to Request"

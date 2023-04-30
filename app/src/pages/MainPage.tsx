@@ -370,7 +370,7 @@ export const MainPage: React.FC<{}> = (props) => {
       <div className="title">
         <Header>ZK P2P On-Ramp From Venmo</Header>
         <NumberedInputContainer>
-          <span style={{ color: 'rgba(255, 255, 255, 0.7)', lineHeight: '1.25'}}>
+          <span style={{ color: 'rgba(255, 255, 255, 0.7)', lineHeight: '1.3'}}>
             This is an experimental application demonstrating zero knowledge proof technology. The ramp
             (<StyledLink href="https://goerli.etherscan.io/address/0x945D14a5c63769f4cf008a2994810940cc0DFd5C">smart contract</StyledLink>),
             which performs proof verification and escrow functionality, and its associated fake USDC
@@ -378,15 +378,16 @@ export const MainPage: React.FC<{}> = (props) => {
             live on Goerli Testnet and will require Goerli ETH to test. We are actively developing and improving this.
           </span>
           <NumberedStep step={1}>
-            On-rampers: the flow will require two transactions. First, you will post orders to the on-chain order book. Once
-            one or more claims for the order are submitted by off-rampers, you will be able to complete the flow by sending a Venmo
-            transaction to the off-ramper of your choice, generating a proof with the confirmation email from Venmo, and then
-            submitting the proof on chain to unlock the fUSDC.
+            On-rampers: the flow will require two transactions. First, you will post orders to the
+            on-chain order book. Then, when claims for the order are submitted by off-rampers,
+            you will choose a claim to complete on Venmo, generate a proof with the confirmation
+            email, and then submit the proof on chain to unlock the fUSDC.
           </NumberedStep>
           <NumberedStep step={2}>
-            Off-rampers: the flow will require your Venmo Id (not handle) [Add link to steps here]. Additionally, you will need
-            to mint fUSDC from the contract directly (we have modified the ERC20 to include an externally accessible mint function)
-            and approve allowance to the smart contract.
+            Off-rampers: the flow will require your Venmo Id (not handle) [Add link to steps here].
+            Additionally, you will need to mint fUSDC from the contract directly (we have modified
+            the ERC20 to include an externally accessible mint function) and approve allowance
+            to the smart contract.
           </NumberedStep>
         </NumberedInputContainer>
       </div>

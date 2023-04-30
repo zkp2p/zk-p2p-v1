@@ -23,7 +23,7 @@ const NumberedStepContainer = styled(Row)`
   border-radius: 4px;
   padding: 12px 24px;
   color: #fff;
-  line-height: 1.25;
+  line-height: 1.3;
 `;
 
 const NumberedStepLabel = styled(CenterAllDiv)`
