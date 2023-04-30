@@ -384,7 +384,8 @@ export const MainPage: React.FC<{}> = (props) => {
             email, and then submit the proof on chain to unlock the fUSDC.
           </NumberedStep>
           <NumberedStep step={2}>
-            Off-rampers: the flow will require your Venmo Id (not handle) [Add link to steps here].
+            Off-rampers: the flow will require your Venmo Id
+            (<StyledLink href="https://github.com/0xSachinK/zk-p2p-onramp/blob/main/README.md#venmo-id-instructions">instructions</StyledLink>).
             Additionally, you will need to mint fUSDC from the contract directly (we have modified
             the ERC20 to include an externally accessible mint function) and approve allowance
             to the smart contract.
