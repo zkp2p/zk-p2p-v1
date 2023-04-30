@@ -40,7 +40,7 @@ contract Ramp is Verifier {
         address offRamper;
         uint256 venmoId;                        // hash of offRamperVenmoId
         ClaimStatus status;
-        uint256 encryptedOffRamperVenmoId;        // encrypt(offRamperVenmoId, onRamperEncryptPublicKey)
+        bytes encryptedOffRamperVenmoId;        // encrypt(offRamperVenmoId, onRamperEncryptPublicKey)
         uint256 claimExpirationTime;
         uint256 minAmountToPay;
     }
@@ -105,7 +105,7 @@ contract Ramp is Verifier {
     function claimOrder(
         uint256 _venmoId,
         uint256 _orderNonce,
-        uint256 _encryptedVenmoId,
+        bytes calldata _encryptedVenmoId,
         uint256 _minAmountToPay
     )
         external 
