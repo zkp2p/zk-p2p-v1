@@ -134,7 +134,7 @@ export const SubmitOrderClaimsForm: React.FC<SubmitOrderClaimsFormProps> = ({
             disabled={false}
             onClick={toggleVenmoIds}
             >
-            {venmoIdsVisible ? 'Hide Venmo Handles' : 'Decrypt Venmo Handles'}
+            {venmoIdsVisible ? 'Hide Venmo IDs' : 'Decrypt and Verify IDs'}
           </Button>
         </SubmitOrderClaimsFormTableAndButtonContainer>
       </SubmitOrderClaimsFormBodyContainer>

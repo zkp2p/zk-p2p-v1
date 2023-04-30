@@ -56,7 +56,7 @@ export const SubmitOrderOnRampForm: React.FC<SubmitOrderOnRampFormProps> = ({
             writeCompleteOrder?.();
           }}
         >
-          Submit and Claim
+          Submit and Retrieve USDC
         </Button>
       </SubmitOrderOnRampFormBodyContainer>
     </SubmitOrderOnRampFormHeaderContainer>

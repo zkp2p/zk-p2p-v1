@@ -386,8 +386,8 @@ export const MainPage: React.FC<{}> = (props) => {
           <NumberedStep step={2}>
             Off-rampers: the flow will require your Venmo Id
             (<StyledLink href="https://github.com/0xSachinK/zk-p2p-onramp/blob/main/README.md#venmo-id-instructions">instructions</StyledLink>).
-            Additionally, you will need to mint fUSDC from the contract directly (we have modified
-            the ERC20 to include an externally accessible mint function) and approve allowance
+            Additionally, you will need to mint fUSDC from the contract directly. We have modified
+            the generic ERC20 to include an externally accessible mint function. You will also need to approve allowance
             to the smart contract.
           </NumberedStep>
         </NumberedInputContainer>
