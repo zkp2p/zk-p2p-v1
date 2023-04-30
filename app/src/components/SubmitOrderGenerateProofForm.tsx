@@ -30,12 +30,9 @@ export const SubmitOrderGenerateProofForm: React.FC<SubmitOrderGenerateProofForm
   setSubmitOrderPublicSignals
 }) => {
   const [emailFull, setEmailFull] = useState<string>(localStorage.emailFull || "");
-  const [publicSignals, setPublicSignals] = useState<string>(localStorage.publicSignals || "");
-  const [proof, setProof] = useState<string>(localStorage.proof || "");
 
   const [displayMessage, setDisplayMessage] = useState<string>("Generate Proof");
   const [downloadProgress, setDownloadProgress] = useState<number>(0);
-
 
   const [status, setStatus] = useState<
     | "not-started"
@@ -84,18 +81,6 @@ export const SubmitOrderGenerateProofForm: React.FC<SubmitOrderGenerateProofForm
       if (localStorage.emailFull !== emailFull) {
         console.info("Wrote email to localStorage");
         localStorage.emailFull = emailFull;
-      }
-    }
-    if (proof) {
-      if (localStorage.proof !== proof) {
-        console.info("Wrote proof to localStorage");
-        localStorage.proof = proof;
-      }
-    }
-    if (publicSignals) {
-      if (localStorage.publicSignals !== publicSignals) {
-        console.info("Wrote publicSignals to localStorage");
-        localStorage.publicSignals = publicSignals;
       }
     }
   }, [value]);
@@ -180,7 +165,6 @@ export const SubmitOrderGenerateProofForm: React.FC<SubmitOrderGenerateProofForm
               /*
                 Set proof
               */
-              setProof(JSON.stringify(proof));
               setSubmitOrderProof(JSON.stringify(proof));
 
               /*
@@ -195,8 +179,7 @@ export const SubmitOrderGenerateProofForm: React.FC<SubmitOrderGenerateProofForm
               /*
                 Set public signals
               */
-            setPublicSignals(JSON.stringify(publicSignals)); // 
-            setSubmitOrderPublicSignals(JSON.stringify(publicSignals));
+              setSubmitOrderPublicSignals(JSON.stringify(publicSignals));
 
               if (!circuitInputs) {
                 setStatus("error-failed-to-prove");

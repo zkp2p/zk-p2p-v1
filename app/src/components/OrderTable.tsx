@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 
 
-interface CustomTableProps {
+interface OrderTableProps {
   headers: string[];
   data: any[][];
   onRowClick?: (rowData: any[]) => void;
@@ -10,7 +10,7 @@ interface CustomTableProps {
   rowsPerPage?: number;
 }
 
-export const CustomTable: React.FC<CustomTableProps> = ({ headers, data, onRowClick, selectedRow, rowsPerPage = 10 }) => {
+export const OrderTable: React.FC<OrderTableProps> = ({ headers, data, onRowClick, selectedRow, rowsPerPage = 10 }) => {
   const [currentPage, setCurrentPage] = useState(0);
 
   const totalPages = Math.ceil(data.length / rowsPerPage);

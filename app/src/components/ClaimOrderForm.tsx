@@ -12,6 +12,7 @@ import { generateVenmoIdHash } from "../helpers/venmoHash";
 
 
 interface ClaimOrderFormProps {
+  loggedInWalletAddress: string;
   senderEncryptingKey: string;
   senderAddressDisplay: string;
   senderRequestedAmountDisplay: number;
@@ -23,6 +24,7 @@ interface ClaimOrderFormProps {
 }
  
 export const ClaimOrderForm: React.FC<ClaimOrderFormProps> = ({
+  loggedInWalletAddress,
   senderEncryptingKey,
   senderAddressDisplay,
   senderRequestedAmountDisplay,
@@ -32,7 +34,8 @@ export const ClaimOrderForm: React.FC<ClaimOrderFormProps> = ({
   writeClaimOrder,
   isWriteClaimOrderLoading
 }) => {
-  const [venmoIdInput, setVenmoIdInput] = useState<string>("");
+  const persistedVenmoIdKey = `persistedVenmoId_${loggedInWalletAddress}`;
+  const [venmoIdInput, setVenmoIdInput] = useState<string>(localStorage.getItem(persistedVenmoIdKey) || "");
   const [requestedUSDAmountInput, setRequestedUSDAmountInput] = useState<number>(0);
 
   return (
@@ -64,7 +67,7 @@ export const ClaimOrderForm: React.FC<ClaimOrderFormProps> = ({
             }}
           />
           <SingleLineInput
-            label="USD Amount to Receive"
+            label="USD Amount to Request"
             value={requestedUSDAmountInput === 0 ? '' : requestedUSDAmountInput.toString()}
             placeholder={'0'}
             onChange={(e) => {
@@ -87,6 +90,9 @@ export const ClaimOrderForm: React.FC<ClaimOrderFormProps> = ({
 
             // Set the requested USD amount
             setRequestedUSDAmount(requestedUSDAmountInput);
+
+            // Persist venmo id input so user doesn't have to paste it again in the future
+            localStorage.setItem(persistedVenmoIdKey, venmoIdInput);
 
             writeClaimOrder?.();
           }}

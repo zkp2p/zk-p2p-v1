@@ -4,16 +4,17 @@ import { useMount } from "react-use";
 
 // @ts-ignore
 import styled from "styled-components";
-import { NewOrderForm } from "../components/NewOrderForm";
+import { Button } from "../components/Button";
 import { ClaimOrderForm } from "../components/ClaimOrderForm";
+import { Col, Header, SubHeader } from "../components/Layout";
+import { NewOrderForm } from "../components/NewOrderForm";
+import { NumberedStep } from "../components/NumberedStep";
+import { OrderTable } from '../components/OrderTable';
 import { SubmitOrderClaimsForm } from "../components/SubmitOrderClaimsForm";
 import { SubmitOrderGenerateProofForm } from "../components/SubmitOrderGenerateProofForm";
 import { SubmitOrderOnRampForm } from "../components/SubmitOrderOnRampForm";
-import { Button } from "../components/Button";
-import { NumberedStep } from "../components/NumberedStep";
-import { Col, Header, SubHeader } from "../components/Layout";
 import { TopBanner } from "../components/TopBanner";
-import { CustomTable } from '../components/CustomTable';
+
 import {
   useAccount, 
   useContractWrite, 
@@ -21,7 +22,7 @@ import {
   useNetwork, 
   usePrepareContractWrite,
 } from "wagmi";
-// import { abi } from "../helpers/ramp_legacy.abi";
+
 import { abi } from "../helpers/ramp.abi";
 import { contractAddresses } from "../helpers/deployed_addresses";
 import { OnRampOrder, OnRampOrderClaim } from "../helpers/types";
@@ -74,11 +75,10 @@ export const MainPage: React.FC<{}> = (props) => {
   };
 
   // order table state
-  const orderTableHeaders = ['Creator', 'Token Amount', 'Max', 'Status'];
+  const orderTableHeaders = ['Creator', 'Requested USDC Amount', 'Status'];
   const orderTableData = fetchedOrders.map((order) => [
     formatAddressForTable(order.onRamper),
     formatAmountsForUSDC(order.amountToReceive),
-    formatAmountsForUSDC(order.maxAmountToPay),
     getOrderStatusString(order),
   ]);
 
@@ -382,7 +382,7 @@ export const MainPage: React.FC<{}> = (props) => {
       <Main>
         <Column>
           <SubHeader>Orders</SubHeader>
-          <CustomTable
+          <OrderTable
             headers={orderTableHeaders}
             data={orderTableData}
             onRowClick={handleOrderRowClick}

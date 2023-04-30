@@ -3,7 +3,7 @@ import styled from 'styled-components';
 
 import { Button } from "./Button";
 import { Col, SubHeader } from "./Layout";
-import { CustomTable } from './CustomTable';
+import { OrderTable } from './OrderTable';
 import { NumberedStep } from "../components/NumberedStep";
 
 import { OnRampOrderClaim } from "../helpers/types";
@@ -31,7 +31,7 @@ export const SubmitOrderClaimsForm: React.FC<SubmitOrderClaimsFormProps> = ({
   const [venmoIdsVisible, setVenmoIdsVisible] = useState<boolean>(false);
   const [decryptedVenmoIds, setDecryptedVenmoIds] = useState<string[]>([]);
 
-  const tableHeaders = ['Venmo Account', 'Requested Amount', 'Expiration'];
+  const tableHeaders = ['Venmo Account', 'Requested USD Amount', 'Expiration'];
   const tableData = orderClaims.map((orderClaim, index) => [
     renderVenmoId(index),
     formatAmountsForUSDC(orderClaim.minAmountToPay),
@@ -41,7 +41,7 @@ export const SubmitOrderClaimsForm: React.FC<SubmitOrderClaimsFormProps> = ({
   function renderVenmoId(index: number) {
     if (venmoIdsVisible && decryptedVenmoIds[index]) {
       const venmoLink = `https://venmo.com/code?user_id=${decryptedVenmoIds[index]}`;
-      return <a href={venmoLink} target="_blank" rel="noopener noreferrer">View Account</a>;
+      return <a href={venmoLink} target="_blank" rel="noopener noreferrer">{decryptedVenmoIds[index]}</a>;
     } else {
       return 'Encrypted';
     }
@@ -85,10 +85,11 @@ export const SubmitOrderClaimsForm: React.FC<SubmitOrderClaimsFormProps> = ({
       <SubHeader>Select Claim</SubHeader>
       <SubmitOrderClaimsFormBodyContainer>
         <NumberedStep>
-          Complete one of the order claims below by sending the requested amount to the Venmo handle. Make sure you have e-mail receipts enabled on Venmo before sending the payment.
+          Complete one of the claims below by sending the requested amount to the Venmo handle (click into the account id to view the handle).
+          Make sure you have e-mail receipts enabled on Venmo before sending the payment.
         </NumberedStep>
         <SubmitOrderClaimsFormTableAndButtonContainer>
-          <CustomTable
+          <OrderTable
             headers={tableHeaders}
             data={tableData}
             onRowClick={async(rowData: any[]) => {
