@@ -415,6 +415,7 @@ export const MainPage: React.FC<{}> = (props) => {
           {actionState === FormState.CLAIM && (
             <Column>
               <ClaimOrderForm
+                loggedInWalletAddress={ethereumAddress}
                 senderEncryptingKey={selectedOrder.onRamperEncryptPublicKey}
                 senderAddressDisplay={selectedOrder.onRamper}
                 senderRequestedAmountDisplay={formatAmountsForUSDC(selectedOrder.amountToReceive)}
@@ -525,6 +526,6 @@ const Container = styled.div`
 
 const NumberedInputContainer = styled(Col)`
   gap: 1rem;
-  width: 65%;
+  width: 50%;
   margin-bottom: 2rem;
 `;
