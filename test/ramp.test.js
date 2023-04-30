@@ -55,6 +55,8 @@ describe("Ramp", function () {
         let maxAmountToPay = BigNumber.from(110000000); // $110
 
         it("stores an order", async function () {
+            const publicKey = "a19eb5cdd6b3fce15832521908e4f66817e9ea8728dde4469f517072616a590be610c8af6d616fa77806b4d3ac1176634f78cd29266b4bdae4110ac3cdeb9231";
+
             const orderId = await ramp.orderNonce();
 
             const unopenedOrder = await ramp.orders(orderId);
@@ -63,7 +65,7 @@ describe("Ramp", function () {
             expect(unopenedOrder.maxAmountToPay).to.equal(ZERO);
             expect(unopenedOrder.status).to.equal(0);
 
-            await ramp.connect(onRamper).postOrder(amount, maxAmountToPay, onRamper.address);
+            await ramp.connect(onRamper).postOrder(amount, maxAmountToPay, publicKey);
 
             const openOrder = await ramp.orders(orderId);
 
