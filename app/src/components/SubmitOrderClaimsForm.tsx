@@ -84,26 +84,28 @@ export const SubmitOrderClaimsForm: React.FC<SubmitOrderClaimsFormProps> = ({
     <SubmitOrderClaimsFormHeaderContainer>
       <SubHeader>Select Claim</SubHeader>
       <SubmitOrderClaimsFormBodyContainer>
-          <NumberedStep>
-            Complete one of the order claims below by sending the requested amount to the Venmo handle. Make sure you have e-mail receipts enabled on Venmo before sending the payment.
-          </NumberedStep>
-        <CustomTable
-          headers={tableHeaders}
-          data={tableData}
-          onRowClick={async(rowData: any[]) => {
-            const [rowIndex] = rowData;
-            const orderClaimToSelect = orderClaims[rowIndex];
-            setSelectedOrderClaim(orderClaimToSelect);
-          }}
-          selectedRow={getIndexForSelectedClaim(currentlySelectedOrderClaim)}
-          rowsPerPage={3}
-        />
-        <Button
-          disabled={false}
-          onClick={toggleVenmoIds}
-          >
-          {venmoIdsVisible ? 'Hide Venmo Handles' : 'Decrypt Venmo Handles'}
-        </Button>
+        <NumberedStep>
+          Complete one of the order claims below by sending the requested amount to the Venmo handle. Make sure you have e-mail receipts enabled on Venmo before sending the payment.
+        </NumberedStep>
+        <SubmitOrderClaimsFormTableAndButtonContainer>
+          <CustomTable
+            headers={tableHeaders}
+            data={tableData}
+            onRowClick={async(rowData: any[]) => {
+              const [rowIndex] = rowData;
+              const orderClaimToSelect = orderClaims[rowIndex];
+              setSelectedOrderClaim(orderClaimToSelect);
+            }}
+            selectedRow={getIndexForSelectedClaim(currentlySelectedOrderClaim)}
+            rowsPerPage={3}
+          />
+          <Button
+            disabled={false}
+            onClick={toggleVenmoIds}
+            >
+            {venmoIdsVisible ? 'Hide Venmo Handles' : 'Decrypt Venmo Handles'}
+          </Button>
+        </SubmitOrderClaimsFormTableAndButtonContainer>
       </SubmitOrderClaimsFormBodyContainer>
     </SubmitOrderClaimsFormHeaderContainer>
   );
@@ -116,4 +118,8 @@ const SubmitOrderClaimsFormHeaderContainer = styled.div`
 
 const SubmitOrderClaimsFormBodyContainer = styled(Col)`
   gap: 2rem;
+`;
+
+const SubmitOrderClaimsFormTableAndButtonContainer = styled(Col)`
+  gap: 0rem;
 `;
