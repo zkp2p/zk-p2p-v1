@@ -45,11 +45,11 @@ Our circuits are build on top of the [zk-email-verify](https://github.com/zkemai
 
 #### Venmo Email regex circuits
 We used their regex circuit generator scripts to generate our own regex circuits for parsing a venmo payment email. Currently we have the following regex circuits:
-- **[Venmo Off-ramper ID Regex](./circuit/venmo_offramper_id_regex.circom)**: This regex circuit extracts out the venmo ID of the payee (user who was paid) from a venmo payment email's body. Written in circom.
-- **[Venmo Amount Regex](./circuit/venmo_amount_regex.circom)**: This regex circuit extracts out the amount sent from a venmo payment email's header. Written in circom.
+- **Venmo Off-ramper ID Regex**: This [regex circuit](./circuit/venmo_offramper_id_regex.circom) extracts out the venmo ID of the payee (user who was paid) from a venmo payment email's body. Written in circom.
+- **Venmo Amount Regex**: This [regex circuit](./circuit/venmo_amount_regex.circom) extracts out the amount sent from a venmo payment email's header. Written in circom.
 
 #### P2P OnRamp Circuit:
-This is our main circuit written in circom and it performs the following operations:
+This is our [main circuit](./circuit/circuit.circom) written in circom and it performs the following operations:
 * It accepts the email as an input and checks if the email header and body are signed by Venmo using RSA and SHA-256, ensuring the email's authenticity.
 * It extracts the venmo ID of the payee (user who was paid) from the email's body and hashes it.
 * It extracts the amount of USD transacted in the venmo email from the email's header and packs it into smaller chunks.
@@ -99,29 +99,40 @@ Chunked proving key generation| 3 hours
 Witness geeration|60s
 Proof generation using rapidsnark| 9.2s
 
+#### Proving system
+
+We used the Groth16 proving system because it produces proofs smaller in size compared to other proving systems, which translates into lower gas costs when verifying proof on-chain. Groth16 proofs can be verified quickly which is essential for on-chain verification.
+
+Groth16 requires a trusted setup per circuit, but we have not done any trusted setup for our PoC deployed on https://zkp2p.xyz.
+
 ### Smart Contracts
 
-The smart contracts are written in Solidity and deployed on the Goerli test network. The contract provides trustless on-ramping and off-ramping mechanisms for USDC tokens using Venmo as the payment platform. The following functionalities are provided by the contract:
+The smart contracts are written in Solidity and deployed on the Goerli test network. The contract provides endpoints for different actors in the system to turstlessly coordinate with each other. 
 
-- **User Registration**: Users can register their Venmo IDs using the `register` function, which maps their Ethereum address to their Venmo ID and vice versa.
+#### Ramp contract
 
-- **Posting Orders**: Registered users can post an order using the `postOrder` function, specifying the amount they want to receive and the maximum amount they're willing to pay. Orders are stored in the `orders` mapping, with an incremental `orderNonce` as the key.
+The [ramp contract](./contracts/Ramp.sol) offers the following functionality:
 
-- **Claiming Orders**: Users can claim an open order using the `claimOrder` function. The function verifies that the order is open and not claimed by the caller. The claimer submits their USDC tokens, and the order's claim status is updated accordingly.
+For on-rampers:
+- Posting Orders: Allows on-rampers to post an on-ramp order specifying the amount to receive, max amount to pay, and an encryption public key.
+- On-Ramping: Enables users to perform the on-ramp operation by providing ZK proof of off-chain payment to the off-ramper. The function verifies the proof and releases the escrowed funds to the on-ramper.
+- Canceling Orders: Allows the creator of an order to cancel it if it is still open and has not been filled or canceled.
 
-- **On-Ramping**: Users can initiate the on-ramp process using the `onRamp` function, which verifies the zero-knowledge proof provided by the on-ramper. It checks if the order is open and if the off-ramper has submitted a claim. Once verified, the claim status is updated, the order is marked as filled, and USDC tokens are transferred to the on-ramper.
+For off-rampers:
+- Claiming Orders: Allows off-rampers to claim a posted order by providing their Venmo ID, the order nonce, an encrypted Venmo ID, and a minimum amount to pay.
+- Clawback claims: Enables off-rampers to claw back funds from a submitted claim if the claim has expired or the order has been canceled or filled.
 
-- **Canceling Orders**: Order creators can cancel their open orders using the `cancelOrder` function, which checks if the order is open and if the caller is the order creator before marking the order as canceled.
+#### Verifier contract
 
-- **Clawback**: Users can claw back their funds from submitted claims that haven't been used or have expired using the `clawback` function. The function checks the claim status and order status before transferring the USDC tokens back to the caller.
+The [verifier contract](./contracts/Verifier.sol) is for verifying zk-SNARK proofs using the Groth16 proving sysetem. It is generated using the SnarkJS template and hosts the on-chain verification logic. It is extended by the main Ramp contract.
 
-- **View Functions**: The contract offers view functions for retrieving claims associated with a specific order (`getClaimsForOrder`) and fetching all orders (`getAllOrders`).
+#### Fake USDC contract
 
-- The contract uses the `IERC20` interface from OpenZeppelin for handling ERC20 token (USDC) interactions and a custom `Verifier` contract for handling zero-knowledge proofs. The contract stores orders and claims in mappings and maintains various enums and structs to represent order and claim statuses. 
+An ERC20 token deployed on Goerli network for testing purposes.
 
-The contract addresses on the Goerli network are: 
-- Ramp - [0x805a3Ae6495Be653dE460685D5FFDD5A538550f1](https://goerli.etherscan.io/address/0x805a3Ae6495Be653dE460685D5FFDD5A538550f1)
-- FakeUSDC - [0xb685Bdc019DEE17D073746a88bF6a6cDDED8Ae70](https://goerli.etherscan.io/address/0xb685Bdc019DEE17D073746a88bF6a6cDDED8Ae70)
+The latest contract addresses on the Goerli network are: 
+- Ramp - [0x945D14a5c63769f4cf008a2994810940cc0DFd5C](https://goerli.etherscan.io/address/0x945D14a5c63769f4cf008a2994810940cc0DFd5C)
+- FakeUSDC - [0xf6426A1fdE02c3d6f10b4af107cDd7669574E74C](https://goerli.etherscan.io/address/0xf6426A1fdE02c3d6f10b4af107cDd7669574E74C)
 
 
 ## Approach to Problem
