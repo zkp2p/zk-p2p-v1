@@ -6,13 +6,13 @@ ZKP2P is a privacy preserving trustless P2P fiat onramp that can integrate with 
 without permission from the payment network itself. We build upon the 0xParc / PSE ZK-Email libraries to prove the 
 contents in a payment email and bring that data on-chain in a privacy preserving manner to unlock escrowed assets on-chain.
 
-Our current PoC deployed at https://zkp2p.xyz enables trustless and privacy-preserving USDC to USD trades on the Goerli network using Venmo as the off-chain payment rails.
-Our PoC is live and you can test it out. 😄 
+Our current PoC enables trustless and privacy-preserving USDC to USD trades on the Goerli network using Venmo as the off-chain payment rails.
+Our PoC is live! Give it a try at https://zkp2p.xyz. 😄 
 
-We began to hack on this submission at ZKHack Lisbon in early April where we built a working v0. Since then we have re-worked the flow to add privacy as first class citizen. We modified our circuits and smart contracts to preserve privacy of Venmo ID of our users, enabled full client side proving so that no private data is leaked to a server, and added optimizations to make the client side proving faster.
+We began hacking on this submission at ZKHack Lisbon in early April, where we built a working v0. Since then, we have reworked the flow to prioritize privacy. We modified our circuits and smart contracts to preserve the privacy of our users' Venmo IDs, implemented full client-side proving to prevent private data leakage to servers, and added optimizations for faster client-side proving.
 
 
-### Flow
+### Flow Diagram
 There are 2 actors in the system: 
 1. On-rampers: Users who intend to trade their USD on Venmo to USDC on-chain.
 2. Off-rampers: Users who intend to trade their USDC on-chain to USD on Venmo.
