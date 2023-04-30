@@ -43,7 +43,7 @@ async function main() {
   console.log("Deploying Ramp contract with the account:", deployer.address);
 
   const Ramp = await hre.ethers.getContractFactory("Ramp");
-  const ramp = await Ramp.deploy(venmoRsaKey, fakeUSDC.address, deployGasConfig);
+  const ramp = await Ramp.deploy(venmoRsaKey, fakeUSDCAddress, deployGasConfig);
 
   console.log("Ramp contract deployed to address:", ramp.address);
 }
