@@ -95,7 +95,10 @@ export const SubmitOrderGenerateProofForm: React.FC<SubmitOrderGenerateProofForm
       <SubHeader>Generate Proof</SubHeader>
       <SubmitOrderGenerateProofFormBodyContainer>
           <NumberedStep>
-            Select 'Show original' from your confirmation email and paste the full content with headers below. When generating a proof for the first time, you will need to download proving keys. Please allot approximately 3 minutes for key downloading and 10 minutes for proof generation. Do not close your browser.
+            Once you receive the Venmo transaction email, select 'Show original' from the dropdown and paste the full
+            contents with headers below. When generating a proof for the first time, you will need to download proving
+            keys (~5.5gb). Please allot approximately 3 minutes for key downloading and 10 minutes for proof generation.
+            Do not close your browser.
           </NumberedStep>
         <LabeledTextArea
           label="Full Email with Headers"

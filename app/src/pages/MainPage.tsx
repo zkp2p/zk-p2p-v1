@@ -6,7 +6,7 @@ import { useMount } from "react-use";
 import styled from "styled-components";
 import { Button } from "../components/Button";
 import { ClaimOrderForm } from "../components/ClaimOrderForm";
-import { Col, Header, SubHeader } from "../components/Layout";
+import { Col, Header, StyledLink, SubHeader } from "../components/Layout";
 import { NewOrderForm } from "../components/NewOrderForm";
 import { NumberedStep } from "../components/NumberedStep";
 import { OrderTable } from '../components/OrderTable';
@@ -372,9 +372,9 @@ export const MainPage: React.FC<{}> = (props) => {
         <NumberedInputContainer>
           <span style={{ color: 'rgba(255, 255, 255, 0.7)', lineHeight: '1.25'}}>
             This is an experimental application demonstrating zero knowledge proof technology. The ramp
-            (<a href="https://goerli.etherscan.io/address/0x945D14a5c63769f4cf008a2994810940cc0DFd5C">smart contract</a>),
+            (<StyledLink href="https://goerli.etherscan.io/address/0x945D14a5c63769f4cf008a2994810940cc0DFd5C">smart contract</StyledLink>),
             which performs proof verification and escrow functionality, and its associated fake USDC
-            (<a href="https://goerli.etherscan.io/address/0xf6426A1fdE02c3d6f10b4af107cDd7669574E74C">fUSDC</a>) asset
+            (<StyledLink href="https://goerli.etherscan.io/address/0xf6426A1fdE02c3d6f10b4af107cDd7669574E74C">fUSDC</StyledLink>) asset
             live on Goerli Testnet and will require Goerli ETH to test. We are actively developing and improving this.
           </span>
           <NumberedStep step={1}>

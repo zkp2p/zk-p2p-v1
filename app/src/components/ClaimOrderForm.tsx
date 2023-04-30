@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 
 import { Button } from "../components/Button";
-import { Col, SubHeader } from "../components/Layout";
+import { Col, StyledLink, SubHeader } from "../components/Layout";
 import { NumberedStep } from "../components/NumberedStep";
 import { ReadOnlyInput } from "../components/ReadOnlyInput";
 import { SingleLineInput } from "../components/SingleLineInput";
@@ -54,9 +54,11 @@ export const ClaimOrderForm: React.FC<ClaimOrderFormProps> = ({
         </SelectedOrderContainer>
         <NumberedInputContainer>
           <NumberedStep>
-            Specify a Venmo ID to receive USD at [INSERT link to gist to retreive your Venmo ID] and a required USD
-            amount to receive. Your Venmo ID will be encrypted. Submitting this transaction will lock
-            {senderRequestedAmountDisplay} fUSDC for the user to unlock with a proof of a completed Venmo transaction.
+            Specify a Venmo ID to receive USD at and a required USD amount to receive. Your Venmo ID will be encrypted.
+            Submitting this transaction will lock {senderRequestedAmountDisplay} fUSDC for the user to claim with a
+            proof of a completed Venmo transaction. If this is your first time, you will need to mint
+            (<StyledLink href="https://goerli.etherscan.io/address/0xf6426A1fdE02c3d6f10b4af107cDd7669574E74C">fUSDC</StyledLink>) and approve
+            spending to the ramp (<StyledLink href="https://goerli.etherscan.io/address/0x945D14a5c63769f4cf008a2994810940cc0DFd5C">smart contract</StyledLink>)
           </NumberedStep>
         </NumberedInputContainer>
         <InputsContainer>

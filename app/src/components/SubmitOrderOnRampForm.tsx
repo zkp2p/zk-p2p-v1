@@ -29,7 +29,9 @@ export const SubmitOrderOnRampForm: React.FC<SubmitOrderOnRampFormProps> = ({
       <SubHeader>Submit Proof</SubHeader>
       <SubmitOrderOnRampFormBodyContainer>
           <NumberedStep>
-            Upon successful proof generation, both the proof and public inputs will be populated automatically. Prior to submission, select the correct order claim for the completed Venmo payment from table of claims above.
+            Upon successful proof generation above, both the proof and public inputs will be populated automatically.
+            Prior to submission, select the correct order claim for the Venmo payment you compelted from table of claims
+            above.
           </NumberedStep>
         <LabeledTextArea
           label="Proof Output"

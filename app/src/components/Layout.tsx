@@ -38,3 +38,12 @@ export const H3 = styled(SubHeader)`
   font-size: 1.4em;
   margin-bottom: -8px;
 `;
+
+export const StyledLink = styled.a`
+  color: #1F95E2;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+`;
