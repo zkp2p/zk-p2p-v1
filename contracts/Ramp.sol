@@ -30,7 +30,7 @@ contract Ramp is Verifier {
 
     struct Order {
         address onRamper;
-        address onRamperEncryptPublicKey;
+        bytes onRamperEncryptPublicKey;
         uint256 amountToReceive;
         uint256 maxAmountToPay;
         OrderStatus status;
@@ -82,7 +82,7 @@ contract Ramp is Verifier {
     /* ============ External Functions ============ */
 
 
-    function postOrder(uint256 _amount, uint256 _maxAmountToPay, address _encryptPublicKey) 
+    function postOrder(uint256 _amount, uint256 _maxAmountToPay, bytes calldata _encryptPublicKey) 
         external 
     {
         require(_amount != 0, "Amount can't be 0");
