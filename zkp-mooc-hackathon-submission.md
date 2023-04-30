@@ -1,18 +1,23 @@
 # ZKP MOOC Hackathon submission
 
 ## Project Description
-- ZKP2P enables trustless USDC to USD trades using ZK proofs of DKIM signatures of Venmo confirmation emails.
-- We began to hack on this submission at ZKHack Lisbon in early April
-- On-rampers and off-rampers interact through the client https://zkp2p.xyz/, and Venmo to exchange fiat and USDC
 
-There are 2 actors in the system: 1) off-rampers and 2) on-rampers:
-1. Off-rampers are users who intend to trade their USDC on-chain to USD on Venmo
-2. On-rampers are users who intend to trade their USD on Venmo to USDC on-chain
+ZKP2P is a privacy preserving trustless P2P fiat onramp that can integrate with any web2 payment rails (e.g. Venmo) 
+without permission from the payment network itself. We build upon the 0xParc / PSE ZK-Email libraries to prove the 
+contents in a payment email and bring that data on-chain in a privacy preserving manner to unlock escrowed assets on-chain.
 
-There are currently 2 major flows in the protocol described below:
-**Registration**
-1. All users of the system must register and tie up a Venmo user ID to their public wallet address
-2. Currently, users are able to specify any Venmo ID valid or not before posting orders. It is up to the counterparty to check that the Venmo ID is valid off-chain. In the future, we can make the system safer by requiring as part of the registration flow for the user to generate a proof of a historical Venmo transaction
+Our current PoC deployed at https://zkp2p.xyz enables trustless and privacy-preserving USDC to USD trades on the Goerli network using Venmo as the off-chain payment rails.
+Our PoC is live and you can test it out. 😄 
+
+We began to hack on this submission at ZKHack Lisbon in early April where we built a working v0. Since then we have re-worked the flow to add privacy as first class citizen. We modified our circuits and smart contracts to preserve privacy of Venmo ID of our users, enabled full client side proving so that no private data is leaked to a server, and added optimizations to make the client side proving faster.
+
+
+### Flow
+There are 2 actors in the system: 
+1. On-rampers: Users who intend to trade their USD on Venmo to USDC on-chain.
+2. Off-rampers: Users who intend to trade their USDC on-chain to USD on Venmo.
+
+<img src="./images/P2P_Venmo_Onramp_v1.svg">
 
 **Onramp / Offramp**
 1. Onrampers create a new order specifying the amount of USDC they want to receive and the maximum amount of USD they are willing to pay
