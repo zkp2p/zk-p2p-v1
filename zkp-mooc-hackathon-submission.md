@@ -53,11 +53,12 @@ This is our [main circuit](./circuit/circuit.circom) written in circom and it pe
 * It accepts the email as an input and checks if the email header and body are signed by Venmo using RSA and SHA-256, ensuring the email's authenticity.
 * It extracts the venmo ID of the payee (user who was paid) from the email's body and hashes it.
 * It extracts the amount of USD transacted in the venmo email from the email's header and packs it into smaller chunks.
-* Public signals revealed by the circuit:
-    - RSA signature modulus against which the signature was checked. Is Venmo's DNS public key. [17 signals]
+* Public inputs to the circuit:
+    - RSA signature modulus against which the signature was checked. Venmo's DNS public key. [17 signals]
+    - Order ID specified by the on-ramper generating the proof [To prevent frontrunning; 1 signal]
+* Public outputs from the circuit:
     - Hash of the payee's Venmo ID [1 signal]
     - Amount of USD paid to payee [3 signals]
-    - Order ID specified by the on-ramper generating the proof [To prevent frontrunning; 1 signal]
 
 Following table contains information about our main circuit:
 |Metric|Value|
