@@ -10,4 +10,8 @@ contract FakeUSDC is ERC20 {
     function decimals() public view virtual override returns (uint8) {
         return 6;
     }
+
+    function mint(address to, uint256 amount) public {
+        _mint(to, amount);
+    }
 }
