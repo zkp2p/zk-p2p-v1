@@ -371,16 +371,17 @@ export const MainPage: React.FC<{}> = (props) => {
         <Header>ZK P2P On-Ramp From Venmo</Header>
         <NumberedInputContainer>
           <span style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
-            This is an experimental application demonstrating zero knowledge proof technology. The
-            (<a href="https://goerli.etherscan.io/address/0x945D14a5c63769f4cf008a2994810940cc0DFd5C">ramp contract</a>),
+            This is an experimental application demonstrating zero knowledge proof technology. The ramp
+            (<a href="https://goerli.etherscan.io/address/0x945D14a5c63769f4cf008a2994810940cc0DFd5C">smart contract</a>),
             which performs proof verification and escrow functionality, and its associated fake USDC
             (<a href="https://goerli.etherscan.io/address/0xf6426A1fdE02c3d6f10b4af107cDd7669574E74C">fUSDC</a>) asset
             live on Goerli Testnet and will require Goerli ETH to test. We are actively developing and improving this.
           </span>
           <NumberedStep step={1}>
-            On-rampers: the flow will roughly consist of posting orders to the on-chain order book. Once a claim for the order
-            is submitted by an off-ramper, you will be able to complete the flow by completing a Venmo transaction to the
-            off-ramper, and then submitting a proof of a completed Venmo transaction to unlock the fUSDC.
+            On-rampers: the flow will require two transactions. First, you will posting orders to the on-chain order book. Once
+            one or more claims for the order are submitted by off-rampers, you will be able to complete the flow by sending a Venmo
+            transaction to the off-ramper of your choice, generating a proof with the confirmation email from Venmo, and then
+            submitting the proof on chain to unlock the fUSDC.
           </NumberedStep>
           <NumberedStep step={2}>
             Off-rampers: be prepared to look up your Venmo Id [Add link to steps here]. Additionally, you will need to mint fUSDC
