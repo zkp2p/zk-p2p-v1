@@ -38,13 +38,13 @@ There are 2 actors in the system:
 
 ### Circuits
 #### ZK-email-verify
-Our circuits are build on top of the [zk-email-verify](https://github.com/zkemail/zk-email-verify) circuits. We borrow the following circuits and scripts written by the zk-email team:
+Our circuits are built on top of the [zk-email-verify](https://github.com/zkemail/zk-email-verify) circuits. We borrow the following circuits and scripts written by the zk-email team:
 - **RSA Signature verification**: Verifies a signature signed by a 2048 bit RSA public key
 - **SHA256 Partial hashing**: Completes the sha256 hash given a pre-computed state. Allows us to calculate first part of the partial hashes outside the circuit thus reducing proving time.
 - **Regex circuit generator script**: To perform arbitrary regex checks within the circom framework, they implemented a Python script that converts a given regex into a deterministic finite automata (DFA) and then represents the DFA via gate operations in circom code.
 
 #### Venmo Email regex circuits
-We used their regex circuit generator scripts to generate our own regex circuits for parsing a venmo payment email. Currently we have the following regex circuits:
+We used their regex circuit generator scripts to generate our own regex circuits for parsing a Venmo payment email. Currently we have the following regex circuits:
 - **Venmo Off-ramper ID Regex**: This [regex circuit](./circuit/venmo_offramper_id_regex.circom) extracts out the venmo ID of the payee (user who was paid) from a venmo payment email's body. Written in circom.
 - **Venmo Amount Regex**: This [regex circuit](./circuit/venmo_amount_regex.circom) extracts out the amount sent from a venmo payment email's header. Written in circom.
 
@@ -73,14 +73,14 @@ Following table contains information about our main circuit:
 
 ### Proof generation in the browser
 
-To preserver privacy of the user's email we opted for generating ZK proofs in the browser. Following optimizations were added to make client side proving faster:
+To preserve privacy of the user's email, we opted for generating ZK proofs in the browser. We then added the following optimizations to make client side proving faster:
 
 #### Chunked Proving key
 The size of our proving key is **3.5GB** which makes it difficult to download and generate proofs. So we chunked our keys into 10 parts using [sampriti's snarkjs fork](https://github.com/sampritipanda/snarkjs#fef81fc51d17a734637555c6edbd585ecda02d9e). We then compressed each one of them and hosted them on a public [AWS S3 bucket](https://s3.console.aws.amazon.com/s3/buckets/zk-p2p-onramp?region=us-east-1&tab=objects). Sizes of the chunked proving keys in total is **1.95 GB**. A reduction in size of 45%.
 
 #### Storing proving keys
 The chunked proving keys are downloaded when the user generates the proof for the very first time. These chunked keys are stored in their compressed form in the local storage of the browser on the user's machine, so that 
-the user doesn't has to downaload the proving key again and waste network bandwidth.
+the user doesn't has to download the proving key again and utilize network bandwidth.
 
 Following table presents steps taken to generate proof on the client end along with time taken for each step:
 |Step|Time|
@@ -110,8 +110,7 @@ Groth16 requires a trusted setup per circuit, but we have not done any trusted s
 
 The smart contracts are written in Solidity and deployed on the Goerli test network. You can find them here: 
 - Ramp - [0x945D14a5c63769f4cf008a2994810940cc0DFd5C](https://goerli.etherscan.io/address/0x945D14a5c63769f4cf008a2994810940cc0DFd5C)
-- FakeUSDC - [0xf6426A1fdE02c3d6f10b4af107cDd7669574E74C](https://goerli.etherscan.io/address/0xf6426A1fdE02c3d6f10b4af107cDd7669574E74C)
-. 
+- FakeUSDC - [0xf6426A1fdE02c3d6f10b4af107cDd7669574E74C](https://goerli.etherscan.io/address/0xf6426A1fdE02c3d6f10b4af107cDd7669574E74C) 
 
 #### Ramp contract
 
@@ -128,12 +127,11 @@ For off-rampers:
 
 #### Verifier contract
 
-The [verifier contract](./contracts/Verifier.sol) is for verifying zk-SNARK proofs using the Groth16 proving sysetem. It is generated using the SnarkJS template and hosts the on-chain verification logic. It is extended by the main Ramp contract.
+The [verifier contract](./contracts/Verifier.sol) is for verifying zk-SNARK proofs using the Groth16 proving system. It is generated using the SnarkJS template and hosts the on-chain verification logic. It is extended by the main Ramp contract.
 
 #### Fake USDC contract
 
 An ERC20 token deployed on Goerli network for testing purposes.
-
 
 ## Approach to Problem
 
@@ -147,4 +145,4 @@ To address these issues, we designed a user-friendly onboarding flow that mitiga
 
 Our initial v0 implemention implemented in early April leaked users Venmo IDs on-chain and did not support client side proof generation. We have iterated on our initial v0 implemention since then and added privacy as a first class citizen ensuring no venmo IDs are leaked on-chain. Only the parties involved in the transaciton know their counterpartie's Venmo ID to facilitate the off-chain transaction. We added supported for full client side proving to preserve maximum privacy and not reveal contents of the email other than what is necessary.
 
-Even now, our solution requires up to ten minutes for client-side proof generation, yet it remains more competitive than the existing alternatives. It caters to only venmo users and can only be used to on-board to USDC. As we move toward production, we will continue to optimize client side proof generation, add support for more payment services and on-chain tokens including ETH for gas token, improve security and enhance the overall user experience.
+Even now, our solution requires up to ten minutes for client-side proof generation, yet it remains more competitive than the existing alternatives. It caters to only Venmo users and can only be used to on-board to USDC. As we move toward production, we will continue to optimize client side proof generation, add support for more payment services and on-chain tokens including ETH for gas token, improve security and enhance the overall user experience.
