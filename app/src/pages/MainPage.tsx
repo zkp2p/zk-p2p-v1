@@ -355,7 +355,6 @@ export const MainPage: React.FC<{}> = (props) => {
     } else {
       setActionState(FormState.CLAIM);
     }
-    // setActionState(FormState.UPDATE);
 
     setSelectedOrderClaim({} as OnRampOrderClaim);
     setSelectedOrder(orderToSelect);
@@ -371,11 +370,22 @@ export const MainPage: React.FC<{}> = (props) => {
       <div className="title">
         <Header>ZK P2P On-Ramp From Venmo</Header>
         <NumberedInputContainer>
+          <span style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+            This is an experimental application demonstrating zero knowledge proof technology. The
+            (<a href="https://goerli.etherscan.io/address/0x945D14a5c63769f4cf008a2994810940cc0DFd5C">ramp contract</a>),
+            which performs proof verification and escrow functionality, and its associated fake USDC
+            (<a href="https://goerli.etherscan.io/address/0xf6426A1fdE02c3d6f10b4af107cDd7669574E74C">fUSDC</a>) asset
+            live on Goerli Testnet and will require Goerli ETH to test. We are actively developing and improving this.
+          </span>
           <NumberedStep step={1}>
-            Step 1 Instructions: disclaimer this is an experimental application showcasing ZKP technology
+            On-rampers: the flow will roughly consist of posting orders to the on-chain order book. Once a claim for the order
+            is submitted by an off-ramper, you will be able to complete the flow by completing a Venmo transaction to the
+            off-ramper, and then submitting a proof of a completed Venmo transaction to unlock the fUSDC.
           </NumberedStep>
           <NumberedStep step={2}>
-            Step 2 Instructions: when off-ramping, be prepared to look up your Venmo Id. You will also need to mint fUSDC from the contract directly and approve allowance to the smart contract
+            Off-rampers: be prepared to look up your Venmo Id [Add link to steps here]. Additionally, you will need to mint fUSDC
+            from the contract directly (we have modified the ERC20 to include an externally accessible mint function) and approve
+            allowance to the smart contract.
           </NumberedStep>
         </NumberedInputContainer>
       </div>
