@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 
 
@@ -20,6 +20,10 @@ export const OrderTable: React.FC<OrderTableProps> = ({ headers, data, onRowClic
   };
 
   const paginatedData = data.slice(currentPage * rowsPerPage, (currentPage + 1) * rowsPerPage);
+
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [data]);
 
   return (
     <TableContainer>
@@ -48,9 +52,11 @@ export const OrderTable: React.FC<OrderTableProps> = ({ headers, data, onRowClic
           &#8249;
         </PaginationButton>
         <PageInfo>
-          {currentPage + 1} of {totalPages}
+          {totalPages === 0 ? '0 of 0' : `${currentPage + 1} of ${totalPages}`}
         </PageInfo>
-        <PaginationButton disabled={currentPage === totalPages - 1} onClick={() => handleChangePage(currentPage + 1)}>
+        <PaginationButton
+          disabled={currentPage === totalPages - 1 || totalPages === 0}
+          onClick={() => handleChangePage(currentPage + 1)}>  
           &#8250;
         </PaginationButton>
       </PaginationContainer>
