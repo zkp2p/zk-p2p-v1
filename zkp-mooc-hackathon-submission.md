@@ -48,7 +48,7 @@ We used their regex circuit generator scripts to generate our own regex circuits
 - **Venmo Off-ramper ID Regex**: This [regex circuit](./circuit/venmo_offramper_id_regex.circom) extracts out the venmo ID of the payee (user who was paid) from a venmo payment email's body. Written in circom.
 - **Venmo Amount Regex**: This [regex circuit](./circuit/venmo_amount_regex.circom) extracts out the amount sent from a venmo payment email's header. Written in circom.
 
-#### P2P OnRamp Circuit:
+#### P2P OnRamp Circuit
 This is our [main circuit](./circuit/circuit.circom) written in circom and it performs the following operations:
 * It accepts the email as an input and checks if the email header and body are signed by Venmo using RSA and SHA-256, ensuring the email's authenticity.
 * It extracts the venmo ID of the payee (user who was paid) from the email's body and hashes it.
@@ -59,7 +59,7 @@ This is our [main circuit](./circuit/circuit.circom) written in circom and it pe
     - Amount of USD paid to payee
     - Order ID specified by the on-ramper generating the proof [To prevent frontrunning]
 
-Following table represents information about our circuit:
+Following table contains information about our main circuit:
 |Metric|Value|
 |------|------|
 |constraints| 6618823|
@@ -72,7 +72,7 @@ Following table represents information about our circuit:
 
 ### Proof generation in the browser
 
-To preserver privacy of the user's email we opted for generating ZK proofs in the browser. Optimizations added to make client side proving faster:
+To preserver privacy of the user's email we opted for generating ZK proofs in the browser. Following optimizations were added to make client side proving faster:
 
 #### Chunked Proving key
 The size of our proving key is **3.5GB** which makes it difficult to download and generate proofs. So we chunked our keys into 10 parts using [sampriti's snarkjs fork](https://github.com/sampritipanda/snarkjs#fef81fc51d17a734637555c6edbd585ecda02d9e). We then compressed each one of them and hosted them on a public [AWS S3 bucket](https://s3.console.aws.amazon.com/s3/buckets/zk-p2p-onramp?region=us-east-1&tab=objects). Sizes of the chunked proving keys in total is **1.95 GB**. A reduction in size of 45%.
@@ -81,7 +81,7 @@ The size of our proving key is **3.5GB** which makes it difficult to download an
 The chunked proving keys are downloaded when the user generates the proof for the very first time. These chunked keys are stored in their compressed form in the local storage of the browser on the user's machine, so that 
 the user doesn't has to downaload the proving key again and waste network bandwidth.
 
-Table presents steps taken to generate proof on the client end along with time taken for each step:
+Following table presents steps taken to generate proof on the client end along with time taken for each step:
 |Step|Time|
 |------|------|
 Chunked keys download (only once)| 207s (3.4s)
@@ -90,7 +90,7 @@ Proof generaiton | 623s (10.3 mins)
 ### Dev Server
 We set up an AWS EC2 `z1d.12x large` instance as our development server. We chose this instance because it has one of the fastest single core performance for our circuit compilation and witness generation needs. It has 48 cores which speeds up our proving key generation. We followed the [best practices for large circuits](https://hackmd.io/V-7Aal05Tiy-ozmzTGBYPA?view) guide to setup our server. 
 
-Table presents the various steps of circuit development alng with time taken to perform each step:
+Following table presents the various steps of circuit development alng with time taken to perform each step:
 |Step|Time|
 |------|------|
 Compilation | 563.87s (9.3 mins)
@@ -99,7 +99,7 @@ Chunked proving key generation| 3 hours
 Witness geeration|60s
 Proof generation using rapidsnark| 9.2s
 
-#### Proving system
+### Proving system
 
 We used the Groth16 proving system because it produces proofs smaller in size compared to other proving systems, which translates into lower gas costs when verifying proof on-chain. Groth16 proofs can be verified quickly which is essential for on-chain verification.
 
@@ -107,11 +107,14 @@ Groth16 requires a trusted setup per circuit, but we have not done any trusted s
 
 ### Smart Contracts
 
-The smart contracts are written in Solidity and deployed on the Goerli test network. The contract provides endpoints for different actors in the system to turstlessly coordinate with each other. 
+The smart contracts are written in Solidity and deployed on the Goerli test network. You can find them here: 
+- Ramp - [0x945D14a5c63769f4cf008a2994810940cc0DFd5C](https://goerli.etherscan.io/address/0x945D14a5c63769f4cf008a2994810940cc0DFd5C)
+- FakeUSDC - [0xf6426A1fdE02c3d6f10b4af107cDd7669574E74C](https://goerli.etherscan.io/address/0xf6426A1fdE02c3d6f10b4af107cDd7669574E74C)
+. 
 
 #### Ramp contract
 
-The [ramp contract](./contracts/Ramp.sol) offers the following functionality:
+The [ramp contract](./contracts/Ramp.sol) provides endpoints for different actors in the system to turstlessly coordinate with each other. It offers the following functionality:
 
 For on-rampers:
 - Posting Orders: Allows on-rampers to post an on-ramp order specifying the amount to receive, max amount to pay, and an encryption public key.
@@ -129,10 +132,6 @@ The [verifier contract](./contracts/Verifier.sol) is for verifying zk-SNARK proo
 #### Fake USDC contract
 
 An ERC20 token deployed on Goerli network for testing purposes.
-
-The latest contract addresses on the Goerli network are: 
-- Ramp - [0x945D14a5c63769f4cf008a2994810940cc0DFd5C](https://goerli.etherscan.io/address/0x945D14a5c63769f4cf008a2994810940cc0DFd5C)
-- FakeUSDC - [0xf6426A1fdE02c3d6f10b4af107cDd7669574E74C](https://goerli.etherscan.io/address/0xf6426A1fdE02c3d6f10b4af107cDd7669574E74C)
 
 
 ## Approach to Problem
