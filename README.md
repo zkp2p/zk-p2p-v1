@@ -1,14 +1,16 @@
 # ZKP2P
 
-### A trustless P2P fiat onramp powered by ZK proofs and Venmo
+### A trustless P2P fiat onramp powered by ZK proofs
 
 <img width="1000" align="center" src="https://user-images.githubusercontent.com/6797244/229355494-3f9fd4aa-76a2-4219-b294-88e356e43345.jpeg"/>
 
-ZKP2P enables trustless USDC to USD trades using ZK proofs of DKIM signatures of Venmo confirmation emails. The app can be found at [zkp2p.xyz](https://zkp2p.xyz/). We use the libraries created by [ZK Email](https://github.com/zkemail/zk-email-verify/) to prove the SHA256 and RSA signatures and regex.
+ZKP2P is a trustless P2P fiat onramp that can be built on top of any web2 payment rails (e.g. Venmo) without permission from the payment network itself. The network is powered by ZK proofs of DKIM signatures in payment confirmation emails. We build upon the 0xParc / PSE [ZK Email](https://github.com/zkemail/zk-email-verify/) libraries to prove the SHA256, email regex and RSA without revealing sensitive contents in the email. Upon successful proof generation, a user will be able to trustlessly unlock escrowed assets on-chain.
 
-Part of [ZK Hack Lisbon](https://www.zklisbon.com/) 2023 (2nd place winner).
 
-Our demo at the [ZK Hack closing ceremony](https://www.youtube.com/watch?v=GjxNsZ-Gg-Q) and [Devfolio](https://devfolio.co/projects/zkpp-23ef)
+The PoC is live on Goerli! Try it at [zkp2p.xyz](https://zkp2p.xyz/). *Note: repo currently in heavy development.*
+
+
+Part of [ZK Hack Lisbon](https://www.zklisbon.com/) 2023 (2nd place winner). Our demo at the [ZK Hack closing ceremony](https://www.youtube.com/watch?v=GjxNsZ-Gg-Q) and [Devfolio](https://devfolio.co/projects/zkpp-23ef)
 
 DM us to join the conversation!
 
@@ -29,68 +31,49 @@ Twitter
 - Only institutional accounts have direct access to convert USDC or USDT to USD
 - Existing P2P solutions either require meeting in person (e.g., LocalBitcoins) or rely on a centralized intermediary (e.g., OTC desks)
 
-<!--
-### High Level Flows
+### High Level Flow
 
 There are 2 actors in the system: 1) off-rampers and 2) on-rampers:
 1. Off-rampers are users who intend to trade their USDC on-chain to USD on Venmo
 2. On-rampers are users who intend to trade their USD on Venmo to USDC on-chain
 
-There are currently 2 major flows in the protocol described below:
-**Registration**
-1. All users of the system must register and tie up a Venmo user ID to their public wallet address
-2. Currently, users are able to specify any Venmo ID valid or not before posting orders. It is up to the counterparty to check that the Venmo ID is valid off-chain. In the future, we can make the system safer by requiring as part of the registration flow for the user to generate a proof of a historical Venmo transaction
+<img src="./images/P2P_Venmo_Onramp_v1.png">
 
-**Onramp / Offramp**
-1. Onrampers create a new order specifying the amount of USDC they want to receive and the maximum amount of USD they are willing to pay
-
-<img width="1706" alt="Screenshot 2023-04-04 at 11 36 50 AM" src="https://user-images.githubusercontent.com/6797244/229766694-05d67c79-80c0-40c6-a751-07f1e6fca8c0.png">
-
-2. Offrampers view orders that are posted and can indicate interest in filling an onrampers order by claiming. When offrampers claim an order, they lock their USDC to the Ramp escrow contract. Multiple offrampers can indicate interest in an order.
-
-<img width="1706" alt="Screenshot 2023-04-04 at 11 37 23 AM" src="https://user-images.githubusercontent.com/6797244/229767231-2dad605e-74eb-4495-be16-f5db263a7442.png">
-
-3. Offrampers send a Venmo request off-chain to the onramper's Venmo ID. Multiple offrampers can send Venmo request to the onramper
-4. Onramper chooses which Venmo request to complete the charge for and check that `orderID`, offramper `userID`, and amount are correct
-5. Onramper completes request and downloads the confirmation email from Venmo. They generate a proof of the confirmation email and submit the transaction on-chain to unlock the escrow funds
-
-<img align="center" width="1715" alt="Screenshot 2023-04-02 at 1 39 16 PM" src="https://user-images.githubusercontent.com/6797244/229768914-236fdc83-76b5-4e54-925f-ae29e4ff6cd2.png">
--->
-### Usage
-This is WIP
-1. Clone the repo and run `yarn install` in both the root and `app` folders. Navigate to the app folder and run `yarn start`
-2. Currently, we still need to wire up the generate proof to the UI flow. You have to paste your proof.json and public.json into the `Proof Output` and `Public Signal` text boxes in the UI. To generate the proof, you'll need to first download the proving key from our S3 bucket (link to be updated)
-3. Then run `yarn genProofGroth` after cloning the repo. This will take a long time (5min+). Or user RapidSnark on a server by following [Best Practices for Large Circuits](https://hackmd.io/V-7Aal05Tiy-ozmzTGBYPA?view#Compilation-and-proving).
-
-|Compilation|Value|
+Following table contains information about our main circuit:
+|Metric|Value|
 |------|------|
-|non-linear constraints|8811533|
-|public inputs|17|
-|public outputs|9|
-|private inputs|7543|
-|wires|8449232|
-|labels|34981572|
+|constraints| 6618823|
+|public inputs| 18|
+|public outputs| 4|
+|private inputs| 7478|
+|wires| 6400562|
+|labels| 30385320|
+
+### Usage
+
+#### Fetching Venmo ID Instructions
+ZKP2P on-ramping requires submitting Venmo IDs on chain so the on-rampers knows where to send the payment. A Venmo ID is unique identifier (e.g. 1234567891011121314 up to 19 digits) for your Venmo account that is separate from your handle (@Venmo-User). They are encrypted with keys generated automatically for the on-ramper and stored locally. We cannot extract Venmo handles directly from the ID as it violates Venmo's Terms of Service. You can look up your Venmo ID using one of the following methods:
+- Open any Venmo payment receipt email and click on 'Show original' and search for `user_id`. As of writing these instructions [4/30/2023], you should be able to locate your id in multiple places but may need to splice the `3D` encoding in front of the id.
+- Paste `curl https://account.venmo.com/u/[YOUR_VENMO_HANDLE] | grep -o '"user":{"displayName":"[^"]*","id":"[0-9]*"' | sed 's/.*"id":"\([0-9]*\).*/\1/'` into the command line.
+
+To verify your id, you can go to https://venmo.com/code?user_id=[YOUR_VENMO_ID] and the page should resolve to a profile for your account.
+
+#### Approving and Acquiring FakeUSDC
+As of 4/30/2023, users must mint and approve the fake USDC token on Goerli to interact with our app. We still haven't wired it into the UI flow yet, so you must do it manually. You can do so by going to the FakeUSDC Etherscan link below and calling the `mint` function with the amount of USDC you want to mint. Then, on the same Etherscan page and call the `approve` function with a USDC value scaled by 10e6 and the address of the Ramp contract (below)
+
+#### Deployed Addresses (Goerli)
+
+* Ramp - [0x945D14a5c63769f4cf008a2994810940cc0DFd5C](https://goerli.etherscan.io/address/0x945D14a5c63769f4cf008a2994810940cc0DFd5C)
+* FakeUSDC - [0xf6426A1fdE02c3d6f10b4af107cDd7669574E74C](https://goerli.etherscan.io/address/0xf6426A1fdE02c3d6f10b4af107cDd7669574E74C)
 
 ### Limitations
-- Slow proving time. It takes 60s for witness generation and 15s for proof gen using RapidSnark. 5GB proving key size. 8M+ constraints (a lot can be heavily optimized in the future)
+- Slow proving time
 - Mechanism relies on trusting Venmo. It is likely not sound for large transactions where a malicious actor has more incentive to attack the system. (e.g. chargebacks, convincing Venmo signatures to sign a malicious email). Hopefully for smaller transactions, there is more recourse (e.g. user ID is doxxed and victim can complain to Venmo)
+- Currently only supports USDC and Venmo. Can be extended to other P2P payment systems (e.g. Paypal, Zelle) and other assets (ETH, NFTs etc.)
 
 ### Future Work
 - Deploy to prod!
 - Design around edge cases (What if a hacker gets Venmo to sign a malicious email? What are ways of recourse? How to deal with chargebacks? Nullifiers?)
 - Optimizations. Speed up proving time perhaps using Halo2 libs
 - Integrate more P2P payment systems (Paypal, Zelle) and potentially bank ACH / wires
-- Support more tokens
-
-### Deployed Addresses
-
-#### Testnet (Goerli)
-* Ramp - [0x805a3Ae6495Be653dE460685D5FFDD5A538550f1](https://goerli.etherscan.io/address/0x805a3Ae6495Be653dE460685D5FFDD5A538550f1)
-* FakeUSDC - [0xb685Bdc019DEE17D073746a88bF6a6cDDED8Ae70](https://goerli.etherscan.io/address/0xb685Bdc019DEE17D073746a88bF6a6cDDED8Ae70)
-
-### Venmo ID Instructions
-ZKP2P on-ramping requires submitting Venmo IDs on chain so the on-rampers knows where to send the payment. A Venmo ID is unique identifier (e.g. 1234567891011121314 up to 19 digits) for your Venmo account that is separate from your handle (@Venmo-User). They are encrypted with keys generated automatically for the on-ramper and stored locally. We cannot extract Venmo handles directly from the ID as it violates Venmo's Terms of Service. You can look up your Venmo ID using one of the following methods:
-- Open any Venmo payment receipt email and click on 'Show original' and search for `user_id`. As of writing these instructions [4/30/2023], you should be able to locate your id in multiple places but may need to splice the `3D` encoding in front of the id.
-- Paste `curl https://account.venmo.com/u/[YOUR_VENMO_HANDLE] | grep -o '"user":{"displayName":"[^"]*","id":"[0-9]*"' | sed 's/.*"id":"\([0-9]*\).*/\1/'` into the command line.
-
-To verify your id, you can go to https://venmo.com/code?user_id=[YOUR_VENMO_ID] and the page should resolve to a profile for your account.
+- Onchain composability 👀
