@@ -108,9 +108,15 @@ Groth16 requires a trusted setup per circuit, but we have not done any trusted s
 
 ### Smart Contracts
 
-The smart contracts are written in Solidity and deployed on the Goerli test network. You can find them here: 
+The smart contracts are written in Solidity and deployed on the Goerli and Mantle (L2) test network. You can find them here: 
+
+Goerli
 - Ramp - [0x945D14a5c63769f4cf008a2994810940cc0DFd5C](https://goerli.etherscan.io/address/0x945D14a5c63769f4cf008a2994810940cc0DFd5C)
 - FakeUSDC - [0xf6426A1fdE02c3d6f10b4af107cDd7669574E74C](https://goerli.etherscan.io/address/0xf6426A1fdE02c3d6f10b4af107cDd7669574E74C) 
+
+Mantle (L2)
+- Ramp - [0xa8B1e2A1235E2B30B32233b9176867A05B48dc3e](https://explorer.testnet.mantle.xyz/address/0xa8B1e2A1235E2B30B32233b9176867A05B48dc3e/contracts#address-tabs)
+- FakeUSDC - [0xA6E289496d6479a5c7cAD48745990ef534FD3314](https://explorer.testnet.mantle.xyz/address/0xA6E289496d6479a5c7cAD48745990ef534FD3314/contracts#address-tabs)
 
 #### Ramp contract
 
