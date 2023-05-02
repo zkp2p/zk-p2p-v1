@@ -61,7 +61,7 @@ export const ClaimOrderForm: React.FC<ClaimOrderFormProps> = ({
             on-ramper. If this is your first time, you will need to mint <StyledLink href="https://goerli.etherscan.io/address/0xf6426A1fdE02c3d6f10b4af107cDd7669574E74C#writeContract">fUSDC </StyledLink>
             and approve spending to the ramp
             (<StyledLink href="https://goerli.etherscan.io/address/0x945D14a5c63769f4cf008a2994810940cc0DFd5C">smart contract</StyledLink>).
-            Make sure to 
+            Make sure to approve the correct amount with the appropriate decimals (6).
           </NumberedStep>
         </NumberedInputContainer>
         <InputsContainer>
