@@ -352,7 +352,7 @@ export const MainPage: React.FC<{}> = (props) => {
     if (selectedOrder) {
       const intervalId = setInterval(() => {
         refetchClaimedOrders();
-      }, 150000); // Refetch every 150 seconds
+      }, 15000); // Refetch every 15 seconds
   
       return () => {
         clearInterval(intervalId);
