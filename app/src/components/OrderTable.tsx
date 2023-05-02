@@ -19,11 +19,16 @@ export const OrderTable: React.FC<OrderTableProps> = ({ headers, data, onRowClic
     setCurrentPage(newPage);
   };
 
+  const isSelected = (rowIndex: number): boolean => {
+    const globalIndex = rowIndex + currentPage * rowsPerPage;
+    return globalIndex === selectedRow;
+  };
+
   const paginatedData = data.slice(currentPage * rowsPerPage, (currentPage + 1) * rowsPerPage);
 
   useEffect(() => {
     setCurrentPage(0);
-  }, [data]);
+  }, [data.length]);
 
   return (
     <TableContainer>
@@ -32,16 +37,25 @@ export const OrderTable: React.FC<OrderTableProps> = ({ headers, data, onRowClic
           <tr>
             {headers.map((header, index) => (
               <TableHeader key={index}>
-                {header
-              }</TableHeader>
+                {header}
+              </TableHeader>
             ))}
           </tr>
         </thead>
         <tbody>
           {paginatedData.map((row, rowIndex) => (
-            <TableRow key={rowIndex} onClick={() => onRowClick && onRowClick([rowIndex])} selected={rowIndex === selectedRow}>
+            <TableRow
+              key={rowIndex}
+              onClick={() => {
+                const selectedOrderIndex = rowIndex + currentPage * rowsPerPage;
+                onRowClick && onRowClick([selectedOrderIndex])}
+              }
+              selected={isSelected(rowIndex)}
+            >
               {row.map((cell, cellIndex) => (
-                <TableCell key={cellIndex}>{cell}</TableCell>
+                <TableCell key={cellIndex}>
+                  {cell}
+                </TableCell>
               ))}
             </TableRow>
           ))}
