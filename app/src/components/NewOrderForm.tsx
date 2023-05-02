@@ -40,20 +40,25 @@ export const NewOrderForm: React.FC<NewOrderFormProps> = ({
   })
 
   useEffect(() => {
+    // On successful completion of message signing only
     if (signedMessageSignature) {
+      // Generate account hash from signature and store to localStorage
       const accountHash = generateAccountFromSignature(signedMessageSignature);
       setAccountHash(accountHash);
       localStorage.setItem(accountHashKey, accountHash);
       
+      // Extract public key from account hash and set as venmo encrypting key parameter
       const publicKey = getPublicKeyFromAccount(accountHash);
       setVenmoIdEncryptingKey(publicKey);
     }
   }, [signedMessageSignature])
 
   useEffect(() => {
+    // On update to the logged in wallet address (updating accountHashKey), fetch accountHash from localStorage
     const accountHash = localStorage.getItem(accountHashKey);
     setAccountHash(accountHash || "");
 
+    // If accountHash exists, extract public key from account hash and set as venmo encrypting key parameter
     if (accountHash) {
       const publicKey = getPublicKeyFromAccount(accountHash);
       setVenmoIdEncryptingKey(publicKey);
@@ -61,7 +66,7 @@ export const NewOrderForm: React.FC<NewOrderFormProps> = ({
       setVenmoIdEncryptingKey("");
     }
 
-  }, [accountHashKey, loggedInWalletAddress]);
+  }, [loggedInWalletAddress]);
 
   return (
     <NewOrderFormHeaderContainer>
