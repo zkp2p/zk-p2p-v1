@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 
 import { Button } from "../components/Button";
-import { Col, StyledLink, SubHeader } from "../components/Layout";
+import { Col, SubHeader } from "../components/Layout";
 import { NumberedStep } from "../components/NumberedStep";
 import { ReadOnlyInput } from "../components/ReadOnlyInput";
 import { SingleLineInput } from "../components/SingleLineInput";
+import { StyledLink } from "../components/StyledLink";
 
 import { encryptMessage } from "../helpers/messagEncryption";
 import { generateVenmoIdHash } from "../helpers/venmoHash";
@@ -21,6 +22,8 @@ interface ClaimOrderFormProps {
   setHashedVenmoId: (key: string) => void;
   writeClaimOrder?: () => void;
   isWriteClaimOrderLoading: boolean;
+  rampExplorerLink: string;
+  fusdcExplorerLink: string;
 }
  
 export const ClaimOrderForm: React.FC<ClaimOrderFormProps> = ({
@@ -32,7 +35,9 @@ export const ClaimOrderForm: React.FC<ClaimOrderFormProps> = ({
   setEncryptedVenmoId,
   setHashedVenmoId,
   writeClaimOrder,
-  isWriteClaimOrderLoading
+  isWriteClaimOrderLoading,
+  rampExplorerLink,
+  fusdcExplorerLink
 }) => {
   const persistedVenmoIdKey = `persistedVenmoId_${loggedInWalletAddress}`;
   const [venmoIdInput, setVenmoIdInput] = useState<string>(localStorage.getItem(persistedVenmoIdKey) || "");
@@ -55,12 +60,19 @@ export const ClaimOrderForm: React.FC<ClaimOrderFormProps> = ({
         <NumberedInputContainer>
           <NumberedStep>
             Specify a Venmo ID (not handle, see our
-            <StyledLink href="https://github.com/0xSachinK/zk-p2p-onramp/blob/main/README.md#venmo-id-instructions"> guide</StyledLink>)
+            <StyledLink
+            urlHyperlink="https://github.com/0xSachinK/zk-p2p-onramp/blob/main/README.md#venmo-id-instructions"
+            label={' guide'}/>)
             no retrieving your ID to receive USD at and a required USD amount to receive. Your Venmo ID will be encrypted.
             Submitting this transaction will escrow {senderRequestedAmountDisplay} fUSDC for the
-            on-ramper. If this is your first time, you will need to mint <StyledLink href="https://goerli.etherscan.io/address/0xf6426A1fdE02c3d6f10b4af107cDd7669574E74C#writeContract">fUSDC </StyledLink>
+            on-ramper. If this is your first time, you will need to mint
+            <StyledLink
+              urlHyperlink={fusdcExplorerLink}
+              label={' fUSDC '}/>
             and approve spending to the ramp
-            (<StyledLink href="https://goerli.etherscan.io/address/0x945D14a5c63769f4cf008a2994810940cc0DFd5C">smart contract</StyledLink>).
+            (<StyledLink
+              urlHyperlink={rampExplorerLink}
+              label={'smart contract'}/>).
             Make sure to approve the correct amount with the appropriate decimals (6).
           </NumberedStep>
         </NumberedInputContainer>

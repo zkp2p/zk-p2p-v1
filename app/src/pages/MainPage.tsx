@@ -6,7 +6,8 @@ import { useMount } from "react-use";
 import styled from "styled-components";
 import { Button } from "../components/Button";
 import { ClaimOrderForm } from "../components/ClaimOrderForm";
-import { Col, Header, StyledLink, SubHeader } from "../components/Layout";
+import { Col, Header, SubHeader } from "../components/Layout";
+import { StyledLink } from "../components/StyledLink";
 import { NewOrderForm } from "../components/NewOrderForm";
 import { NumberedStep } from "../components/NumberedStep";
 import { OrderTable } from '../components/OrderTable';
@@ -52,7 +53,9 @@ export const MainPage: React.FC<{}> = (props) => {
   const [selectedOrder, setSelectedOrder] = useState<OnRampOrder>({} as OnRampOrder);
   const [selectedOrderClaim, setSelectedOrderClaim] = useState<OnRampOrderClaim >({} as OnRampOrderClaim);
   
-  const [rampContractAddress, setRampContractAddress] = useState<string>('goerli');
+  const [rampContractAddress, setRampContractAddress] = useState<string>(contractAddresses['goerli'].ramp);
+  const [fUSDCContractAddress, setFUSDCContractAddress] = useState<string>(contractAddresses['goerli'].fusdc);
+  const [blockExplorer, setBlockExplorer] = useState<string>('https://goerli.etherscan.io/address/');
 
   // ----- transaction state -----
   const [newOrderAmount, setNewOrderAmount] = useState<number>(0);
@@ -236,13 +239,43 @@ export const MainPage: React.FC<{}> = (props) => {
       return '';
     };
 
+    const fetchFUSDCContractAddress = (chain: Chain) => {
+      if (contractAddresses[chain.network]) {
+        return contractAddresses[chain.network].fusdc;
+      }
+      return '';
+    };
+
     if (chain) {
-      const address = fetchRampContractAddress(chain);
+      const rampAddress = fetchRampContractAddress(chain);
+      const fusdcAddress = fetchFUSDCContractAddress(chain);
+
+      console.log('Fetching chain.network:')
+      console.log(chain.network)
+
+      let explorer;
+      switch (chain.network) {
+        case "goerli":
+          explorer = 'https://goerli.etherscan.io/address/';
+          break;
+
+        case "mantle":
+          explorer = 'https://explorer.testnet.mantle.xyz/address/';
+          break;
+
+        default:
+          explorer = '';
+          break;
+      }
 
       console.log('Fetching ramp contract address for network addresses: ');
-      console.log(address);
+      console.log(rampAddress);
+      console.log(fusdcAddress);
+      console.log(explorer);
 
-      setRampContractAddress(address);
+      setRampContractAddress(rampAddress);
+      setFUSDCContractAddress(fusdcAddress);
+      setBlockExplorer(explorer);
     }
   }, [chain]);
 
@@ -401,10 +434,14 @@ export const MainPage: React.FC<{}> = (props) => {
         <NumberedInputContainer>
           <span style={{ color: 'rgba(255, 255, 255, 0.7)', lineHeight: '1.3'}}>
             This is an experimental application demonstrating zero knowledge proof technology. The ramp
-            (<StyledLink href="https://goerli.etherscan.io/address/0x945D14a5c63769f4cf008a2994810940cc0DFd5C">smart contract</StyledLink>),
+            (<StyledLink
+              urlHyperlink={blockExplorer + rampContractAddress}
+              label={'smart contract'}/>),
             which performs proof verification and escrow functionality, and its associated fake USDC
-            (<StyledLink href="https://goerli.etherscan.io/address/0xf6426A1fdE02c3d6f10b4af107cDd7669574E74C">fUSDC</StyledLink>) asset
-            live on Goerli Testnet and will require Goerli ETH to test. We are actively developing and improving this.
+            (<StyledLink
+              urlHyperlink={blockExplorer + fUSDCContractAddress}
+              label={'fUSDC'}/>),
+            asset live on Goerli Testnet and will require Goerli ETH to test. We are actively developing and improving this.
           </span>
           <NumberedStep step={1}>
             On-rampers: the flow will require two transactions. First, you will post orders to the
@@ -414,7 +451,9 @@ export const MainPage: React.FC<{}> = (props) => {
           </NumberedStep>
           <NumberedStep step={2}>
             Off-rampers: the flow will require your Venmo Id
-            (<StyledLink href="https://github.com/0xSachinK/zk-p2p-onramp/blob/main/README.md#venmo-id-instructions">instructions</StyledLink>).
+            (<StyledLink
+              urlHyperlink="https://github.com/0xSachinK/zk-p2p-onramp/blob/main/README.md#venmo-id-instructions"
+              label={'instructions'}/>).
             Additionally, you will need to mint fUSDC from the contract directly. We have modified
             the generic ERC20 to include an externally accessible mint function. You will also need to approve allowance
             to the smart contract.
@@ -466,6 +505,8 @@ export const MainPage: React.FC<{}> = (props) => {
                 setHashedVenmoId={setClaimOrderHashedVenmoId}
                 writeClaimOrder={writeClaimOrder}
                 isWriteClaimOrderLoading={isWriteClaimOrderLoading}
+                rampExplorerLink={blockExplorer + rampContractAddress}
+                fusdcExplorerLink={blockExplorer + fUSDCContractAddress}
               />
             </Column>
           )}
