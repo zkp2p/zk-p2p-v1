@@ -51,7 +51,7 @@ export const downloadProofFiles = async function (filename: string, onFileDownlo
   const filePromises = [];
   for (const c of zkeySuffix) {
     const targzFilename = `${filename}.zkey${c}${zkeyExtension}`;
-    const itemCompressed = await localforage.getItem(targzFilename);
+    // const itemCompressed = await localforage.getItem(targzFilename);
     const item = await localforage.getItem(`${filename}.zkey${c}`);
     if (item) {
       console.log(`${filename}.zkey${c}${item ? "" : zkeyExtension} already found in localstorage!`);
@@ -111,7 +111,7 @@ export async function verifyProof(proof: any, publicSignals: any) {
 
 function bigIntToArray(n: number, k: number, x: bigint) {
   let divisor = 1n;
-  for (var idx = 0; idx < n; idx++) {
+  for (var i = 0; i < n; i++) {
     divisor = divisor * 2n;
   }
 

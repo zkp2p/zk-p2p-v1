@@ -8,9 +8,9 @@ import { LabeledTextArea } from './LabeledTextArea';
 import { ProgressBar } from "../components/ProgressBar";
 import { NumberedStep } from "../components/NumberedStep";
 
-import { downloadProofFiles, generateProof, verifyProof } from "../helpers/zkp";
+import { downloadProofFiles, generateProof } from "../helpers/zkp";
 import { insert13Before10 } from "../scripts/generate_input";
-import { packedNBytesToString } from "../helpers/binaryFormat";
+// import { packedNBytesToString } from "../helpers/binaryFormat";
 import { OnRampOrder } from "../helpers/types";
 
 const generate_input = require("../scripts/generate_input");
@@ -173,10 +173,10 @@ export const SubmitOrderGenerateProofForm: React.FC<SubmitOrderGenerateProofForm
               /*
                 Retrieve public signals
               */
-              let kek = publicSignals.map((x: string) => BigInt(x));
-              let soln = packedNBytesToString(kek.slice(0, 12));
-              let soln2 = packedNBytesToString(kek.slice(12, 147));
-              let soln3 = packedNBytesToString(kek.slice(147, 150));
+              // let kek = publicSignals.map((x: string) => BigInt(x));
+              // let soln = packedNBytesToString(kek.slice(0, 12));
+              // let soln2 = packedNBytesToString(kek.slice(12, 147));
+              // let soln3 = packedNBytesToString(kek.slice(147, 150));
               // setPublicSignals(`From: ${soln}\nTo: ${soln2}\nUsername: ${soln3}`);
               
               /*
