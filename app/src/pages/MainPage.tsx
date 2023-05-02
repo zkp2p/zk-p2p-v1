@@ -153,7 +153,8 @@ export const MainPage: React.FC<{}> = (props) => {
     },
   });
 
-  console.log(writeCreateOrderConfig);
+  // Debug:
+  // console.log(writeCreateOrderConfig);
 
   const {
     isLoading: isWriteNewOrderLoading,

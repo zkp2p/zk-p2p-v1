@@ -44,16 +44,23 @@ export const NewOrderForm: React.FC<NewOrderFormProps> = ({
       const accountHash = generateAccountFromSignature(signedMessageSignature);
       setAccountHash(accountHash);
       localStorage.setItem(accountHashKey, accountHash);
+      
+      const publicKey = getPublicKeyFromAccount(accountHash);
+      setVenmoIdEncryptingKey(publicKey);
     }
-  }, [accountHashKey, signedMessageSignature])
-
-  useEffect(() => {
-    console.log('Sign Message Status Use Effect: ', signMessageStatus);
-  }, [signMessageStatus])
+  }, [signedMessageSignature])
 
   useEffect(() => {
     const accountHash = localStorage.getItem(accountHashKey);
     setAccountHash(accountHash || "");
+
+    if (accountHash) {
+      const publicKey = getPublicKeyFromAccount(accountHash);
+      setVenmoIdEncryptingKey(publicKey);
+    } else {
+      setVenmoIdEncryptingKey("");
+    }
+
   }, [accountHashKey, loggedInWalletAddress]);
 
   return (
@@ -78,11 +85,7 @@ export const NewOrderForm: React.FC<NewOrderFormProps> = ({
             if (accountHash === "") {
               await signMessage();
             } else {
-              if (accountHash !== "") {
-                const publicKey = getPublicKeyFromAccount(accountHash);
-                setVenmoIdEncryptingKey(publicKey);
-                writeNewOrder?.();
-              }
+              writeNewOrder?.();
             }
           }}
           >
