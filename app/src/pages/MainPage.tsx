@@ -221,6 +221,14 @@ export const MainPage: React.FC<{}> = (props) => {
   */
 
   useEffect(() => {
+    if (address) {
+      setEthereumAddress(address);
+    } else {
+      setEthereumAddress("");
+    }
+  }, [address]);
+
+  useEffect(() => {
     const fetchRampContractAddress = (chain: Chain) => {
       if (contractAddresses[chain.network]) {
         return contractAddresses[chain.network].ramp;
