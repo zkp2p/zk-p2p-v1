@@ -73,7 +73,6 @@ export const MainPage: React.FC<{}> = (props) => {
   const [fetchedOrderClaims, setFetchedOrderClaims] = useState<OnRampOrderClaim[]>([]);
 
   const { chain } = useNetwork();
-  console.log("Chain: ", chain);
 
   const formatAmountsForTransactionParameter = (tokenAmount: number) => {
     const adjustedAmount = tokenAmount * (10 ** 6);
@@ -253,9 +252,6 @@ export const MainPage: React.FC<{}> = (props) => {
       const rampAddress = fetchRampContractAddress(chain);
       const fusdcAddress = fetchFUSDCContractAddress(chain);
 
-      console.log('Fetching chain.network:')
-      console.log(chain.network)
-
       let explorer;
       switch (chain.network) {
         case "goerli":
@@ -271,11 +267,6 @@ export const MainPage: React.FC<{}> = (props) => {
           break;
       }
 
-      console.log('Fetching ramp contract address for network addresses: ');
-      console.log(rampAddress);
-      console.log(fusdcAddress);
-      console.log(explorer);
-
       setRampContractAddress(rampAddress);
       setFUSDCContractAddress(fusdcAddress);
       setBlockExplorer(explorer);
@@ -284,7 +275,6 @@ export const MainPage: React.FC<{}> = (props) => {
 
   // Fetch Orders
   useEffect(() => {
-    console.log("Processing Orders");
     if (!isReadAllOrdersLoading && !isReadAllOrdersError && allOrders) {
 
       const sanitizedOrders: OnRampOrder[] = [];
@@ -299,14 +289,6 @@ export const MainPage: React.FC<{}> = (props) => {
         const maxAmountToPay = orderData.maxAmountToPay;
         const status = orderData.status;
 
-        // console.log("Order: ");
-        // console.log(orderId);
-        // console.log(onRamper);
-        // console.log(onRamperEncryptPublicKey);
-        // console.log(amountToReceive);
-        // console.log(maxAmountToPay);
-        // console.log(status);
-
         const order: OnRampOrder = {
           orderId,
           onRamper,
@@ -319,14 +301,12 @@ export const MainPage: React.FC<{}> = (props) => {
         sanitizedOrders.push(order);
       }
 
-      console.log("Orders State Updated");
       setFetchedOrders(sanitizedOrders);
     }
   }, [allOrders, isReadAllOrdersLoading, isReadAllOrdersError]);
 
   useEffect(() => {
     const intervalId = setInterval(() => {
-      console.log("Fetching Orders");
       refetchAllOrders();
     }, 15000); // Refetch every 15 seconds
 
@@ -335,10 +315,8 @@ export const MainPage: React.FC<{}> = (props) => {
     };
   }, [refetchAllOrders]);
 
-
   // Fetch Order Claims
   useEffect(() => {
-    console.log("Processing Order Claims");
     if (!isReadOrderClaimsLoading && !isReadOrderClaimsError && orderClaimsData) {
 
       const sanitizedOrderClaims: OnRampOrderClaim[] = [];
@@ -352,15 +330,6 @@ export const MainPage: React.FC<{}> = (props) => {
         const encryptedOffRamperVenmoId = claimsData.encryptedOffRamperVenmoId.substring(2);
         const claimExpirationTime = claimsData.claimExpirationTime.toString();
         const minAmountToPay = claimsData.minAmountToPay.toString();
-
-        // console.log("Order claim: ");
-        // console.log(claimId);
-        // console.log(offRamper);
-        // console.log(hashedVenmoId);
-        // console.log(status);
-        // console.log(encryptedOffRamperVenmoId);
-        // console.log(claimExpirationTime);
-        // console.log(minAmountToPay);
         
         const orderClaim: OnRampOrderClaim = {
           claimId,
@@ -382,7 +351,6 @@ export const MainPage: React.FC<{}> = (props) => {
   useEffect(() => {
     if (selectedOrder) {
       const intervalId = setInterval(() => {
-        console.log("Fetching Order Claims");
         refetchClaimedOrders();
       }, 150000); // Refetch every 150 seconds
   
