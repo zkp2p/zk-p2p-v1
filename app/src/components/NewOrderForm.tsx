@@ -33,6 +33,8 @@ export const NewOrderForm: React.FC<NewOrderFormProps> = ({
   const {
     data: signedMessageSignature,
     signMessage,
+    isLoading: isMessageSigning,
+    status: signMessageStatus,
   } = useSignMessage({
     message: 'You are signing a message to log into zkp2p.xyz.',
   })
@@ -44,6 +46,10 @@ export const NewOrderForm: React.FC<NewOrderFormProps> = ({
       localStorage.setItem(accountHashKey, accountHash);
     }
   }, [accountHashKey, signedMessageSignature])
+
+  useEffect(() => {
+    console.log('Sign Message Status Use Effect: ', signMessageStatus);
+  }, [signMessageStatus])
 
   useEffect(() => {
     const accountHash = localStorage.getItem(accountHashKey);
@@ -67,14 +73,16 @@ export const NewOrderForm: React.FC<NewOrderFormProps> = ({
           }}
         />
         <Button
-          disabled={isWriteNewOrderLoading}
+          disabled={isWriteNewOrderLoading || isMessageSigning}
           onClick={async () => {
             if (accountHash === "") {
               await signMessage();
             } else {
-              const publicKey = getPublicKeyFromAccount(accountHash);
-              setVenmoIdEncryptingKey(publicKey);
-              writeNewOrder?.();
+              if (accountHash !== "") {
+                const publicKey = getPublicKeyFromAccount(accountHash);
+                setVenmoIdEncryptingKey(publicKey);
+                writeNewOrder?.();
+              }
             }
           }}
           >
