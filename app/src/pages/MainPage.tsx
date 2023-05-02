@@ -440,8 +440,9 @@ export const MainPage: React.FC<{}> = (props) => {
             which performs proof verification and escrow functionality, and its associated fake USDC
             (<StyledLink
               urlHyperlink={blockExplorer + fUSDCContractAddress}
-              label={'fUSDC'}/>),
-            asset live on Goerli Testnet and will require Goerli ETH to test. We are actively developing and improving this.
+              label={'fUSDC'}/>)
+            asset, both live on Goerli / Manta Testnets and will require Goerli ETH / Manta BIT to test.
+            We are actively developing and improving this.
           </span>
           <NumberedStep step={1}>
             On-rampers: the flow will require two transactions. First, you will post orders to the
