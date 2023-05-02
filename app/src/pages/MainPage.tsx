@@ -62,7 +62,7 @@ export const MainPage: React.FC<{}> = (props) => {
   const [newOrderVenmoIdEncryptingKey, setNewOrderVenmoIdEncryptingKey] = useState<string>('');
 
   const [claimOrderEncryptedVenmoId, setClaimOrderEncryptedVenmoId] = useState<string>('');
-  const [claimOrderHashedVenmoHandle, setClaimOrderHashedVenmoId] = useState<string>('');
+  const [claimOrderHashedVenmoId, setClaimOrderHashedVenmoId] = useState<string>('');
   const [claimOrderRequestedAmount, setClaimOrderRequestedAmount] = useState<number>(0);
 
   const [submitOrderPublicSignals, setSubmitOrderPublicSignals] = useState<string>('');
@@ -170,7 +170,7 @@ export const MainPage: React.FC<{}> = (props) => {
     contractInterface: abi,
     functionName: 'claimOrder',
     args: [
-      claimOrderHashedVenmoHandle,
+      claimOrderHashedVenmoId,
       selectedOrder.orderId,
       '0x' + claimOrderEncryptedVenmoId,
       formatAmountsForTransactionParameter(claimOrderRequestedAmount)
@@ -456,7 +456,7 @@ export const MainPage: React.FC<{}> = (props) => {
           <NumberedStep step={2}>
             Off-rampers: the flow will require your Venmo Id
             (<StyledLink
-              urlHyperlink="https://github.com/0xSachinK/zk-p2p-onramp/blob/main/README.md#venmo-id-instructions"
+              urlHyperlink="https://github.com/0xSachinK/zk-p2p-onramp/blob/main/README.md#fetching-venmo-id-instructions"
               label={'instructions'}/>).
             Additionally, you will need to mint fUSDC from the contract directly. We have modified
             the generic ERC20 to include an externally accessible mint function. You will also need to approve allowance
