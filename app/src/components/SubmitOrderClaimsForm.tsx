@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
+import { useSignMessage } from 'wagmi'
 
 import { Button } from "./Button";
 import { Col, SubHeader } from "./Layout";
@@ -7,7 +8,10 @@ import { OrderTable } from './OrderTable';
 import { NumberedStep } from "../components/NumberedStep";
 
 import { OnRampOrderClaim } from "../helpers/types";
-import { decryptMessageWithAccount } from '../helpers/messagEncryption';
+import {
+  decryptMessageWithAccount,
+  generateAccountFromSignature
+} from '../helpers/messagEncryption';
 import { generateVenmoIdHash } from "../helpers/venmoHash";
 import { formatAmountsForUSDC } from '../helpers/tableFormatters';
 
@@ -28,6 +32,14 @@ export const SubmitOrderClaimsForm: React.FC<SubmitOrderClaimsFormProps> = ({
 }) => {
   const accountHashKey = `accountHash_${loggedInWalletAddress}`;
   const [accountHash, setAccountHash] = useState<string>(localStorage.getItem(accountHashKey) || "");
+
+  const {
+    data: signedMessageSignature,
+    signMessage,
+  } = useSignMessage({
+    message: 'You are signing a message to log into zkp2p.xyz.',
+    // message: 'You are signing a message that will be used to encrypt Venmo handles.',
+  })
 
   const [venmoIdsVisible, setVenmoIdsVisible] = useState<boolean>(false);
   const [decryptedVenmoIds, setDecryptedVenmoIds] = useState<string[]>([]);
@@ -83,9 +95,20 @@ export const SubmitOrderClaimsForm: React.FC<SubmitOrderClaimsFormProps> = ({
   }
 
   useEffect(() => {
+    // On successful completion of message signing only
+    if (signedMessageSignature) {
+      // Generate account hash from signature and store to localStorage
+      const accountHash = generateAccountFromSignature(signedMessageSignature);
+      setAccountHash(accountHash);
+      localStorage.setItem(accountHashKey, accountHash);
+    }
+  }, [signedMessageSignature])
+
+  useEffect(() => {
+    // On update to the logged in wallet address (updating accountHashKey), fetch accountHash from localStorage
     const accountHash = localStorage.getItem(accountHashKey);
     setAccountHash(accountHash || "");
-  }, [accountHashKey, loggedInWalletAddress]);
+  }, [loggedInWalletAddress]);
 
   async function toggleVenmoIds() {
     if (!venmoIdsVisible) {
@@ -132,7 +155,13 @@ export const SubmitOrderClaimsForm: React.FC<SubmitOrderClaimsFormProps> = ({
           />
           <Button
             disabled={false}
-            onClick={toggleVenmoIds}
+            onClick={async () => {
+              if (accountHash === "") {
+                await signMessage();
+              } else {
+                toggleVenmoIds();
+              }
+            }}
             >
             {venmoIdsVisible ? 'Hide Venmo IDs' : 'Decrypt and Verify IDs'}
           </Button>

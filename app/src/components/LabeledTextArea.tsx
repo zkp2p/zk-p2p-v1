@@ -97,4 +97,5 @@ const TextArea = styled.textarea`
 	resize: none;
   &:hover {
 		border: 1px solid rgba(255, 255, 255, 0.8);
+  }
 `;
