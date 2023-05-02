@@ -13,23 +13,26 @@ import {
 import "./index.css";
 import "@rainbow-me/rainbowkit/styles.css";
 
-export const scrollAlpha = {
-  id: 534353,
-  name: 'Scroll Alpha',
-  network: 'scrollalpha',
+export const mantleTestnet = {
+  id: 5001,
+  name: 'Mantle Testnet',
+  network: 'mantle',
   nativeCurrency: {
     decimals: 18,
-    name: 'Ethereum',
-    symbol: 'ETH',
+    name: 'BitDAO',
+    symbol: 'BIT',
   },
   rpcUrls: {
-    public: { http: ["https://alpha-rpc.scroll.io/l2"] },
-    default: { http: ["https://alpha-rpc.scroll.io/l2"] },
+    public: { http: ["https://rpc.testnet.mantle.xyz/"] },
+    default: { http: ["https://rpc.testnet.mantle.xyz/"] },
   },
 }
 
 const { chains, provider, webSocketProvider } = configureChains(
-  [chain.goerli, scrollAlpha],
+  [
+    chain.goerli,
+    mantleTestnet
+  ],
   [
     alchemyProvider({ apiKey: '7OLNUah9mWjItVi7QiJWrlc6xVVdSGn3' }),
     publicProvider()

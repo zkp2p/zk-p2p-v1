@@ -16,6 +16,7 @@ import { SubmitOrderOnRampForm } from "../components/SubmitOrderOnRampForm";
 import { TopBanner } from "../components/TopBanner";
 
 import {
+  Chain,
   useAccount, 
   useContractWrite, 
   useContractRead, 
@@ -51,6 +52,8 @@ export const MainPage: React.FC<{}> = (props) => {
   const [selectedOrder, setSelectedOrder] = useState<OnRampOrder>({} as OnRampOrder);
   const [selectedOrderClaim, setSelectedOrderClaim] = useState<OnRampOrderClaim >({} as OnRampOrderClaim);
   
+  const [rampContractAddress, setRampContractAddress] = useState<string>('goerli');
+
   // ----- transaction state -----
   const [newOrderAmount, setNewOrderAmount] = useState<number>(0);
   const [newOrderVenmoIdEncryptingKey, setNewOrderVenmoIdEncryptingKey] = useState<string>('');
@@ -66,7 +69,7 @@ export const MainPage: React.FC<{}> = (props) => {
   const [fetchedOrders, setFetchedOrders] = useState<OnRampOrder[]>([]);
   const [fetchedOrderClaims, setFetchedOrderClaims] = useState<OnRampOrderClaim[]>([]);
 
-  const { chain } = useNetwork()
+  const { chain } = useNetwork();
   console.log("Chain: ", chain);
 
   const formatAmountsForTransactionParameter = (tokenAmount: number) => {
@@ -107,7 +110,7 @@ export const MainPage: React.FC<{}> = (props) => {
     isError: isReadAllOrdersError,
     refetch: refetchAllOrders,
   } = useContractRead({
-    addressOrName: contractAddresses["goerli"]["ramp"],
+    addressOrName: rampContractAddress,
     contractInterface: abi,
     functionName: 'getAllOrders',
   });
@@ -119,7 +122,7 @@ export const MainPage: React.FC<{}> = (props) => {
     isError: isReadOrderClaimsError,
     refetch: refetchClaimedOrders,
   } = useContractRead({
-    addressOrName: contractAddresses["goerli"]["ramp"],
+    addressOrName: rampContractAddress,
     contractInterface: abi,
     functionName: 'getClaimsForOrder',
     args: [selectedOrder.orderId],
@@ -134,7 +137,7 @@ export const MainPage: React.FC<{}> = (props) => {
   // new:    postOrder(uint256 _amount, uint256 _maxAmountToPay, bytes calldata _encryptPublicKey)
   //
   const { config: writeCreateOrderConfig } = usePrepareContractWrite({
-    addressOrName: contractAddresses["goerli"]["ramp"],
+    addressOrName: rampContractAddress,
     contractInterface: abi,
     functionName: 'postOrder',
     args: [
@@ -157,7 +160,7 @@ export const MainPage: React.FC<{}> = (props) => {
   // new:    claimOrder(uint256 _venmoId, uint256 _orderNonce, bytes calldata _encryptedVenmoId, uint256 _minAmountToPay)
   //
   const { config: writeClaimOrderConfig } = usePrepareContractWrite({
-    addressOrName: contractAddresses["goerli"]["ramp"],
+    addressOrName: rampContractAddress,
     contractInterface: abi,
     functionName: 'claimOrder',
     args: [
@@ -195,7 +198,7 @@ export const MainPage: React.FC<{}> = (props) => {
   };
 
   const { config: writeCompleteOrderConfig } = usePrepareContractWrite({
-    addressOrName: contractAddresses["goerli"]["ramp"],
+    addressOrName: rampContractAddress,
     contractInterface: abi,
     functionName: 'onRamp',
     args: [
@@ -217,9 +220,29 @@ export const MainPage: React.FC<{}> = (props) => {
     Hooks
   */
 
+  useEffect(() => {
+    const fetchRampContractAddress = (chain: Chain) => {
+      if (contractAddresses[chain.network]) {
+        return contractAddresses[chain.network].ramp;
+      }
+      return '';
+    };
+
+    if (chain) {
+      const address = fetchRampContractAddress(chain);
+
+      console.log('Fetching ramp contract address for network addresses: ');
+      console.log(address);
+
+      setRampContractAddress(address);
+    }
+  }, [chain]);
+
   // Fetch Orders
   useEffect(() => {
+    console.log("Processing Orders");
     if (!isReadAllOrdersLoading && !isReadAllOrdersError && allOrders) {
+
       const sanitizedOrders: OnRampOrder[] = [];
       for (let i = 0; i < allOrders.length; i++) {
         const rawOrderData = allOrders[i];
@@ -252,12 +275,14 @@ export const MainPage: React.FC<{}> = (props) => {
         sanitizedOrders.push(order);
       }
 
+      console.log("Orders State Updated");
       setFetchedOrders(sanitizedOrders);
     }
   }, [allOrders, isReadAllOrdersLoading, isReadAllOrdersError]);
 
   useEffect(() => {
     const intervalId = setInterval(() => {
+      console.log("Fetching Orders");
       refetchAllOrders();
     }, 15000); // Refetch every 15 seconds
 
@@ -266,9 +291,12 @@ export const MainPage: React.FC<{}> = (props) => {
     };
   }, [refetchAllOrders]);
 
+
   // Fetch Order Claims
   useEffect(() => {
+    console.log("Processing Order Claims");
     if (!isReadOrderClaimsLoading && !isReadOrderClaimsError && orderClaimsData) {
+
       const sanitizedOrderClaims: OnRampOrderClaim[] = [];
       for (let i = 0; i < orderClaimsData.length; i++) {
         const claimsData = orderClaimsData[i];
@@ -310,8 +338,9 @@ export const MainPage: React.FC<{}> = (props) => {
   useEffect(() => {
     if (selectedOrder) {
       const intervalId = setInterval(() => {
+        console.log("Fetching Order Claims");
         refetchClaimedOrders();
-      }, 15000); // Refetch every 15 seconds
+      }, 150000); // Refetch every 150 seconds
   
       return () => {
         clearInterval(intervalId);
@@ -326,14 +355,6 @@ export const MainPage: React.FC<{}> = (props) => {
       setShowBrowserWarning(true);
     }
   }, []);
-
-  useEffect(() => {
-    if (address) {
-      setEthereumAddress(address);
-    } else {
-      setEthereumAddress("");
-    }
-  }, [address]);
 
   /*
     Additional Listeners
