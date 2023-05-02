@@ -116,6 +116,7 @@ const TableRow = styled.tr<{ selected: boolean }>`
 const TableCell = styled.td`
   padding: 16px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  height: 20px;
 `;
 
 const PaginationContainer = styled.div`

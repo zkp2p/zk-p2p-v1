@@ -62,8 +62,8 @@ export const ClaimOrderForm: React.FC<ClaimOrderFormProps> = ({
             Specify a Venmo ID (not handle, see our
             <StyledLink
             urlHyperlink="https://github.com/0xSachinK/zk-p2p-onramp/blob/main/README.md#fetching-venmo-id-instructions"
-            label={' guide'}/>)
-            no retrieving your ID to receive USD at and a required USD amount to receive. Your Venmo ID will be encrypted.
+            label={' guide'}/> on retrieving your ID)
+            to receive USD at and a required USD amount to receive. Your Venmo ID will be encrypted.
             Submitting this transaction will escrow {senderRequestedAmountDisplay} fUSDC for the
             on-ramper. If this is your first time, you will need to mint
             <StyledLink
