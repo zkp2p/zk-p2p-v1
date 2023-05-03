@@ -413,7 +413,11 @@ export const MainPage: React.FC<{}> = (props) => {
               urlHyperlink={blockExplorer + fUSDCContractAddress}
               label={'fUSDC'}/>)
             asset, both live on Goerli / Manta Testnets and will require Goerli ETH / Manta BIT to test.
-            We are actively developing and improving this.
+            We are actively
+            <StyledLink
+              urlHyperlink={"https://github.com/0xSachinK/zk-p2p-onramp"}
+              label={' developing '}/>
+            and improving this.
           </span>
           <NumberedStep step={1}>
             On-rampers: the flow will require two transactions. First, you will post orders to the

@@ -13,8 +13,8 @@ export const StyledLink: React.FC<StyledLinkProps> = ({
 }) => {
   return (
     <ParentContainer>
-      <Link
-        href={urlHyperlink} target="_blank" rel="noopener noreferrer">{label}
+      <Link href={urlHyperlink} target="_blank" rel="noopener noreferrer">
+        {label}
       </Link>
     </ParentContainer>
   );
