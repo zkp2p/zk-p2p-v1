@@ -346,7 +346,7 @@ contract Verifier {
             uint[2] memory a,
             uint[2][2] memory b,
             uint[2] memory c,
-            uint[23] memory input
+            uint[26] memory input
         ) public view returns (bool r) {
         Proof memory proof;
         proof.A = Pairing.G1Point(a[0], a[1]);

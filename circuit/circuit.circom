@@ -286,6 +286,13 @@ template P2POnrampVerify(max_header_bytes, max_body_bytes, n, k) {
         reveal_packed[i] <== packed_output[i].out;
     }
 
+    // Nullifier
+    // Packed SHA256 hash of the email header and body hash (the part that is signed upon)
+    signal output nullifier[msg_len];
+    for (var i = 0; i < msg_len; i++) {
+        nullifier[i] <== base_msg[i].out;
+    }
+
     // The following signals do not take part in computation
     signal input order_id;
     signal input claim_id;
