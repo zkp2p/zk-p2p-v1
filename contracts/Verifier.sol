@@ -11,6 +11,11 @@
 //
 //
 // SPDX-License-Identifier: GPL-3.0
+
+//////////////
+// TODO: NEED TO GENERATE A NEW VERIFIER.
+/////////////
+
 pragma solidity ^0.8.12;
 library Pairing {
     struct G1Point {
@@ -341,7 +346,7 @@ contract Verifier {
             uint[2] memory a,
             uint[2][2] memory b,
             uint[2] memory c,
-            uint[22] memory input
+            uint[23] memory input
         ) public view returns (bool r) {
         Proof memory proof;
         proof.A = Pairing.G1Point(a[0], a[1]);
