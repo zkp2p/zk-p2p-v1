@@ -1,14 +1,13 @@
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.12;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 import { Verifier } from "./Verifier.sol";
 
-// Todo: 
-// 1. Add nullifier logic.
-// 2. Add claimId to signals.
 
-contract Ramp is Verifier {
+contract Ramp is Verifier, Ownable {
     
     /* ============ Enums ============ */
 
@@ -60,6 +59,9 @@ contract Ramp is Verifier {
 
     /* ============ Public Variables ============ */
 
+    // Max value for the order amount, claim amount, and off-chain transaction amount
+    uint256 public maxAmount;
+
     IERC20 public immutable usdc;
     uint256[rsaModulusChunksLen] public venmoMailserverKeys;
 
@@ -81,6 +83,12 @@ contract Ramp is Verifier {
         orderNonce = 1;
     }
 
+    /* ============ Admin Functions ============ */
+
+    function setMaxAmount(uint256 _maxAmount) external onlyOwner {
+        maxAmount = _maxAmount;
+    }
+
     /* ============ External Functions ============ */
 
 
@@ -88,7 +96,9 @@ contract Ramp is Verifier {
         external 
     {
         require(_amount != 0, "Amount can't be 0");
+        require(_amount <= maxAmount, "Amount can't be greater than max amount");
         require(_maxAmountToPay != 0, "Max amount can't be 0");
+        require(_maxAmountToPay <= maxAmount, "Max amount can't be greater than max amount");
         
         Order memory order = Order({
             onRamper: msg.sender,
@@ -116,6 +126,9 @@ contract Ramp is Verifier {
         require(!orderClaimedByVenmoId[_orderNonce][_venmoId], "Order has already been claimed by Venmo ID");
         // Todo: This can be sybilled. What are the implications of this?
         require(msg.sender != orders[_orderNonce].onRamper, "Can't claim your own order");
+        
+        require(_minAmountToPay != 0, "Min amount to pay can't be 0");
+        require(_minAmountToPay <= orders[_orderNonce].maxAmountToPay, "Min amount to pay can't be greater than max amount to pay");
 
         OrderClaim memory claim = OrderClaim({
             offRamper: msg.sender,
@@ -160,6 +173,8 @@ contract Ramp is Verifier {
         );
 
         // Require that the amount paid by on-ramper >= minAskAmount of the off-ramper
+        // Do not require amount to be less than maxAmount because if the on-ramper wants to pay more, they can
+        // and we let the transaction go through.
         require(amount >= orderClaims[orderId][claimId].minAmountToPay, "Amount paid off-chain is too low");
 
         // Update order claim status
@@ -238,7 +253,7 @@ contract Ramp is Verifier {
     )
         internal
         view
-        returns (uint256 offRamperVenmoId, uint256 usdAmount, uint256 orderId, uint256 claimId, bytes32 nullfiier)
+        returns (uint256 offRamperVenmoId, uint256 usdAmount, uint256 orderId, uint256 claimId, bytes32 nullifier)
     {   
         require(verifyProof(a, b, c, signals), "Invalid Proof"); // checks effects iteractions, this should come first
 
@@ -262,7 +277,7 @@ contract Ramp is Verifier {
         bytes memory nullifierAsBytes = abi.encodePacked(
             signals[msgLen - 5], signals[msgLen - 4], signals[msgLen - 3]
         );
-        bytes32 nullifier = keccak256(nullifierAsBytes);
+        nullifier = keccak256(nullifierAsBytes);
         require(!nullified[nullifier], "Email has already been used");
 
         // Signals [24] is orderId
