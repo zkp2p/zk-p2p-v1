@@ -5,6 +5,7 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 import { Verifier } from "./Verifier.sol";
+import "hardhat/console.sol";
 
 
 contract Ramp is Verifier, Ownable {
@@ -72,13 +73,14 @@ contract Ramp is Verifier, Ownable {
     mapping(uint256=>mapping(uint256=>bool)) public orderClaimedByVenmoId;
     mapping(uint256=>mapping(uint256=>OrderClaim)) public orderClaims;
 
-    mapping(bytes32 => bool) nullified;
+    mapping(bytes32 => bool) public nullified;
 
     /* ============ External Functions ============ */
 
-    constructor(uint256[rsaModulusChunksLen] memory _venmoMailserverKeys, IERC20 _usdc) {
+    constructor(uint256[rsaModulusChunksLen] memory _venmoMailserverKeys, IERC20 _usdc, uint256 _maxAmount) {
         venmoMailserverKeys = _venmoMailserverKeys;
         usdc = _usdc;
+        maxAmount = _maxAmount;
 
         orderNonce = 1;
     }
@@ -87,6 +89,10 @@ contract Ramp is Verifier, Ownable {
 
     function setMaxAmount(uint256 _maxAmount) external onlyOwner {
         maxAmount = _maxAmount;
+    }
+
+    function setVenmoMailserverKeys(uint256[rsaModulusChunksLen] memory _venmoMailserverKeys) external onlyOwner {
+        venmoMailserverKeys = _venmoMailserverKeys;
     }
 
     /* ============ External Functions ============ */
@@ -268,17 +274,17 @@ contract Ramp is Verifier, Ownable {
         uint256 amount = _stringToUint256(_convertPackedBytesToBytes(amountSignals, bytesInPackedBytes * 3));
         usdAmount = amount * 10 ** 6;
 
-        // Signals [4:20] are modulus.
-        for (uint256 i = 4; i < msgLen - 5; i++) {
-            require(signals[i] == venmoMailserverKeys[i - 4], "Invalid: RSA modulus not matched");
-        }
-
-        // Signals [21, 22, 23] are nullifier
+        // Signals [4, 5, 6] are nullifier
         bytes memory nullifierAsBytes = abi.encodePacked(
-            signals[msgLen - 5], signals[msgLen - 4], signals[msgLen - 3]
+            signals[4], signals[5], signals[6]
         );
         nullifier = keccak256(nullifierAsBytes);
         require(!nullified[nullifier], "Email has already been used");
+
+        // Signals [7, 8, ...., 23] are modulus.
+        for (uint256 i = 7; i < msgLen - 2; i++) {
+            require(signals[i] == venmoMailserverKeys[i - 7], "Invalid: RSA modulus not matched");
+        }
 
         // Signals [24] is orderId
         orderId = signals[msgLen - 2];
