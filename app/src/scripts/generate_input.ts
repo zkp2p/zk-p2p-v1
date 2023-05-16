@@ -40,6 +40,7 @@ export interface ICircuitInputs {
   venmo_offramper_id_idx?: string;
   venmo_amount_idx?: string;
   order_id?: string;
+  claim_id?: string;
 }
 
 enum CircuitType {
@@ -73,6 +74,7 @@ export async function getCircuitInputs(
   body: Buffer,
   body_hash: string,
   order_id: string,
+  claim_id: string,
   circuit: CircuitType
 ): Promise<{
   valid: {
@@ -170,6 +172,7 @@ export async function getCircuitInputs(
       venmo_offramper_id_idx,
       venmo_amount_idx,
       order_id,
+      claim_id
     };
   } else {
     assert(circuit === CircuitType.SHA, "Invalid circuit type");
@@ -185,7 +188,7 @@ export async function getCircuitInputs(
   };
 }
 
-export async function generate_inputs(email: Buffer, order_id: string): Promise<ICircuitInputs> {
+export async function generate_inputs(email: Buffer, order_id: string, claim_id: string): Promise<ICircuitInputs> {
   var result;
   console.log("DKIM verification starting");
   result = await dkimVerify(email);
@@ -223,14 +226,14 @@ export async function generate_inputs(email: Buffer, order_id: string): Promise<
   let pubkey = result.results[0].publicKey;
   const pubKeyData = pki.publicKeyFromPem(pubkey.toString());
   let modulus = BigInt(pubKeyData.n.toString());
-  let fin_result = await getCircuitInputs(sig, modulus, message, body, body_hash, order_id, circuitType);
+  let fin_result = await getCircuitInputs(sig, modulus, message, body, body_hash, order_id, claim_id, circuitType);
   return fin_result.circuitInputs;
 }
 
 async function do_generate() {
   const email = fs.readFileSync(email_file);
   // console.log(email);
-  const gen_inputs = await generate_inputs(email, "0");
+  const gen_inputs = await generate_inputs(email, "1", "0");
   // console.log(JSON.stringify(gen_inputs));
   return gen_inputs;
 }
