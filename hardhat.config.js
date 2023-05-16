@@ -34,5 +34,13 @@ module.exports = {
   paths: {
     artifacts: "./artifacts",
   },
-  solidity: "0.8.12",
+  solidity: {
+    version: "0.8.12",
+    settings: {
+      optimizer: {
+        enabled: true,
+        runs: 200
+      }
+    }
+  }
 };

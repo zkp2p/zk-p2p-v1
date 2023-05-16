@@ -33,6 +33,7 @@ const ZERO = BigNumber.from(0);
 describe("Ramp", function () {
     let ramp;
     let fakeUSDC;
+    let maxAmount;
 
     let deployer;
     let onRamper;
@@ -47,16 +48,17 @@ describe("Ramp", function () {
         await fakeUSDC.connect(deployer).transfer(offRamper.address, 1000000000); // $1000
 
         const Ramp = await hre.ethers.getContractFactory("Ramp");
-        ramp = await Ramp.deploy(venmoRsaKey, fakeUSDC.address);
+        maxAmount = BigNumber.from("10000000");
+        ramp = await Ramp.deploy(venmoRsaKey, fakeUSDC.address, maxAmount);
     });
 
     describe("postOrder", function () {
-        let amount = BigNumber.from(100000000); // $100
-        let maxAmountToPay = BigNumber.from(110000000); // $110
+        let amount = BigNumber.from(9000000); // $9
+        let maxAmountToPay = BigNumber.from(10000000); // $10
 
         it("stores an order", async function () {
-            const publicKey = "a19eb5cdd6b3fce15832521908e4f66817e9ea8728dde4469f517072616a590be610c8af6d616fa77806b4d3ac1176634f78cd29266b4bdae4110ac3cdeb9231";
-
+            const publicKey = "0xa19eb5cdd6b3fce15832521908e4f66817e9ea8728dde4469f517072616a590be610c8af6d616fa77806b4d3ac1176634f78cd29266b4bdae4110ac3cdeb9231";
+            
             const orderId = await ramp.orderNonce();
 
             const unopenedOrder = await ramp.orders(orderId);
@@ -181,27 +183,26 @@ describe("Ramp", function () {
     });
 
     describe("onRamp", function () {
-        let amount = BigNumber.from(29000000); // $29 (on ramper's perspective)
-        let maxAmountToPay = BigNumber.from(32000000); // $20 (from on-ramper's perspective)
-        let minAmountToPay = BigNumber.from(30000000); // $30 (off-ramper's bidding)
+        let amount = BigNumber.from(9000000); // $9 (on ramper's perspective)
+        let maxAmountToPay = BigNumber.from(10000000); // $10 (from on-ramper's perspective)
+        let minAmountToPay = BigNumber.from(10000000); // $10 (off-ramper's bidding)
         let claimId = BigNumber.from(0);
         let offRamperVenmoId = BigNumber.from("14286706241468003283295067045089601281912688124398815891602745783310727407967");
         let orderId=1;
 
-        let a = ["0x05f34ff4b36a95c3edd17bb02fb39a2560b282459cd91cd00a0fca2ceed8d9e2", "0x09dec8e8a3b5fc5d32496fa2b412ebe53ed2bda8046f1c47a2ad80abb7c0c70a"];
-        let b = [["0x0d7de7a45604b118248f16c79a5c78d11d30898898a428cf07b9d7bdf722baba", "0x07a3e20a8861b3fda2c4525b6b484cee4b40822451dc8db2324f1bb515d41df5"],["0x1e92254eccc0f5c3e95f8645557204302341d454c9a8d17f7f0a5bfc05e02808", "0x17c3d119796e3d9b04165ac8823f774d4855a462bfef52456ae28c2b5231f2e7"]];
-        let c = ["0x003e17fe3fe5e011c72c1e78a760e3b8b0baba5c55e296da5c0561e3a5c36586", "0x0732deb1229407fab505bc7b3313c88c0fb7cf67275267324d42f55fbde06cfa"];
-        let signals = ["0x1f95fd3aa3a0f764e2eae57d17816218da1f577ce7722e51249e2f28fa5a695f","0x0000000000000000000000000000000000000000000000000000000000003033","0x0000000000000000000000000000000000000000000000000000000000000000","0x0000000000000000000000000000000000000000000000000000000000000000","0x000000000000000000000000000000000083a043f3f512cb0e9efb506011e359","0x0000000000000000000000000000000000c2e52cefcd800a155366e0207f2563","0x0000000000000000000000000000000000f3576e6387ca2c770760edd72b0fae","0x00000000000000000000000000000000019143a1fc85a71614784b98ff4b16c0","0x00000000000000000000000000000000007bbd0dfb9ef73cf08f4036e24a6b72","0x000000000000000000000000000000000119d3bd704f04dc4f74482cdc239dc7","0x0000000000000000000000000000000001d083a581190a93434412d791fa7fd1","0x000000000000000000000000000000000064350c632569b077ed7b300d3a4051","0x00000000000000000000000000000000000000000000000000a879c82b6c5e0a","0x0000000000000000000000000000000000000000000000000000000000000000","0x0000000000000000000000000000000000000000000000000000000000000000","0x0000000000000000000000000000000000000000000000000000000000000000","0x0000000000000000000000000000000000000000000000000000000000000000","0x0000000000000000000000000000000000000000000000000000000000000000","0x0000000000000000000000000000000000000000000000000000000000000000","0x0000000000000000000000000000000000000000000000000000000000000000","0x0000000000000000000000000000000000000000000000000000000000000000","0x0000000000000000000000000000000000000000000000000000000000000001"];
-
+        let a = ["0x030f041a5bb0e20c7e89129c0ce06b12ebb4dbc57e57687627ebaf487e053c19", "0x02621e3127810cc43c20cb722385f5fa9d4fe71d4c2343884397b714a881e41b"];
+        let b = [["0x03c2010d7128f692ae23ae9e9404f6345c0e531b7c38b8e3f30f19774d96d098", "0x0864f75fd26a4a2904e0ffba27afd5b1f611e65fd16c16441cacb16c2775c6dd"],["0x0edcd5f61d09b7f75244ef367267258b000693f0d3fdd9f5deb07ce55ca663e8", "0x14ea0b0f58fe04ae99f9ee32096164ef97bf5ec990674968a4eb4f70f9cd40d8"]];
+        let c = ["0x268de00f442b2c90f899709e7d6f056bd0e1551d28be2458eed119395cf8080d", "0x1a05b29d11ed1a498abb512ea561b381e7b7f328f81e5baf5e9a949878d6cf75"];
+        let signals = ["0x1f95fd3aa3a0f764e2eae57d17816218da1f577ce7722e51249e2f28fa5a695f","0x0000000000000000000000000000000000000000000000000000000000003033","0x0000000000000000000000000000000000000000000000000000000000000000","0x0000000000000000000000000000000000000000000000000000000000000000","0x0000000000000000000000000000000000e5ab9ad5b818c501704a57172b2b36","0x0000000000000000000000000000000001281aa2b013864aab62be89d24a4ddb","0x0000000000000000000000000000000000000000000000000000000000003a49","0x000000000000000000000000000000000083a043f3f512cb0e9efb506011e359","0x0000000000000000000000000000000000c2e52cefcd800a155366e0207f2563","0x0000000000000000000000000000000000f3576e6387ca2c770760edd72b0fae","0x00000000000000000000000000000000019143a1fc85a71614784b98ff4b16c0","0x00000000000000000000000000000000007bbd0dfb9ef73cf08f4036e24a6b72","0x000000000000000000000000000000000119d3bd704f04dc4f74482cdc239dc7","0x0000000000000000000000000000000001d083a581190a93434412d791fa7fd1","0x000000000000000000000000000000000064350c632569b077ed7b300d3a4051","0x00000000000000000000000000000000000000000000000000a879c82b6c5e0a","0x0000000000000000000000000000000000000000000000000000000000000000","0x0000000000000000000000000000000000000000000000000000000000000000","0x0000000000000000000000000000000000000000000000000000000000000000","0x0000000000000000000000000000000000000000000000000000000000000000","0x0000000000000000000000000000000000000000000000000000000000000000","0x0000000000000000000000000000000000000000000000000000000000000000","0x0000000000000000000000000000000000000000000000000000000000000000","0x0000000000000000000000000000000000000000000000000000000000000000","0x0000000000000000000000000000000000000000000000000000000000000001","0x0000000000000000000000000000000000000000000000000000000000000000"];
 
         beforeEach(async function () {
             await ramp.connect(onRamper).postOrder(amount, maxAmountToPay, onRamper.address);
             await fakeUSDC.connect(offRamper).approve(ramp.address, amount);
-            await ramp.connect(offRamper).claimOrder(offRamperVenmoId, orderId, "69", minAmountToPay);
+            await ramp.connect(offRamper).claimOrder(offRamperVenmoId, orderId, "0x69", minAmountToPay);
         });
 
         it("sets the order to filled", async function () {
-            await ramp.connect(onRamper).onRamp(a, b, c, signals, claimId);
+            await ramp.connect(onRamper).onRamp(a, b, c, signals);
 
             const order = await ramp.orders(orderId)
 
@@ -212,13 +213,29 @@ describe("Ramp", function () {
             const preOnRampBalance = await fakeUSDC.balanceOf(onRamper.address);
             const preRampBalance = await fakeUSDC.balanceOf(ramp.address);
 
-            await ramp.connect(onRamper).onRamp(a, b, c, signals, claimId);
+            await ramp.connect(onRamper).onRamp(a, b, c, signals);
 
             const postOnRampBalance = await fakeUSDC.balanceOf(onRamper.address);
             const postRampBalance = await fakeUSDC.balanceOf(ramp.address);
 
             expect(postOnRampBalance).to.equal(preOnRampBalance.add(amount));
             expect(postRampBalance).to.equal(preRampBalance.sub(amount));
+        });
+
+        it("sets the nullifier", async function () {
+            const nullifier = ethers.utils.keccak256(
+                ethers.utils.defaultAbiCoder.encode(
+                    ["uint256", "uint256", "uint256"], 
+                    [signals[4], signals[5], signals[6]]
+                )
+            );
+            const nullifiedBefore = await ramp.nullified(nullifier);
+            
+            await ramp.connect(onRamper).onRamp(a, b, c, signals);
+            
+            const nullifiedAfter = await ramp.nullified(nullifier);
+            expect(nullifiedBefore).to.equal(false);
+            expect(nullifiedAfter).to.equal(true);
         });
     });
 
