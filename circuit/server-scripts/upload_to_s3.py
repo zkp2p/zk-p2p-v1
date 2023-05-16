@@ -33,7 +33,7 @@ def upload_to_s3(filename, dir=""):
     with open(dir + filename, 'rb') as file:
         print("Starting upload...")
         s3.upload_fileobj(file, bucket_name, filename, ExtraArgs={
-                        #   'ACL': 'public-read', 'ContentType': 'binary/octet-stream'
+                           'ACL': 'public-read', 'ContentType': 'binary/octet-stream'
         })
         print("Done uploading ", filename, "!")
 
