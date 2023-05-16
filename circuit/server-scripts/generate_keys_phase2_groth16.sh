@@ -9,8 +9,9 @@ exec &> >(tee -a test_log.out)
 PATH_TO_CIRCUIT=${1:-./circuit}                                         # First argument $1 is path to circuit directory
 CIRCUIT_NAME=${2:-circuit}                                             # Second argument $2 is circuit name
 SKIP_PHASE2_CONTRIBUTION=${3:-true}                                 # Third argument $3 is true/false whether to skip phase 2 contribution. Setting to true is unsafe but can be for testing. Otherwise, set to false
-PHASE1=$HOME/ptau_files/powersOfTau28_hez_final_${4:-23}.ptau     # Fourth argument $4 is ptau file number 
-SKIP_ZKEY_VERIFICATION=${5:-true}                                   # Fifth argument $5 is true/false whether to skip zkey verification
+RANDOM_ENTROPY=${4:-"some random text for entropy"}                    # Fourth argument $4 is random entropy
+PHASE1=$HOME/ptau_files/powersOfTau28_hez_final_${5:-23}.ptau     # Fourth argument $5 is ptau file number 
+SKIP_ZKEY_VERIFICATION=${6:-true}                                   # Fifth argument $6 is true/false whether to skip zkey verification
 echo $PWD
 
 # if [ ! $# -eq 5 ]; # Check if there are 5 arguments
@@ -44,7 +45,7 @@ else
 
     echo "****CONTRIBUTE TO PHASE 2 CEREMONY****"
     start=`date +%s`
-    $NODE_PATH $SNARKJS_PATH zkey contribute -verbose "$CIRCUIT_NAME"_0.zkey "$CIRCUIT_NAME".zkey -n="First phase2 contribution" -e="some random text for entropy"
+    $NODE_PATH $SNARKJS_PATH zkey contribute -verbose "$CIRCUIT_NAME"_0.zkey "$CIRCUIT_NAME".zkey -n="First phase2 contribution" -e="$RANDOM_ENTROPY"
     end=`date +%s`
     echo "DONE ($((end-start))s)"
 fi
