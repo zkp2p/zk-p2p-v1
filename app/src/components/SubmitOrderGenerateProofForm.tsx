@@ -70,7 +70,8 @@ export const SubmitOrderGenerateProofForm: React.FC<SubmitOrderGenerateProofForm
   // computed state
   const { value, error } = useAsync(async () => {
     try {
-      const circuitInputs = await generate_input.generate_inputs(Buffer.from(atob(emailFull)),
+      const circuitInputs = await generate_input.generate_inputs(
+        Buffer.from(atob(emailFull)),
         selectedOrder.orderId,
         selectedOrderClaim.claimId
       );
@@ -129,7 +130,11 @@ export const SubmitOrderGenerateProofForm: React.FC<SubmitOrderGenerateProofForm
 
               let input = "";
               try {
-                input = await generate_input.generate_inputs(Buffer.from(formattedArray.buffer), selectedOrder.orderId);
+                input = await generate_input.generate_inputs(
+                  Buffer.from(formattedArray.buffer),
+                  selectedOrder.orderId,
+                  selectedOrderClaim.claimId
+                );
               } catch (e) {
                 console.log("Error generating input", e);
                 setDisplayMessage("Prove");
