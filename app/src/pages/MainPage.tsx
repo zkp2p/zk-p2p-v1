@@ -144,7 +144,8 @@ export const MainPage: React.FC<{}> = (props) => {
     functionName: 'postOrder',
     args: [
       formatAmountsForTransactionParameter(newOrderAmount),
-      UINT256_MAX,
+      // Assuming on-ramper wants to pay at most newOrderAmount for their requested USDC amount versus previously UINT256_MAX
+      formatAmountsForTransactionParameter(newOrderAmount),
       '0x' + newOrderVenmoIdEncryptingKey
     ],
     onError: (error: { message: any }) => {
@@ -188,7 +189,7 @@ export const MainPage: React.FC<{}> = (props) => {
 
   //
   // legacy: onRamp(uint256 _orderId, uint256 _offRamper, VenmoId, bytes calldata _proof)
-  // new:    onRamp(uint256[2] memory _a, uint256[2][2] memory _b, uint256[2] memory _c, uint256[msgLen] memory _signals, uint256 claimId)
+  // new:    onRamp(uint256[2] memory _a, uint256[2][2] memory _b, uint256[2] memory _c, uint256[msgLen] memory _signals)
   //
   const reformatProofForChain = (proof: string) => {
     return [
@@ -209,7 +210,6 @@ export const MainPage: React.FC<{}> = (props) => {
     args: [
       ...reformatProofForChain(submitOrderProof),
       submitOrderPublicSignals ? JSON.parse(submitOrderPublicSignals) : null,
-      selectedOrderClaim.claimId
     ],
     onError: (error: { message: any }) => {
       console.error(error.message);
@@ -278,7 +278,7 @@ export const MainPage: React.FC<{}> = (props) => {
     if (!isReadAllOrdersLoading && !isReadAllOrdersError && allOrders) {
 
       const sanitizedOrders: OnRampOrder[] = [];
-      for (let i = 0; i < allOrders.length; i++) {
+      for (let i = allOrders.length - 1; i >= 0; i--) {
         const rawOrderData = allOrders[i];
         const orderData = rawOrderData.order;
 
@@ -320,7 +320,7 @@ export const MainPage: React.FC<{}> = (props) => {
     if (!isReadOrderClaimsLoading && !isReadOrderClaimsError && orderClaimsData) {
 
       const sanitizedOrderClaims: OnRampOrderClaim[] = [];
-      for (let i = 0; i < orderClaimsData.length; i++) {
+      for (let i = orderClaimsData.length - 1; i >= 0; i--) {
         const claimsData = orderClaimsData[i];
 
         const claimId = i;
@@ -443,7 +443,7 @@ export const MainPage: React.FC<{}> = (props) => {
             headers={orderTableHeaders}
             data={orderTableData}
             onRowClick={handleOrderRowClick}
-            selectedRow={selectedOrder.orderId - 1}
+            selectedRow={selectedOrder.orderId - 1} // Order ids start at 1
             rowsPerPage={10}
           />
           <Button
@@ -500,6 +500,7 @@ export const MainPage: React.FC<{}> = (props) => {
                 <SubmitOrderGenerateProofForm
                   loggedInWalletAddress={ethereumAddress}
                   selectedOrder={selectedOrder}
+                  selectedOrderClaim={selectedOrderClaim}
                   setSubmitOrderProof={setSubmitOrderProof}
                   setSubmitOrderPublicSignals={setSubmitOrderPublicSignals}
                 />

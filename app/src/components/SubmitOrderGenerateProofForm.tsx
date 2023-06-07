@@ -11,7 +11,7 @@ import { NumberedStep } from "../components/NumberedStep";
 import { downloadProofFiles, generateProof } from "../helpers/zkp";
 import { insert13Before10 } from "../scripts/generate_input";
 // import { packedNBytesToString } from "../helpers/binaryFormat";
-import { OnRampOrder } from "../helpers/types";
+import { OnRampOrder, OnRampOrderClaim } from "../helpers/types";
 
 const generate_input = require("../scripts/generate_input");
 
@@ -19,6 +19,7 @@ const generate_input = require("../scripts/generate_input");
 interface SubmitOrderGenerateProofFormProps {
   loggedInWalletAddress: string;
   selectedOrder: OnRampOrder;
+  selectedOrderClaim: OnRampOrderClaim;
   setSubmitOrderProof: (proof: string) => void;
   setSubmitOrderPublicSignals: (publicSignals: string) => void;
 }
@@ -26,6 +27,7 @@ interface SubmitOrderGenerateProofFormProps {
 export const SubmitOrderGenerateProofForm: React.FC<SubmitOrderGenerateProofFormProps> = ({
   loggedInWalletAddress,
   selectedOrder,
+  selectedOrderClaim,
   setSubmitOrderProof,
   setSubmitOrderPublicSignals
 }) => {
@@ -68,7 +70,11 @@ export const SubmitOrderGenerateProofForm: React.FC<SubmitOrderGenerateProofForm
   // computed state
   const { value, error } = useAsync(async () => {
     try {
-      const circuitInputs = await generate_input.generate_inputs(Buffer.from(atob(emailFull)), selectedOrder.orderId);
+      const circuitInputs = await generate_input.generate_inputs(
+        Buffer.from(atob(emailFull)),
+        selectedOrder.orderId,
+        selectedOrderClaim.claimId
+      );
       return circuitInputs;
     } catch (e) {
       return {};
@@ -124,7 +130,11 @@ export const SubmitOrderGenerateProofForm: React.FC<SubmitOrderGenerateProofForm
 
               let input = "";
               try {
-                input = await generate_input.generate_inputs(Buffer.from(formattedArray.buffer), selectedOrder.orderId);
+                input = await generate_input.generate_inputs(
+                  Buffer.from(formattedArray.buffer),
+                  selectedOrder.orderId,
+                  selectedOrderClaim.claimId
+                );
               } catch (e) {
                 console.log("Error generating input", e);
                 setDisplayMessage("Prove");

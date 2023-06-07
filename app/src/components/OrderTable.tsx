@@ -10,7 +10,13 @@ interface OrderTableProps {
   rowsPerPage?: number;
 }
 
-export const OrderTable: React.FC<OrderTableProps> = ({ headers, data, onRowClick, selectedRow, rowsPerPage = 10 }) => {
+export const OrderTable: React.FC<OrderTableProps> = ({
+  headers,
+  data,
+  onRowClick,
+  selectedRow,
+  rowsPerPage = 10
+}) => {
   const [currentPage, setCurrentPage] = useState(0);
 
   const totalPages = Math.ceil(data.length / rowsPerPage);
@@ -20,7 +26,7 @@ export const OrderTable: React.FC<OrderTableProps> = ({ headers, data, onRowClic
   };
 
   const isSelected = (rowIndex: number): boolean => {
-    const globalIndex = rowIndex + currentPage * rowsPerPage;
+    const globalIndex = data.length - 1 - (rowIndex + currentPage * rowsPerPage);
     return globalIndex === selectedRow;
   };
 
@@ -47,8 +53,8 @@ export const OrderTable: React.FC<OrderTableProps> = ({ headers, data, onRowClic
             <TableRow
               key={rowIndex}
               onClick={() => {
-                const selectedOrderIndex = rowIndex + currentPage * rowsPerPage;
-                onRowClick && onRowClick([selectedOrderIndex])}
+                const selectedOrderGLobalDataIndex = rowIndex + currentPage * rowsPerPage;
+                onRowClick && onRowClick([selectedOrderGLobalDataIndex])}
               }
               selected={isSelected(rowIndex)}
             >
