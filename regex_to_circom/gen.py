@@ -78,57 +78,33 @@ for i in range(1, N):
 
         if uppercase <= vals:
             vals -= uppercase
+            # 64 < x < 91
             lines.append(f"\tlt[{lt_i}][i] = LessThan(8);")
-            lines.append(f"\tlt[{lt_i}][i].in[0] <== 64;")
-            lines.append(f"\tlt[{lt_i}][i].in[1] <== in[i];")
+            lines.append(f"\tlt[{lt_i}][i].in[0] <== in[i] - 65 - 10944121435919637611123202872628637544274182200208017171849102093287904247808;")
+            lines.append(f"\tlt[{lt_i}][i].in[1] <== 27;")
 
-            lines.append(f"\tlt[{lt_i+1}][i] = LessThan(8);")
-            lines.append(f"\tlt[{lt_i+1}][i].in[0] <== in[i];")
-            lines.append(f"\tlt[{lt_i+1}][i].in[1] <== 91;")
-
-            lines.append(f"\tand[{and_i}][i] = AND();")
-            lines.append(f"\tand[{and_i}][i].a <== lt[{lt_i}][i].out;")
-            lines.append(f"\tand[{and_i}][i].b <== lt[{lt_i+1}][i].out;")
-
-            eq_outputs.append(('and', and_i))
-            lt_i += 2
-            and_i += 1
+            eq_outputs.append(('lt', lt_i))
+            lt_i += 1
 
         if lowercase <= vals:
             vals -= lowercase
+            # 96 < x < 123
             lines.append(f"\tlt[{lt_i}][i] = LessThan(8);")
-            lines.append(f"\tlt[{lt_i}][i].in[0] <== 96;")
-            lines.append(f"\tlt[{lt_i}][i].in[1] <== in[i];")
+            lines.append(f"\tlt[{lt_i}][i].in[0] <== in[i] - 97 - 10944121435919637611123202872628637544274182200208017171849102093287904247808;")
+            lines.append(f"\tlt[{lt_i}][i].in[1] <== 27;")
 
-            lines.append(f"\tlt[{lt_i+1}][i] = LessThan(8);")
-            lines.append(f"\tlt[{lt_i+1}][i].in[0] <== in[i];")
-            lines.append(f"\tlt[{lt_i+1}][i].in[1] <== 123;")
-
-            lines.append(f"\tand[{and_i}][i] = AND();")
-            lines.append(f"\tand[{and_i}][i].a <== lt[{lt_i}][i].out;")
-            lines.append(f"\tand[{and_i}][i].b <== lt[{lt_i+1}][i].out;")
-
-            eq_outputs.append(('and', and_i))
-            lt_i += 2
-            and_i += 1
+            eq_outputs.append(('lt', lt_i))
+            lt_i += 1
 
         if digits <= vals:
             vals -= digits
+            # 47 < x < 58
             lines.append(f"\tlt[{lt_i}][i] = LessThan(8);")
-            lines.append(f"\tlt[{lt_i}][i].in[0] <== 47;")
-            lines.append(f"\tlt[{lt_i}][i].in[1] <== in[i];")
+            lines.append(f"\tlt[{lt_i}][i].in[0] <== in[i] - 48 - 10944121435919637611123202872628637544274182200208017171849102093287904247808;")
+            lines.append(f"\tlt[{lt_i}][i].in[1] <== 11;")
 
-            lines.append(f"\tlt[{lt_i+1}][i] = LessThan(8);")
-            lines.append(f"\tlt[{lt_i+1}][i].in[0] <== in[i];")
-            lines.append(f"\tlt[{lt_i+1}][i].in[1] <== 58;")
-
-            lines.append(f"\tand[{and_i}][i] = AND();")
-            lines.append(f"\tand[{and_i}][i].a <== lt[{lt_i}][i].out;")
-            lines.append(f"\tand[{and_i}][i].b <== lt[{lt_i+1}][i].out;")
-
-            eq_outputs.append(('and', and_i))
-            lt_i += 2
-            and_i += 1
+            eq_outputs.append(('lt', lt_i))
+            lt_i += 1
 
         for c in vals:
             assert len(c) == 1
