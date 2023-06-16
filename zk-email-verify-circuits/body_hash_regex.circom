@@ -13,8 +13,8 @@ template BodyHashRegex (msg_bytes) {
     }
 
     component eq[131][num_bytes];
-    component lt[26][num_bytes];
-    component and[45][num_bytes];
+    component lt[13][num_bytes];
+    component and[32][num_bytes];
     component multi_or[9][num_bytes];
     signal states[num_bytes+1][29];
 
