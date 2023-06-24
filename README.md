@@ -1,5 +1,3 @@
-> **_NOTE:_**  This is our Readme. Please find the ZKP MOOC Hackathon submission doc [here](https://github.com/0xSachinK/zk-p2p-onramp/blob/main/zkp-mooc-hackathon-submission.md).
-
 # ZKP2P
 
 ### A trustless P2P fiat onramp powered by ZK proofs
@@ -17,15 +15,11 @@ The PoC is live on Goerli! Try it at [zkp2p.xyz](https://zkp2p.xyz/). *Note: rep
 
 Part of [ZK Hack Lisbon](https://www.zklisbon.com/) 2023 (2nd place winner). Our demo at the [ZK Hack closing ceremony](https://www.youtube.com/watch?v=GjxNsZ-Gg-Q) and [Devfolio](https://devfolio.co/projects/zkpp-23ef)
 
-DM us to join the conversation!
+Follow for announcements and updates!
 
 
+[Twitter](https://twitter.com/zkp2p)
 
-Twitter
-- [Richard](https://twitter.com/richardzliang)
-- [Brian](https://twitter.com/Bmwball56)
-- [Alex](https://twitter.com/asoong91)
-- [Sachin](https://twitter.com/0xSachinK)
 
 
 [Telegram](https://t.me/+XDj9FNnW-xs5ODNl)
@@ -71,10 +65,6 @@ As of 4/30/2023, users must mint and approve the fake USDC token on Goerli to in
 
 * Ramp - [0x945D14a5c63769f4cf008a2994810940cc0DFd5C](https://goerli.etherscan.io/address/0x945D14a5c63769f4cf008a2994810940cc0DFd5C)
 * FakeUSDC - [0xf6426A1fdE02c3d6f10b4af107cDd7669574E74C](https://goerli.etherscan.io/address/0xf6426A1fdE02c3d6f10b4af107cDd7669574E74C)
-
-Mantle (L2)
-- Ramp - [0xa8B1e2A1235E2B30B32233b9176867A05B48dc3e](https://explorer.testnet.mantle.xyz/address/0xa8B1e2A1235E2B30B32233b9176867A05B48dc3e/contracts#address-tabs)
-- FakeUSDC - [0xA6E289496d6479a5c7cAD48745990ef534FD3314](https://explorer.testnet.mantle.xyz/address/0xA6E289496d6479a5c7cAD48745990ef534FD3314/contracts#address-tabs)
 
 
 ### Limitations
