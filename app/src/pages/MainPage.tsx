@@ -58,9 +58,6 @@ export const MainPage: React.FC<{}> = (props) => {
   const [blockExplorer, setBlockExplorer] = useState<string>('https://goerli.etherscan.io/address/');
 
   // ----- transaction state -----
-  const [newOrderAmount, setNewOrderAmount] = useState<number>(0);
-  const [newOrderVenmoIdEncryptingKey, setNewOrderVenmoIdEncryptingKey] = useState<string>('');
-
   const [claimOrderEncryptedVenmoId, setClaimOrderEncryptedVenmoId] = useState<string>('');
   const [claimOrderHashedVenmoId, setClaimOrderHashedVenmoId] = useState<string>('');
   const [claimOrderRequestedAmount, setClaimOrderRequestedAmount] = useState<number>(0);
@@ -133,33 +130,6 @@ export const MainPage: React.FC<{}> = (props) => {
   /*
     Contract Writes
   */
-
-  //
-  // legacy: postOrder(uint256 _amount, uint256 _maxAmountToPay)
-  // new:    postOrder(uint256 _amount, uint256 _maxAmountToPay, bytes calldata _encryptPublicKey)
-  //
-  const { config: writeCreateOrderConfig } = usePrepareContractWrite({
-    addressOrName: rampContractAddress,
-    contractInterface: abi,
-    functionName: 'postOrder',
-    args: [
-      formatAmountsForTransactionParameter(newOrderAmount),
-      // Assuming on-ramper wants to pay at most newOrderAmount for their requested USDC amount versus previously UINT256_MAX
-      formatAmountsForTransactionParameter(newOrderAmount),
-      '0x' + newOrderVenmoIdEncryptingKey
-    ],
-    onError: (error: { message: any }) => {
-      console.error(error.message);
-    },
-  });
-
-  // Debug:
-  // console.log(writeCreateOrderConfig);
-
-  const {
-    isLoading: isWriteNewOrderLoading,
-    write: writeNewOrder
-  } = useContractWrite(writeCreateOrderConfig);
 
   //
   // legacy: claimOrder(uint256 _orderNonce)
@@ -459,14 +429,7 @@ export const MainPage: React.FC<{}> = (props) => {
         <Wrapper>
           {actionState === FormState.NEW && (
             <Column>
-              <NewOrderForm
-                loggedInWalletAddress={ethereumAddress}
-                newOrderAmount={newOrderAmount}
-                setNewOrderAmount={setNewOrderAmount}
-                setVenmoIdEncryptingKey={setNewOrderVenmoIdEncryptingKey}
-                writeNewOrder={writeNewOrder}
-                isWriteNewOrderLoading={isWriteNewOrderLoading}
-              />
+              <NewOrderForm loggedInWalletAddress={ethereumAddress}/>
             </Column>
           )}
           {actionState === FormState.CLAIM && (

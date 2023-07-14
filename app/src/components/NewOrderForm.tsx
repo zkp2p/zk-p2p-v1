@@ -1,43 +1,68 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { useSignMessage } from 'wagmi'
+import {
+  useContractWrite,
+  usePrepareContractWrite,
+  useSignMessage,
+} from 'wagmi'
 
 import { Button } from "../components/Button";
 import { Col, SubHeader } from "../components/Layout";
 import { NumberedStep } from "../components/NumberedStep";
 import { SingleLineInput } from "../components/SingleLineInput";
 import { generateAccountFromSignature, getPublicKeyFromAccount } from '../helpers/messagEncryption';
+import { abi } from "../helpers/ramp.abi";
+import { contractAddresses } from "../helpers/deployed_addresses";
+import { formatAmountsForTransactionParameter } from '../helpers/transactionFormat';
 
 
 interface NewOrderFormProps {
   loggedInWalletAddress: string;
-  newOrderAmount: number;
-  setNewOrderAmount: (amount: number) => void;
-  setVenmoIdEncryptingKey: (key: string) => void;
-  writeNewOrder?: () => void;
-  isWriteNewOrderLoading: boolean;
 }
 
- 
 export const NewOrderForm: React.FC<NewOrderFormProps> = ({
   loggedInWalletAddress,
-  newOrderAmount,
-  setNewOrderAmount,
-  setVenmoIdEncryptingKey,
-  writeNewOrder,
-  isWriteNewOrderLoading
 }) => {
   const accountHashKey = `accountHash_${loggedInWalletAddress}`;
   const [accountHash, setAccountHash] = useState<string>(localStorage.getItem(accountHashKey) || "");
+
+  const [newOrderAmount, setNewOrderAmount] = useState<number>(0);
+  const [venmoIdEncryptingKey, setVenmoIdEncryptingKey] = useState<string>('');
 
   const {
     data: signedMessageSignature,
     signMessage,
     isLoading: isMessageSigning,
-    status: signMessageStatus,
   } = useSignMessage({
     message: 'You are signing a message to log into zkp2p.xyz.',
   })
+
+  //
+  // legacy: postOrder(uint256 _amount, uint256 _maxAmountToPay)
+  // new:    postOrder(uint256 _amount, uint256 _maxAmountToPay, bytes calldata _encryptPublicKey)
+  //
+  const { config: writeCreateOrderConfig } = usePrepareContractWrite({
+    addressOrName: contractAddresses['goerli'].ramp,
+    contractInterface: abi,
+    functionName: 'postOrder',
+    args: [
+      formatAmountsForTransactionParameter(newOrderAmount),
+      // Assuming on-ramper wants to pay at most newOrderAmount for their requested USDC amount versus previously UINT256_MAX
+      formatAmountsForTransactionParameter(newOrderAmount),
+      '0x' + venmoIdEncryptingKey
+    ],
+    onError: (error: { message: any }) => {
+      console.error(error.message);
+    },
+  });
+
+  // Debug:
+  // console.log(writeCreateOrderConfig);
+
+  const {
+    isLoading: isWriteNewOrderLoading,
+    write: writeNewOrder
+  } = useContractWrite(writeCreateOrderConfig);
 
   useEffect(() => {
     // On successful completion of message signing only
@@ -109,4 +134,3 @@ const NewOrderFormHeaderContainer = styled.div`
 const NewOrderFormBodyContainer = styled(Col)`
   gap: 2rem;
 `;
-
