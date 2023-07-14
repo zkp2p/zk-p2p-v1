@@ -58,10 +58,6 @@ export const MainPage: React.FC<{}> = (props) => {
   const [blockExplorer, setBlockExplorer] = useState<string>('https://goerli.etherscan.io/address/');
 
   // ----- transaction state -----
-  const [claimOrderEncryptedVenmoId, setClaimOrderEncryptedVenmoId] = useState<string>('');
-  const [claimOrderHashedVenmoId, setClaimOrderHashedVenmoId] = useState<string>('');
-  const [claimOrderRequestedAmount, setClaimOrderRequestedAmount] = useState<number>(0);
-
   const [submitOrderPublicSignals, setSubmitOrderPublicSignals] = useState<string>('');
   const [submitOrderProof, setSubmitOrderProof] = useState<string>('');
   
@@ -70,11 +66,6 @@ export const MainPage: React.FC<{}> = (props) => {
   const [fetchedOrderClaims, setFetchedOrderClaims] = useState<OnRampOrderClaim[]>([]);
 
   const { chain } = useNetwork();
-
-  const formatAmountsForTransactionParameter = (tokenAmount: number) => {
-    const adjustedAmount = tokenAmount * (10 ** 6);
-    return adjustedAmount;
-  };
 
   // order table state
   const orderTableHeaders = ['Creator', 'Requested USDC Amount', 'Status'];
@@ -130,32 +121,6 @@ export const MainPage: React.FC<{}> = (props) => {
   /*
     Contract Writes
   */
-
-  //
-  // legacy: claimOrder(uint256 _orderNonce)
-  // new:    claimOrder(uint256 _venmoId, uint256 _orderNonce, bytes calldata _encryptedVenmoId, uint256 _minAmountToPay)
-  //
-  const { config: writeClaimOrderConfig } = usePrepareContractWrite({
-    addressOrName: rampContractAddress,
-    contractInterface: abi,
-    functionName: 'claimOrder',
-    args: [
-      claimOrderHashedVenmoId,
-      selectedOrder.orderId,
-      '0x' + claimOrderEncryptedVenmoId,
-      formatAmountsForTransactionParameter(claimOrderRequestedAmount)
-
-    ],
-    onError: (error: { message: any }) => {
-      console.error(error.message);
-    },
-  });
-
-  const {
-    isLoading: isWriteClaimOrderLoading,
-    write: writeClaimOrder
-  } = useContractWrite(writeClaimOrderConfig);
-
 
   //
   // legacy: onRamp(uint256 _orderId, uint256 _offRamper, VenmoId, bytes calldata _proof)
@@ -436,14 +401,8 @@ export const MainPage: React.FC<{}> = (props) => {
             <Column>
               <ClaimOrderForm
                 loggedInWalletAddress={ethereumAddress}
-                senderEncryptingKey={selectedOrder.onRamperEncryptPublicKey}
-                senderAddressDisplay={selectedOrder.onRamper}
+                selectedOrder={selectedOrder}
                 senderRequestedAmountDisplay={formatAmountsForUSDC(selectedOrder.amountToReceive)}
-                setRequestedUSDAmount={setClaimOrderRequestedAmount}
-                setEncryptedVenmoId={setClaimOrderEncryptedVenmoId}
-                setHashedVenmoId={setClaimOrderHashedVenmoId}
-                writeClaimOrder={writeClaimOrder}
-                isWriteClaimOrderLoading={isWriteClaimOrderLoading}
                 rampExplorerLink={blockExplorer + rampContractAddress}
                 fusdcExplorerLink={blockExplorer + fUSDCContractAddress}
               />

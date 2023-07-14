@@ -38,7 +38,6 @@ export const SubmitOrderClaimsForm: React.FC<SubmitOrderClaimsFormProps> = ({
     signMessage,
   } = useSignMessage({
     message: 'You are signing a message to log into zkp2p.xyz.',
-    // message: 'You are signing a message that will be used to encrypt Venmo handles.',
   })
 
   const [venmoIdsVisible, setVenmoIdsVisible] = useState<boolean>(false);
@@ -93,6 +92,10 @@ export const SubmitOrderClaimsForm: React.FC<SubmitOrderClaimsFormProps> = ({
   function getIndexForSelectedClaim(selectedClaim: OnRampOrderClaim): number {
     return orderClaims.findIndex((orderClaim) => orderClaim.claimId === selectedClaim.claimId);
   }
+
+  /*
+    Hooks
+  */
 
   useEffect(() => {
     // On successful completion of message signing only

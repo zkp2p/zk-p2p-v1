@@ -37,6 +37,10 @@ export const NewOrderForm: React.FC<NewOrderFormProps> = ({
     message: 'You are signing a message to log into zkp2p.xyz.',
   })
 
+  /*
+    Contract Writes
+  */
+
   //
   // legacy: postOrder(uint256 _amount, uint256 _maxAmountToPay)
   // new:    postOrder(uint256 _amount, uint256 _maxAmountToPay, bytes calldata _encryptPublicKey)
@@ -63,6 +67,10 @@ export const NewOrderForm: React.FC<NewOrderFormProps> = ({
     isLoading: isWriteNewOrderLoading,
     write: writeNewOrder
   } = useContractWrite(writeCreateOrderConfig);
+
+  /*
+    Hooks
+  */
 
   useEffect(() => {
     // On successful completion of message signing only
