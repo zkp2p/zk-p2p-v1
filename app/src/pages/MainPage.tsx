@@ -19,17 +19,15 @@ import { TopBanner } from "../components/TopBanner";
 import {
   Chain,
   useAccount, 
-  useContractWrite, 
   useContractRead, 
   useNetwork, 
-  usePrepareContractWrite,
 } from "wagmi";
 
 import { abi } from "../helpers/ramp.abi";
 import { contractAddresses } from "../helpers/deployed_addresses";
 import { OnRampOrder, OnRampOrderClaim } from "../helpers/types";
-import { UINT256_MAX } from "../helpers/constants";
 import { formatAmountsForUSDC, getOrderStatusString } from '../helpers/tableFormatters';
+
 
 enum FormState {
   DEFAULT = "DEFAULT",
@@ -37,7 +35,6 @@ enum FormState {
   CLAIM = "CLAIM",
   UPDATE = "UPDATE",
 }
-
 
 export const MainPage: React.FC<{}> = (props) => {
   /*
@@ -117,44 +114,6 @@ export const MainPage: React.FC<{}> = (props) => {
     functionName: 'getClaimsForOrder',
     args: [selectedOrder.orderId],
   });
-
-  /*
-    Contract Writes
-  */
-
-  //
-  // legacy: onRamp(uint256 _orderId, uint256 _offRamper, VenmoId, bytes calldata _proof)
-  // new:    onRamp(uint256[2] memory _a, uint256[2][2] memory _b, uint256[2] memory _c, uint256[msgLen] memory _signals)
-  //
-  const reformatProofForChain = (proof: string) => {
-    return [
-      proof ? JSON.parse(proof)["pi_a"].slice(0, 2) : null,
-      proof
-        ? JSON.parse(proof)
-            ["pi_b"].slice(0, 2)
-            .map((g2point: any[]) => g2point.reverse())
-        : null,
-      proof ? JSON.parse(proof)["pi_c"].slice(0, 2) : null,
-    ];
-  };
-
-  const { config: writeCompleteOrderConfig } = usePrepareContractWrite({
-    addressOrName: rampContractAddress,
-    contractInterface: abi,
-    functionName: 'onRamp',
-    args: [
-      ...reformatProofForChain(submitOrderProof),
-      submitOrderPublicSignals ? JSON.parse(submitOrderPublicSignals) : null,
-    ],
-    onError: (error: { message: any }) => {
-      console.error(error.message);
-    },
-  });
-
-  const {
-    isLoading: isWriteCompleteOrderLoading,
-    write: writeCompleteOrder
-  } = useContractWrite(writeCompleteOrderConfig);
 
   /*
     Hooks
@@ -431,10 +390,6 @@ export const MainPage: React.FC<{}> = (props) => {
                 <SubmitOrderOnRampForm
                   proof={submitOrderProof}
                   publicSignals={submitOrderPublicSignals}
-                  setSubmitOrderProof={setSubmitOrderProof}
-                  setSubmitOrderPublicSignals={setSubmitOrderPublicSignals}
-                  writeCompleteOrder={writeCompleteOrder}
-                  isWriteCompleteOrderLoading={isWriteCompleteOrderLoading}
                 />
               </Column>
             </ConditionalContainer>

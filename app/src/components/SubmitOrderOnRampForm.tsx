@@ -1,29 +1,65 @@
 import React from 'react';
 import styled from 'styled-components';
+import {
+  useContractWrite,
+  usePrepareContractWrite,
+} from 'wagmi'
 
 import { Button } from "./Button";
 import { Col, SubHeader } from "./Layout";
 import { LabeledTextArea } from './LabeledTextArea';
 import { NumberedStep } from "../components/NumberedStep";
+import { abi } from "../helpers/ramp.abi";
+import { contractAddresses } from "../helpers/deployed_addresses";
 
 
 interface SubmitOrderOnRampFormProps {
   proof: string;
   publicSignals: string;
-  setSubmitOrderProof: (proof: string) => void;
-  setSubmitOrderPublicSignals: (publicSignals: string) => void;
-  writeCompleteOrder?: () => void;
-  isWriteCompleteOrderLoading: boolean;
 }
  
 export const SubmitOrderOnRampForm: React.FC<SubmitOrderOnRampFormProps> = ({
   proof,
   publicSignals,
-  setSubmitOrderPublicSignals,
-  setSubmitOrderProof,
-  writeCompleteOrder,
-  isWriteCompleteOrderLoading
 }) => {
+  /*
+    Contract Writes
+  */
+
+  //
+  // legacy: onRamp(uint256 _orderId, uint256 _offRamper, VenmoId, bytes calldata _proof)
+  // new:    onRamp(uint256[2] memory _a, uint256[2][2] memory _b, uint256[2] memory _c, uint256[msgLen] memory _signals)
+  //
+  const reformatProofForChain = (proof: string) => {
+    return [
+      proof ? JSON.parse(proof)["pi_a"].slice(0, 2) : null,
+      proof
+        ? JSON.parse(proof)
+            ["pi_b"].slice(0, 2)
+            .map((g2point: any[]) => g2point.reverse())
+        : null,
+      proof ? JSON.parse(proof)["pi_c"].slice(0, 2) : null,
+    ];
+  };
+
+  const { config: writeCompleteOrderConfig } = usePrepareContractWrite({
+    addressOrName: contractAddresses['goerli'].ramp,
+    contractInterface: abi,
+    functionName: 'onRamp',
+    args: [
+      ...reformatProofForChain(proof),
+      publicSignals ? JSON.parse(publicSignals) : null,
+    ],
+    onError: (error: { message: any }) => {
+      console.error(error.message);
+    },
+  });
+
+  const {
+    isLoading: isWriteCompleteOrderLoading,
+    write: writeCompleteOrder
+  } = useContractWrite(writeCompleteOrderConfig);
+
   return (
     <SubmitOrderOnRampFormHeaderContainer>
       <SubHeader>Submit Proof</SubHeader>
@@ -37,18 +73,12 @@ export const SubmitOrderOnRampForm: React.FC<SubmitOrderOnRampFormProps> = ({
           label="Proof Output"
           value={proof}
           disabled={true}
-          onChange={(e) => {
-            setSubmitOrderProof(e.currentTarget.value);
-          }}
         />
         <LabeledTextArea
           label="Public Signals"
           value={publicSignals}
           disabled={true}
           secret
-          onChange={(e) => {
-            setSubmitOrderPublicSignals(e.currentTarget.value);
-          }}
         />
         <Button
           disabled={proof.length === 0 || publicSignals.length === 0 || isWriteCompleteOrderLoading}
