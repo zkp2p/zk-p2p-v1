@@ -1,32 +1,36 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { useSignMessage } from 'wagmi'
+import {
+  useContractRead,
+  useSignMessage
+} from 'wagmi'
 
 import { Button } from "./Button";
 import { Col, SubHeader } from "./Layout";
 import { OrderTable } from './OrderTable';
 import { NumberedStep } from "../components/NumberedStep";
 
-import { OnRampOrderClaim } from "../helpers/types";
+import { OnRampOrder, OnRampOrderClaim } from "../helpers/types";
 import {
   decryptMessageWithAccount,
   generateAccountFromSignature
 } from '../helpers/messagEncryption';
 import { generateVenmoIdHash } from "../helpers/venmoHash";
 import { formatAmountsForUSDC } from '../helpers/tableFormatters';
+import { abi } from "../helpers/ramp.abi";
+import { contractAddresses } from "../helpers/deployed_addresses";
 
 
 interface SubmitOrderClaimsFormProps {
   loggedInWalletAddress: string;
-  orderClaims: OnRampOrderClaim[];
+  selectedOrder: OnRampOrder;
   currentlySelectedOrderClaim: OnRampOrderClaim;
   setSelectedOrderClaim: (claim: OnRampOrderClaim) => void;
 }
- 
 
 export const SubmitOrderClaimsForm: React.FC<SubmitOrderClaimsFormProps> = ({
   loggedInWalletAddress,
-  orderClaims,
+  selectedOrder,
   currentlySelectedOrderClaim,
   setSelectedOrderClaim
 }) => {
@@ -44,8 +48,10 @@ export const SubmitOrderClaimsForm: React.FC<SubmitOrderClaimsFormProps> = ({
   const [decryptedVenmoIds, setDecryptedVenmoIds] = useState<string[]>([]);
   const [hashedVenmoIds, setHashedVenmoIds] = useState<string[]>([]);
 
+  const [fetchedOrderClaims, setFetchedOrderClaims] = useState<OnRampOrderClaim[]>([]);
+
   const tableHeaders = ['Venmo Account', 'Verified', 'Requested USD Amount', 'Expiration'];
-  const tableData = orderClaims.map((orderClaim, index) => [
+  const tableData = fetchedOrderClaims.map((orderClaim, index) => [
     renderVenmoId(index),
     renderVenmoHashConfirmation(index),
     formatAmountsForUSDC(orderClaim.minAmountToPay),
@@ -63,7 +69,7 @@ export const SubmitOrderClaimsForm: React.FC<SubmitOrderClaimsFormProps> = ({
 
   function renderVenmoHashConfirmation(index: number) {
     if (venmoIdsVisible && hashedVenmoIds[index]) {
-      const orderClaim = orderClaims[index];
+      const orderClaim = fetchedOrderClaims[index];
       const orderClaimHashedVenmoId = orderClaim.hashedVenmoId.toString();
       const venmoHash = hashedVenmoIds[index];
 
@@ -90,12 +96,74 @@ export const SubmitOrderClaimsForm: React.FC<SubmitOrderClaimsFormProps> = ({
   }
 
   function getIndexForSelectedClaim(selectedClaim: OnRampOrderClaim): number {
-    return orderClaims.findIndex((orderClaim) => orderClaim.claimId === selectedClaim.claimId);
+    return fetchedOrderClaims.findIndex((orderClaim) => orderClaim.claimId === selectedClaim.claimId);
   }
+
+  /*
+    Contract Reads
+  */
+  
+  // getClaimsForOrder(uint256 _orderId) external view returns (OrderClaim[] memory) {
+  const {
+    data: orderClaimsData,
+    isLoading: isReadOrderClaimsLoading,
+    isError: isReadOrderClaimsError,
+    refetch: refetchClaimedOrders,
+  } = useContractRead({
+    addressOrName: contractAddresses['goerli'].ramp,
+    contractInterface: abi,
+    functionName: 'getClaimsForOrder',
+    args: [selectedOrder.orderId],
+  });
 
   /*
     Hooks
   */
+
+  // Fetch Order Claims
+  useEffect(() => {
+    if (!isReadOrderClaimsLoading && !isReadOrderClaimsError && orderClaimsData) {
+
+      const sanitizedOrderClaims: OnRampOrderClaim[] = [];
+      for (let i = orderClaimsData.length - 1; i >= 0; i--) {
+        const claimsData = orderClaimsData[i];
+
+        const claimId = i;
+        const offRamper = claimsData.offRamper.toString();
+        const hashedVenmoId = claimsData.venmoId;
+        const status = claimsData.status; 
+        const encryptedOffRamperVenmoId = claimsData.encryptedOffRamperVenmoId.substring(2);
+        const claimExpirationTime = claimsData.claimExpirationTime.toString();
+        const minAmountToPay = claimsData.minAmountToPay.toString();
+        
+        const orderClaim: OnRampOrderClaim = {
+          claimId,
+          offRamper,
+          hashedVenmoId,
+          status,
+          encryptedOffRamperVenmoId,
+          claimExpirationTime,
+          minAmountToPay,
+        };
+
+        sanitizedOrderClaims.push(orderClaim);
+      }
+
+      setFetchedOrderClaims(sanitizedOrderClaims);
+    }
+  }, [orderClaimsData, isReadOrderClaimsLoading, isReadOrderClaimsError]);
+
+  useEffect(() => {
+    if (selectedOrder) {
+      const intervalId = setInterval(() => {
+        refetchClaimedOrders();
+      }, 15000); // Refetch every 15 seconds
+  
+      return () => {
+        clearInterval(intervalId);
+      };
+    }
+  }, [selectedOrder, refetchClaimedOrders]);
 
   useEffect(() => {
     // On successful completion of message signing only
@@ -117,7 +185,7 @@ export const SubmitOrderClaimsForm: React.FC<SubmitOrderClaimsFormProps> = ({
     if (!venmoIdsVisible) {
       // Decrypt the off-ramper Venmo IDs
       const decryptedIds = await Promise.all(
-        orderClaims.map(async (orderClaim) => {
+        fetchedOrderClaims.map(async (orderClaim) => {
           return await decryptMessageWithAccount(orderClaim.encryptedOffRamperVenmoId, accountHash);
         })
       );
@@ -150,7 +218,7 @@ export const SubmitOrderClaimsForm: React.FC<SubmitOrderClaimsFormProps> = ({
             data={tableData}
             onRowClick={async(rowData: any[]) => {
               const [rowIndex] = rowData;
-              const orderClaimToSelect = orderClaims[rowIndex];
+              const orderClaimToSelect = fetchedOrderClaims[rowIndex];
               setSelectedOrderClaim(orderClaimToSelect);
             }}
             selectedRow={getIndexForSelectedClaim(currentlySelectedOrderClaim)}

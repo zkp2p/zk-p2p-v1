@@ -60,7 +60,6 @@ export const MainPage: React.FC<{}> = (props) => {
   
   // fetched on-chain state
   const [fetchedOrders, setFetchedOrders] = useState<OnRampOrder[]>([]);
-  const [fetchedOrderClaims, setFetchedOrderClaims] = useState<OnRampOrderClaim[]>([]);
 
   const { chain } = useNetwork();
 
@@ -100,19 +99,6 @@ export const MainPage: React.FC<{}> = (props) => {
     addressOrName: rampContractAddress,
     contractInterface: abi,
     functionName: 'getAllOrders',
-  });
-
-  // getClaimsForOrder(uint256 _orderId) external view returns (OrderClaim[] memory) {
-  const {
-    data: orderClaimsData,
-    isLoading: isReadOrderClaimsLoading,
-    isError: isReadOrderClaimsError,
-    refetch: refetchClaimedOrders,
-  } = useContractRead({
-    addressOrName: rampContractAddress,
-    contractInterface: abi,
-    functionName: 'getClaimsForOrder',
-    args: [selectedOrder.orderId],
   });
 
   /*
@@ -208,51 +194,6 @@ export const MainPage: React.FC<{}> = (props) => {
       clearInterval(intervalId);
     };
   }, [refetchAllOrders]);
-
-  // Fetch Order Claims
-  useEffect(() => {
-    if (!isReadOrderClaimsLoading && !isReadOrderClaimsError && orderClaimsData) {
-
-      const sanitizedOrderClaims: OnRampOrderClaim[] = [];
-      for (let i = orderClaimsData.length - 1; i >= 0; i--) {
-        const claimsData = orderClaimsData[i];
-
-        const claimId = i;
-        const offRamper = claimsData.offRamper.toString();
-        const hashedVenmoId = claimsData.venmoId;
-        const status = claimsData.status; 
-        const encryptedOffRamperVenmoId = claimsData.encryptedOffRamperVenmoId.substring(2);
-        const claimExpirationTime = claimsData.claimExpirationTime.toString();
-        const minAmountToPay = claimsData.minAmountToPay.toString();
-        
-        const orderClaim: OnRampOrderClaim = {
-          claimId,
-          offRamper,
-          hashedVenmoId,
-          status,
-          encryptedOffRamperVenmoId,
-          claimExpirationTime,
-          minAmountToPay,
-        };
-
-        sanitizedOrderClaims.push(orderClaim);
-      }
-
-      setFetchedOrderClaims(sanitizedOrderClaims);
-    }
-  }, [orderClaimsData, isReadOrderClaimsLoading, isReadOrderClaimsError]);
-
-  useEffect(() => {
-    if (selectedOrder) {
-      const intervalId = setInterval(() => {
-        refetchClaimedOrders();
-      }, 15000); // Refetch every 15 seconds
-  
-      return () => {
-        clearInterval(intervalId);
-      };
-    }
-  }, [selectedOrder, refetchClaimedOrders]);
 
   useEffect(() => {
     const userAgent = navigator.userAgent;
@@ -372,7 +313,7 @@ export const MainPage: React.FC<{}> = (props) => {
               <Column>
                 <SubmitOrderClaimsForm
                   loggedInWalletAddress={ethereumAddress}
-                  orderClaims={fetchedOrderClaims}
+                  selectedOrder={selectedOrder}
                   currentlySelectedOrderClaim={selectedOrderClaim}
                   setSelectedOrderClaim={setSelectedOrderClaim}
                 />
