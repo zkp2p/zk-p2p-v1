@@ -19,7 +19,6 @@ const { chains, provider, webSocketProvider } = configureChains(
   [chain.goerli, optimism],
   [
     alchemyProvider(
-      // { apiKey: process.env.REACT_APP_ALCHEMY_API_KEY }
       { apiKey: '7OLNUah9mWjItVi7QiJWrlc6xVVdSGn3' }
     ),
     publicProvider()

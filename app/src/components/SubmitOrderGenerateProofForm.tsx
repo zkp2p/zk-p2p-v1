@@ -7,6 +7,8 @@ import { Col, SubHeader } from "./Layout";
 import { LabeledTextArea } from './LabeledTextArea';
 import { ProgressBar } from "../components/ProgressBar";
 import { NumberedStep } from "../components/NumberedStep";
+import { EmailInputTypeSwitch } from "./EmailInputTypeSwitch";
+import { DragAndDropTextBox } from "./DragAndDropTextBox";
 
 import { downloadProofFiles, generateProof } from "../helpers/zkp";
 import { insert13Before10 } from "../scripts/generate_input";
@@ -31,6 +33,8 @@ export const SubmitOrderGenerateProofForm: React.FC<SubmitOrderGenerateProofForm
   setSubmitOrderProof,
   setSubmitOrderPublicSignals
 }) => {
+  const [isEmailInputSettingDrag, setIsEmailInputSettingDrag] = useState<boolean>(true);
+  
   const [emailFull, setEmailFull] = useState<string>(localStorage.emailFull || "");
 
   const [displayMessage, setDisplayMessage] = useState<string>("Generate Proof");
@@ -96,23 +100,51 @@ export const SubmitOrderGenerateProofForm: React.FC<SubmitOrderGenerateProofForm
   const circuitInputs = value || {};
   console.log("Circuit inputs:", circuitInputs);
 
+  const handleEmailInputTypeChanged = (checked: boolean) => {
+    setIsEmailInputSettingDrag(checked);
+  };
+
   return (
     <SubmitOrderGenerateProofFormHeaderContainer>
       <SubHeader>Generate Proof</SubHeader>
       <SubmitOrderGenerateProofFormBodyContainer>
-          <NumberedStep>
-            From the Venmo transaction email, select 'Show original' and paste the full contents
-            below. You will need to download proving keys (1.95 GB) your first time generating a proof.
-            Allocate approximately 3 minutes for downloading keys and 10 minutes for proof generation.
-            Do not close your browser.
-          </NumberedStep>
-        <LabeledTextArea
-          label="Full Email with Headers"
-          value={emailFull}
-          onChange={(e) => {
-              setEmailFull(e.currentTarget.value);
-          }}
-          />
+        <NumberedStep>
+          Open the Venmo transaction email and select 'Show original' to view the full contents. To generate
+          the proof, you can either download and drag the .eml file into the box below or paste the contents
+          directly. You will then need to download keys (1.95 GB) if this is your first time generating proofs.
+          Allot approximately 3 minutes for downloading keys and 10 minutes for proof generation. Do not close your browser.
+        </NumberedStep>
+        <SubmitOrderGenerateProofFormBodyTitleContainer>
+          <HeaderContainer>
+            <Title>{isEmailInputSettingDrag ? 'Drag and Drop .eml' : 'Paste Email'}</Title>
+            <EmailInputTypeSwitch
+              inputTypeChecked={isEmailInputSettingDrag}
+              isLightMode={false}
+              onSwitchChange={handleEmailInputTypeChanged}
+              />
+          </HeaderContainer>
+          {isEmailInputSettingDrag ? (
+            <DragAndDropTextBox
+              onFileDrop={(file: File) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                  if (e.target) {
+                    setEmailFull(e.target.result as string);
+                  }
+                };
+                reader.readAsText(file);
+              }}
+            />
+          ) : (
+            <LabeledTextArea
+              label=""
+              value={emailFull}
+              onChange={(e) => {
+                setEmailFull(e.currentTarget.value);
+              }}
+            />
+          )}
+        </SubmitOrderGenerateProofFormBodyTitleContainer>
         <ButtonContainer>
           <Button
             disabled={emailFull.length === 0}                             // TODO: Add back in no selected order claim id check
@@ -239,6 +271,10 @@ const SubmitOrderGenerateProofFormBodyContainer = styled(Col)`
   gap: 2rem;
 `;
 
+const SubmitOrderGenerateProofFormBodyTitleContainer = styled(Col)`
+  gap: 0rem;
+`;
+
 const ProcessStatus = styled.div<{ status: string }>`
   font-size: 8px;
   padding: 8px;
@@ -249,6 +285,15 @@ const ButtonContainer = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between; // Adjust the space between the buttons
+`;
+
+const HeaderContainer = styled.div`
+  display: flex;
+  justify-content: space-between;
+`;
+
+const Title = styled.h4`
+  // Add any styles you want for your title here
 `;
 
 const TimerDisplayContainer = styled.div`

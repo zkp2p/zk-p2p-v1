@@ -1,5 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
+import {
+  useContractWrite,
+  usePrepareContractWrite,
+} from 'wagmi'
 
 import { Button } from "../components/Button";
 import { Col, SubHeader } from "../components/Layout";
@@ -10,32 +14,24 @@ import { StyledLink } from "../components/StyledLink";
 
 import { encryptMessage } from "../helpers/messagEncryption";
 import { generateVenmoIdHash } from "../helpers/venmoHash";
+import { abi } from "../helpers/ramp.abi";
+import { OnRampOrder } from "../helpers/types";
+import { contractAddresses } from "../helpers/deployed_addresses";
+import { formatAmountsForTransactionParameter } from '../helpers/transactionFormat';
 
 
 interface ClaimOrderFormProps {
   loggedInWalletAddress: string;
-  senderEncryptingKey: string;
-  senderAddressDisplay: string;
   senderRequestedAmountDisplay: number;
-  setRequestedUSDAmount: (key: number) => void;
-  setEncryptedVenmoId: (key: string) => void;
-  setHashedVenmoId: (key: string) => void;
-  writeClaimOrder?: () => void;
-  isWriteClaimOrderLoading: boolean;
+  selectedOrder: OnRampOrder;
   rampExplorerLink: string;
   fusdcExplorerLink: string;
 }
  
 export const ClaimOrderForm: React.FC<ClaimOrderFormProps> = ({
   loggedInWalletAddress,
-  senderEncryptingKey,
-  senderAddressDisplay,
   senderRequestedAmountDisplay,
-  setRequestedUSDAmount,
-  setEncryptedVenmoId,
-  setHashedVenmoId,
-  writeClaimOrder,
-  isWriteClaimOrderLoading,
+  selectedOrder,
   rampExplorerLink,
   fusdcExplorerLink
 }) => {
@@ -43,6 +39,51 @@ export const ClaimOrderForm: React.FC<ClaimOrderFormProps> = ({
   const [venmoIdInput, setVenmoIdInput] = useState<string>(localStorage.getItem(persistedVenmoIdKey) || "");
   const [requestedUSDAmountInput, setRequestedUSDAmountInput] = useState<number>(0);
 
+  const [encryptedVenmoId, setEncryptedVenmoId] = useState<string>('');
+  const [hashedVenmoId, setHashedVenmoId] = useState<string>('');
+  const [requestedAmount, setRequestedAmount] = useState<number>(0);
+
+  /*
+    Contract Writes
+  */
+
+  //
+  // legacy: claimOrder(uint256 _orderNonce)
+  // new:    claimOrder(uint256 _venmoId, uint256 _orderNonce, bytes calldata _encryptedVenmoId, uint256 _minAmountToPay)
+  //
+  const { config: writeClaimOrderConfig } = usePrepareContractWrite({
+    addressOrName: contractAddresses['goerli'].ramp,
+    contractInterface: abi,
+    functionName: 'claimOrder',
+    args: [
+      hashedVenmoId,
+      selectedOrder.orderId,
+      '0x' + encryptedVenmoId,
+      formatAmountsForTransactionParameter(requestedAmount)
+
+    ],
+    onError: (error: { message: any }) => {
+      console.error(error.message);
+    },
+  });
+
+  const {
+    isLoading: isWriteClaimOrderLoading,
+    write: writeClaimOrder
+  } = useContractWrite(writeClaimOrderConfig);
+
+  /*
+    Hooks
+  */
+
+  useEffect(() => {
+    setRequestedUSDAmountInput(0);
+    setRequestedAmount(0);
+  }, [selectedOrder]);
+
+  /*
+    Component
+  */
   return (
     <ClaimOrderFormHeaderContainer>
       <SubHeader>Claim Order</SubHeader>
@@ -50,7 +91,7 @@ export const ClaimOrderForm: React.FC<ClaimOrderFormProps> = ({
         <SelectedOrderContainer>
           <ReadOnlyInput
             label="Order Creator"
-            value={senderAddressDisplay}
+            value={selectedOrder.onRamper}
           />
           <ReadOnlyInput
             label="Requested USDC Amount"
@@ -98,17 +139,17 @@ export const ClaimOrderForm: React.FC<ClaimOrderFormProps> = ({
           disabled={isWriteClaimOrderLoading}
           onClick={async () => {
             // Sign venmo id with encrypting key from the order
-            const encryptedVenmoId = await encryptMessage(venmoIdInput, senderEncryptingKey);
+            const encryptedVenmoId = await encryptMessage(venmoIdInput, selectedOrder.onRamperEncryptPublicKey);
             setEncryptedVenmoId(encryptedVenmoId);
-            console.log(encryptedVenmoId);
+            // console.log(encryptedVenmoId);
 
             // Generate hash of the venmo id
             const hashedVenmoId = await generateVenmoIdHash(venmoIdInput);
             setHashedVenmoId(hashedVenmoId);
-            console.log(hashedVenmoId);
+            // console.log(hashedVenmoId);
 
             // Set the requested USD amount
-            setRequestedUSDAmount(requestedUSDAmountInput);
+            setRequestedAmount(requestedUSDAmountInput);
 
             // Persist venmo id input so user doesn't have to paste it again in the future
             localStorage.setItem(persistedVenmoIdKey, venmoIdInput);
