@@ -63,7 +63,7 @@ As of 4/30/2023, users must mint and approve the fake USDC token on Goerli to in
 
 #### Deployed Addresses (Goerli)
 
-* Ramp - [0x945D14a5c63769f4cf008a2994810940cc0DFd5C](https://goerli.etherscan.io/address/0x945D14a5c63769f4cf008a2994810940cc0DFd5C)
+* Ramp - [0x912534358a29A294695760EF56342eaBc71a707e](https://goerli.etherscan.io/address/0x912534358a29A294695760EF56342eaBc71a707e)
 * FakeUSDC - [0xf6426A1fdE02c3d6f10b4af107cDd7669574E74C](https://goerli.etherscan.io/address/0xf6426A1fdE02c3d6f10b4af107cDd7669574E74C)
 
 
