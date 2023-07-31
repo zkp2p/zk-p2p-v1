@@ -4,7 +4,7 @@ import { uncompressGz as uncompress } from "./uncompress";
 
 const snarkjs = require("snarkjs");
 
-export const loadURL = "https://zk-p2p-onramp.s3.amazonaws.com/";
+export const loadURL = "https://s3.amazonaws.com/zk-p2p-onramp/";
 const compressed = true;
 // const loadURL = "/zkemail-zkey-chunks/";
 
@@ -21,12 +21,13 @@ async function storeArrayBuffer(keyname: string, buffer: ArrayBuffer) {
 // GET the compressed file from the remote server, then store it with localforage
 // Note that it must be stored as an uncompressed ArrayBuffer
 // and named such that filename===`${name}.zkey${a}` in order for it to be found by snarkjs.
-export async function downloadFromFilename(filename: string, compressed = false) {
+export async function downloadFromFilename(filename: string, compressed: boolean) {
   const link = loadURL + filename;
   try {
     const zkeyResp = await fetch(link, {
       method: "GET",
     });
+
     const zkeyBuff = await zkeyResp.arrayBuffer();
     if (!compressed) {
       await storeArrayBuffer(filename, zkeyBuff);
@@ -34,11 +35,11 @@ export async function downloadFromFilename(filename: string, compressed = false)
       // uncompress the data
       const zkeyUncompressed = await uncompress(zkeyBuff);
       const rawFilename = filename.replace(zkeyExtensionRegEx, ""); // replace .gz with ""
+
       // store the uncompressed data
       console.log("storing file in localforage", rawFilename);
       await storeArrayBuffer(rawFilename, zkeyUncompressed);
       console.log("stored file in localforage", rawFilename);
-      // await localforage.setItem(filename, zkeyBuff);
     }
     console.log(`Storage of ${filename} successful!`);
   } catch (e) {
@@ -50,8 +51,8 @@ export async function downloadFromFilename(filename: string, compressed = false)
 export const downloadProofFiles = async function (filename: string, onFileDownloaded: () => void) {
   const filePromises = [];
   for (const c of zkeySuffix) {
-    const targzFilename = `${filename}.zkey${c}${zkeyExtension}`;
-    // const itemCompressed = await localforage.getItem(targzFilename);
+    const targzFilename = `${filename}.zkey${c}${zkeyExtension}`; // e.g. circuit.zkeyb.gz
+
     const item = await localforage.getItem(`${filename}.zkey${c}`);
     if (item) {
       console.log(`${filename}.zkey${c}${item ? "" : zkeyExtension} already found in localstorage!`);
@@ -59,7 +60,6 @@ export const downloadProofFiles = async function (filename: string, onFileDownlo
       continue;
     }
     filePromises.push(
-      // downloadFromFilename(targzFilename, true).then(
       downloadFromFilename(targzFilename, compressed).then(() => onFileDownloaded())
     );
   }
@@ -69,17 +69,18 @@ export const downloadProofFiles = async function (filename: string, onFileDownlo
 
 export const uncompressProofFiles = async function (filename: string) {
   const filePromises = [];
-  for (const c of zkeySuffix) {
-    const targzFilename = `${filename}.zkey${c}${zkeyExtension}`;
-    const item = await localforage.getItem(`${filename}.zkey${c}`);
+  for (const suffix of zkeySuffix) {
+    const targzFilename = `${filename}.zkey${suffix}${zkeyExtension}`;
+    const item = await localforage.getItem(`${filename}.zkey${suffix}`);
+    
     const itemCompressed = await localforage.getItem(targzFilename);
     if (!itemCompressed) {
       console.error(`Error downloading file ${targzFilename}`);
     } else {
-      console.log(`${filename}.zkey${c}${item ? "" : zkeyExtension} already found in localstorage!`);
+      console.log(`${filename}.zkey${suffix}${item ? "" : zkeyExtension} already found in localstorage!`);
       continue;
     }
-    filePromises.push(downloadFromFilename(targzFilename));
+    filePromises.push(downloadFromFilename(targzFilename, true));
   }
   console.log(filePromises);
   await Promise.all(filePromises);
@@ -87,11 +88,11 @@ export const uncompressProofFiles = async function (filename: string) {
 
 export async function generateProof(input: any, filename: string) {
   // TODO: figure out how to generate this s.t. it passes build
-  console.log("generating proof for input");
+  // console.log("generating proof for input");
   console.log(input);
-  const { proof, publicSignals } = await snarkjs.groth16.fullProve(input, `${loadURL}${filename}.wasm`, `${filename}.zkey`);
-  console.log(`Generated proof ${JSON.stringify(proof)}`);
-  console.log(`Generated public signals ${JSON.stringify(publicSignals)}`);
+  const { proof, publicSignals } = await snarkjs.groth16.prove(input, `${loadURL}${filename}.wasm`, `${filename}.zkey`);
+  // console.log(`Generated proof ${JSON.stringify(proof)}`);
+  // console.log(`Generated public signals ${JSON.stringify(publicSignals)}`);
 
   return {
     proof,
