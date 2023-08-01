@@ -51,7 +51,7 @@ export const MainPage: React.FC<{}> = (props) => {
   const [selectedOrderClaim, setSelectedOrderClaim] = useState<OnRampOrderClaim >({} as OnRampOrderClaim);
   
   const [rampContractAddress, setRampContractAddress] = useState<string>(contractAddresses['goerli'].ramp);
-  const [fUSDCContractAddress, setFUSDCContractAddress] = useState<string>(contractAddresses['goerli'].fusdc);
+  const [fUSDCContractAddress, setFUSDCContractAddress] = useState<string>(contractAddresses['goerli'].usdc);
   const [blockExplorer, setBlockExplorer] = useState<string>('https://goerli.etherscan.io/address/');
 
   // ----- transaction state -----
@@ -123,7 +123,7 @@ export const MainPage: React.FC<{}> = (props) => {
 
     const fetchFUSDCContractAddress = (chain: Chain) => {
       if (contractAddresses[chain.network]) {
-        return contractAddresses[chain.network].fusdc;
+        return contractAddresses[chain.network].usdc;
       }
       return '';
     };
