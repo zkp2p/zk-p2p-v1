@@ -24,7 +24,7 @@ import {
 } from "wagmi";
 
 import { abi } from "../helpers/ramp.abi";
-import { contractAddresses } from "../helpers/deployed_addresses";
+import { useRampContractAddress, useUSDCContractAddress } from '../hooks/useContractAddress';
 import { OnRampOrder, OnRampOrderClaim } from "../helpers/types";
 import { formatAmountsForUSDC, getOrderStatusString } from '../helpers/tableFormatters';
 
@@ -37,31 +37,37 @@ enum FormState {
 }
 
 export const MainPage: React.FC<{}> = (props) => {
+  // fetch account and network
+  const { address } = useAccount();
+  const { chain } = useNetwork();
+
+  const rampAddress = useRampContractAddress(chain);
+  const usdcAddress = useUSDCContractAddress(chain);
+
   /*
     App State
   */
 
-  const { address } = useAccount();
   const [ethereumAddress, setEthereumAddress] = useState<string>(address ?? "");
   const [showBrowserWarning, setShowBrowserWarning] = useState<boolean>(false);
-  
+
   // ----- application state -----
   const [actionState, setActionState] = useState<FormState>(FormState.DEFAULT);
+
   const [selectedOrder, setSelectedOrder] = useState<OnRampOrder>({} as OnRampOrder);
   const [selectedOrderClaim, setSelectedOrderClaim] = useState<OnRampOrderClaim >({} as OnRampOrderClaim);
-  
-  const [rampContractAddress, setRampContractAddress] = useState<string>(contractAddresses['goerli'].ramp);
-  const [fUSDCContractAddress, setFUSDCContractAddress] = useState<string>(contractAddresses['goerli'].usdc);
-  const [blockExplorer, setBlockExplorer] = useState<string>('https://goerli.etherscan.io/address/');
+
+  const [rampContractAddress, setRampContractAddress] = useState<string>(useRampContractAddress(chain));
+  const [usdcContractAddress, setUSDCContractAddress] = useState<string>(useUSDCContractAddress(chain));
+
+  const [blockExplorer, setBlockExplorer] = useState<string>('https://optimistic.etherscan.io/address/');
 
   // ----- transaction state -----
   const [submitOrderPublicSignals, setSubmitOrderPublicSignals] = useState<string>('');
   const [submitOrderProof, setSubmitOrderProof] = useState<string>('');
-  
+
   // fetched on-chain state
   const [fetchedOrders, setFetchedOrders] = useState<OnRampOrder[]>([]);
-
-  const { chain } = useNetwork();
 
   // order table state
   const orderTableHeaders = ['Creator', 'Requested USDC Amount', 'Status'];
@@ -96,7 +102,7 @@ export const MainPage: React.FC<{}> = (props) => {
     isError: isReadAllOrdersError,
     refetch: refetchAllOrders,
   } = useContractRead({
-    addressOrName: rampContractAddress,
+    addressOrName: useRampContractAddress(chain),
     contractInterface: abi,
     functionName: 'getAllOrders',
   });
@@ -113,33 +119,17 @@ export const MainPage: React.FC<{}> = (props) => {
     }
   }, [address]);
 
+  // TODO: Move block explorer into hook as well
   useEffect(() => {
-    const fetchRampContractAddress = (chain: Chain) => {
-      if (contractAddresses[chain.network]) {
-        return contractAddresses[chain.network].ramp;
-      }
-      return '';
-    };
-
-    const fetchFUSDCContractAddress = (chain: Chain) => {
-      if (contractAddresses[chain.network]) {
-        return contractAddresses[chain.network].usdc;
-      }
-      return '';
-    };
-
     if (chain) {
-      const rampAddress = fetchRampContractAddress(chain);
-      const fusdcAddress = fetchFUSDCContractAddress(chain);
-
       let explorer;
       switch (chain.network) {
+        case "optimism":
+          explorer = 'https://optimistic.etherscan.io/address/';
+          break;
+        
         case "goerli":
           explorer = 'https://goerli.etherscan.io/address/';
-          break;
-
-        case "mantle":
-          explorer = 'https://explorer.testnet.mantle.xyz/address/';
           break;
 
         default:
@@ -148,7 +138,7 @@ export const MainPage: React.FC<{}> = (props) => {
       }
 
       setRampContractAddress(rampAddress);
-      setFUSDCContractAddress(fusdcAddress);
+      setUSDCContractAddress(usdcAddress);
       setBlockExplorer(explorer);
     }
   }, [chain]);
@@ -245,8 +235,8 @@ export const MainPage: React.FC<{}> = (props) => {
               label={'smart contract'}/>),
             which performs proof verification and escrow functionality, and its associated fake USDC
             (<StyledLink
-              urlHyperlink={blockExplorer + fUSDCContractAddress}
-              label={'fUSDC'}/>)
+              urlHyperlink={blockExplorer + usdcContractAddress}
+              label={'usdc'}/>)
             asset, both live on Goerli / Manta Testnets and will require Goerli ETH / Manta BIT to test.
             We are actively
             <StyledLink
@@ -258,14 +248,14 @@ export const MainPage: React.FC<{}> = (props) => {
             On-rampers: the flow will require two transactions. First, you will post orders to the
             on-chain order book. Then, when claims for the order are submitted by off-rampers,
             you will choose a claim to complete on Venmo, generate a proof with the confirmation
-            email, and then submit the proof on chain to unlock the fUSDC.
+            email, and then submit the proof on chain to unlock the USDC.
           </NumberedStep>
           <NumberedStep step={2}>
             Off-rampers: the flow will require your Venmo Id
             (<StyledLink
               urlHyperlink="https://github.com/0xSachinK/zk-p2p-onramp/blob/main/README.md#fetching-venmo-id-instructions"
               label={'instructions'}/>).
-            Additionally, you will need to mint fUSDC from the contract directly. We have modified
+            Additionally, you will need to mint USDC from the contract directly. We have modified
             the generic ERC20 to include an externally accessible mint function. You will also need to approve allowance
             to the smart contract.
           </NumberedStep>
@@ -304,7 +294,7 @@ export const MainPage: React.FC<{}> = (props) => {
                 selectedOrder={selectedOrder}
                 senderRequestedAmountDisplay={formatAmountsForUSDC(selectedOrder.amountToReceive)}
                 rampExplorerLink={blockExplorer + rampContractAddress}
-                fusdcExplorerLink={blockExplorer + fUSDCContractAddress}
+                usdcExplorerLink={blockExplorer + usdcContractAddress}
               />
             </Column>
           )}

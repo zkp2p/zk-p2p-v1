@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import {
   useContractWrite,
   usePrepareContractWrite,
+  useNetwork,
 } from 'wagmi'
 
 import { Button } from "../components/Button";
@@ -16,8 +17,8 @@ import { encryptMessage } from "../helpers/messagEncryption";
 import { generateVenmoIdHash } from "../helpers/venmoHash";
 import { abi } from "../helpers/ramp.abi";
 import { OnRampOrder } from "../helpers/types";
-import { contractAddresses } from "../helpers/deployed_addresses";
 import { formatAmountsForTransactionParameter } from '../helpers/transactionFormat';
+import { useRampContractAddress } from '../hooks/useContractAddress';
 
 
 interface ClaimOrderFormProps {
@@ -25,7 +26,7 @@ interface ClaimOrderFormProps {
   senderRequestedAmountDisplay: number;
   selectedOrder: OnRampOrder;
   rampExplorerLink: string;
-  fusdcExplorerLink: string;
+  usdcExplorerLink: string;
 }
  
 export const ClaimOrderForm: React.FC<ClaimOrderFormProps> = ({
@@ -33,7 +34,7 @@ export const ClaimOrderForm: React.FC<ClaimOrderFormProps> = ({
   senderRequestedAmountDisplay,
   selectedOrder,
   rampExplorerLink,
-  fusdcExplorerLink
+  usdcExplorerLink
 }) => {
   const persistedVenmoIdKey = `persistedVenmoId_${loggedInWalletAddress}`;
   const [venmoIdInput, setVenmoIdInput] = useState<string>(localStorage.getItem(persistedVenmoIdKey) || "");
@@ -42,6 +43,8 @@ export const ClaimOrderForm: React.FC<ClaimOrderFormProps> = ({
   const [encryptedVenmoId, setEncryptedVenmoId] = useState<string>('');
   const [hashedVenmoId, setHashedVenmoId] = useState<string>('');
   const [requestedAmount, setRequestedAmount] = useState<number>(0);
+
+  const { chain } = useNetwork();
 
   /*
     Contract Writes
@@ -52,7 +55,7 @@ export const ClaimOrderForm: React.FC<ClaimOrderFormProps> = ({
   // new:    claimOrder(uint256 _venmoId, uint256 _orderNonce, bytes calldata _encryptedVenmoId, uint256 _minAmountToPay)
   //
   const { config: writeClaimOrderConfig } = usePrepareContractWrite({
-    addressOrName: contractAddresses['goerli'].ramp,
+    addressOrName: useRampContractAddress(chain),
     contractInterface: abi,
     functionName: 'claimOrder',
     args: [
@@ -105,11 +108,11 @@ export const ClaimOrderForm: React.FC<ClaimOrderFormProps> = ({
             urlHyperlink="https://github.com/0xSachinK/zk-p2p-onramp/blob/main/README.md#fetching-venmo-id-instructions"
             label={' guide'}/> on retrieving your ID)
             to receive USD at and a required USD amount to receive. Your Venmo ID will be encrypted.
-            Submitting this transaction will escrow {senderRequestedAmountDisplay} fUSDC for the
+            Submitting this transaction will escrow {senderRequestedAmountDisplay} USDC for the
             on-ramper. If this is your first time, you will need to mint
             <StyledLink
-              urlHyperlink={fusdcExplorerLink}
-              label={' fUSDC '}/>
+              urlHyperlink={usdcExplorerLink}
+              label={' USDC '}/>
             and approve spending to the ramp
             (<StyledLink
               urlHyperlink={rampExplorerLink}

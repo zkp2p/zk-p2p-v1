@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import {
   useContractWrite,
   usePrepareContractWrite,
+  useNetwork,
 } from 'wagmi'
 
 import { Button } from "./Button";
@@ -10,7 +11,7 @@ import { Col, SubHeader } from "./Layout";
 import { LabeledTextArea } from './LabeledTextArea';
 import { NumberedStep } from "../components/NumberedStep";
 import { abi } from "../helpers/ramp.abi";
-import { contractAddresses } from "../helpers/deployed_addresses";
+import { useRampContractAddress } from '../hooks/useContractAddress';
 
 
 interface SubmitOrderOnRampFormProps {
@@ -22,6 +23,8 @@ export const SubmitOrderOnRampForm: React.FC<SubmitOrderOnRampFormProps> = ({
   proof,
   publicSignals,
 }) => {
+  const { chain } = useNetwork();
+
   /*
     Contract Writes
   */
@@ -43,7 +46,7 @@ export const SubmitOrderOnRampForm: React.FC<SubmitOrderOnRampFormProps> = ({
   };
 
   const { config: writeCompleteOrderConfig } = usePrepareContractWrite({
-    addressOrName: contractAddresses['goerli'].ramp,
+    addressOrName: useRampContractAddress(chain),
     contractInterface: abi,
     functionName: 'onRamp',
     args: [

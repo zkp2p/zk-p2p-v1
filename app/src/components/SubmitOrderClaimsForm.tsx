@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import {
   useContractRead,
-  useSignMessage
+  useSignMessage,
+  useNetwork,
 } from 'wagmi'
 
 import { Button } from "./Button";
@@ -18,7 +19,7 @@ import {
 import { generateVenmoIdHash } from "../helpers/venmoHash";
 import { formatAmountsForUSDC } from '../helpers/tableFormatters';
 import { abi } from "../helpers/ramp.abi";
-import { contractAddresses } from "../helpers/deployed_addresses";
+import { useRampContractAddress } from '../hooks/useContractAddress';
 
 
 interface SubmitOrderClaimsFormProps {
@@ -34,6 +35,8 @@ export const SubmitOrderClaimsForm: React.FC<SubmitOrderClaimsFormProps> = ({
   currentlySelectedOrderClaim,
   setSelectedOrderClaim
 }) => {
+  const { chain } = useNetwork();
+  
   const accountHashKey = `accountHash_${loggedInWalletAddress}`;
   const [accountHash, setAccountHash] = useState<string>(localStorage.getItem(accountHashKey) || "");
 
@@ -110,7 +113,7 @@ export const SubmitOrderClaimsForm: React.FC<SubmitOrderClaimsFormProps> = ({
     isError: isReadOrderClaimsError,
     refetch: refetchClaimedOrders,
   } = useContractRead({
-    addressOrName: contractAddresses['goerli'].ramp,
+    addressOrName: useRampContractAddress(chain),
     contractInterface: abi,
     functionName: 'getClaimsForOrder',
     args: [selectedOrder.orderId],
