@@ -72,7 +72,7 @@ export const uncompressProofFiles = async function (filename: string) {
   for (const suffix of zkeySuffix) {
     const targzFilename = `${filename}.zkey${suffix}${zkeyExtension}`;
     const item = await localforage.getItem(`${filename}.zkey${suffix}`);
-    
+
     const itemCompressed = await localforage.getItem(targzFilename);
     if (!itemCompressed) {
       console.error(`Error downloading file ${targzFilename}`);
@@ -90,7 +90,8 @@ export async function generateProof(input: any, filename: string) {
   // TODO: figure out how to generate this s.t. it passes build
   // console.log("generating proof for input");
   console.log(input);
-  const { proof, publicSignals } = await snarkjs.groth16.prove(input, `${loadURL}${filename}.wasm`, `${filename}.zkey`);
+  console.log(`${loadURL}${filename}.wasm`, `${filename}.zkey`);
+  const { proof, publicSignals } = await snarkjs.groth16.fullProve(input, `${loadURL}${filename}.wasm`, `${filename}.zkey`);
   // console.log(`Generated proof ${JSON.stringify(proof)}`);
   // console.log(`Generated public signals ${JSON.stringify(publicSignals)}`);
 

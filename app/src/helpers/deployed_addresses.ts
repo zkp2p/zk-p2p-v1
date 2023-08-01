@@ -4,9 +4,10 @@ type Contracts = {
   };
 };
 
+
 export const contractAddresses: Contracts = {
   "goerli": {
-    "ramp": '0xE62e588756576ECE4a8dCAEBA94dd2889dc6A04c',
+    "ramp": '0xC77CF422dF9A02c10D361D7D45581AC6ee73b97c',
     "fusdc": '0xf6426A1fdE02c3d6f10b4af107cDd7669574E74C',
   },
   // Legacy
