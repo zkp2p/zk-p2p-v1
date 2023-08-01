@@ -341,41 +341,17 @@ export const MainPage: React.FC<{}> = (props) => {
   );
 };
 
-const ConditionalContainer = styled.div`
-  display: grid;
-  gap: 1rem;
-  align-self: flex-start;
-`;
-
-const Main = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-`;
-
-const Column = styled.div`
-  gap: 1rem;
-  align-self: flex-start;
-  background: rgba(255, 255, 255, 0.1);
-  padding: 1.5rem;
-  border-radius: 4px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-`;
-
-const Wrapper = styled.div`
-  gap: 1rem;
-  align-self: flex-start;
-`;
-
 const Container = styled.div`
   display: flex;
   flex-direction: column;
   margin: 0 auto;
+
   & .title {
     display: flex;
     flex-direction: column;
     align-items: center;
   }
+  
   & .main {
     & .signaturePane {
       flex: 1;
@@ -400,6 +376,32 @@ const Container = styled.div`
       width: 500px;
     }
   }
+`;
+
+const Main = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+`;
+
+const Wrapper = styled.div`
+  gap: 1rem;
+  align-self: flex-start;
+`;
+
+const ConditionalContainer = styled.div`
+  display: grid;
+  gap: 1rem;
+  align-self: flex-start;
+`;
+
+const Column = styled.div`
+  gap: 1rem;
+  align-self: flex-start;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 1.5rem;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
 `;
 
 const NumberedInputContainer = styled(Col)`

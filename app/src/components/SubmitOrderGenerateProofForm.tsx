@@ -153,6 +153,8 @@ export const SubmitOrderGenerateProofForm: React.FC<SubmitOrderGenerateProofForm
               setDisplayMessage("Generating proof...");
               setStatus("generating-input");
 
+              console.log(emailFull);
+
               const formattedArray = await insert13Before10(Uint8Array.from(Buffer.from(emailFull)));
 
               // Due to a quirk in carriage return parsing in JS, we need to manually edit carriage returns to match DKIM parsing
