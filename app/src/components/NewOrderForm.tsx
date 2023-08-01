@@ -4,6 +4,7 @@ import {
   useContractWrite,
   usePrepareContractWrite,
   useSignMessage,
+  useNetwork,
 } from 'wagmi'
 
 import { Button } from "../components/Button";
@@ -12,8 +13,8 @@ import { NumberedStep } from "../components/NumberedStep";
 import { SingleLineInput } from "../components/SingleLineInput";
 import { generateAccountFromSignature, getPublicKeyFromAccount } from '../helpers/messagEncryption';
 import { abi } from "../helpers/ramp.abi";
-import { contractAddresses } from "../helpers/deployed_addresses";
 import { formatAmountsForTransactionParameter } from '../helpers/transactionFormat';
+import { useRampContractAddress } from '../hooks/useContractAddress';
 
 
 interface NewOrderFormProps {
@@ -28,6 +29,8 @@ export const NewOrderForm: React.FC<NewOrderFormProps> = ({
 
   const [newOrderAmount, setNewOrderAmount] = useState<number>(0);
   const [venmoIdEncryptingKey, setVenmoIdEncryptingKey] = useState<string>('');
+
+  const { chain } = useNetwork();
 
   const {
     data: signedMessageSignature,
@@ -46,7 +49,7 @@ export const NewOrderForm: React.FC<NewOrderFormProps> = ({
   // new:    postOrder(uint256 _amount, uint256 _maxAmountToPay, bytes calldata _encryptPublicKey)
   //
   const { config: writeCreateOrderConfig } = usePrepareContractWrite({
-    addressOrName: contractAddresses['goerli'].ramp,
+    addressOrName: useRampContractAddress(chain),
     contractInterface: abi,
     functionName: 'postOrder',
     args: [
