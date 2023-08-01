@@ -17,7 +17,6 @@ import { SubmitOrderOnRampForm } from "../components/SubmitOrderOnRampForm";
 import { TopBanner } from "../components/TopBanner";
 
 import {
-  Chain,
   useAccount, 
   useContractRead, 
   useNetwork, 
