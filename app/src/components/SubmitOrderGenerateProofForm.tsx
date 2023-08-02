@@ -105,7 +105,7 @@ export const SubmitOrderGenerateProofForm: React.FC<SubmitOrderGenerateProofForm
       <SubHeader>Generate Proof</SubHeader>
       <Body>
         <NumberedStep>
-          Select one of the claims in the table above. To generate a proof, open the transaction
+          Select the claim you completed from the table above. To generate a proof, open the transaction
           email from Venmo and select 'Show original' to view the full contents. You can either
           download and drag the .eml file into the box below or paste the contents directly. If this
           is your first time, you will then need to download proving keys. Allot ~10
@@ -256,7 +256,7 @@ const ComponentWrapper = styled.div`
 `;
 
 const Body = styled(Col)`
-  gap: 2rem;
+  gap: 1rem;
 `;
 
 const InputWithTitleContainer = styled(Col)`
