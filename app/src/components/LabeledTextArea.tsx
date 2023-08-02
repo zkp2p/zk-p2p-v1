@@ -29,9 +29,7 @@ export const LabeledTextArea: React.FC<{
   secret,
 }) => {
   return (
-    <LabeledTextAreaContainer
-      className={_.compact(["labeledTextAreaContainer", className]).join(" ")}
-    >
+    <LabeledTextAreaContainer className={_.compact(["labeledTextAreaContainer", className]).join(" ")}>
       <Label isEmpty={!label}>{label}</Label>
       {warning && (
         <span className="warning" style={{ color: warningColor }}>

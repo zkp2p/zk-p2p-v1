@@ -20,9 +20,16 @@ export const EmailInputTypeSwitch: React.FC<EmailInputTypeSwitchProps> = ({
   });
 
   useEffect(() => {
-    localStorage.setItem('proofEmailVersion', JSON.stringify(checked));
     onSwitchChange(checked);
+    
+    return () => {
+      localStorage.setItem('proofEmailVersion', JSON.stringify(checked));
+    };
   }, [checked]);
+
+  useEffect(() => {
+    setChecked(inputTypeChecked);
+  }, [inputTypeChecked]);
 
   const handleSwitchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setChecked(event.target.checked);

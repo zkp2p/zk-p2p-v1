@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useAsync, useUpdateEffect } from "react-use";
+import { useAsync } from "react-use";
 import styled from 'styled-components';
 
 import { Button } from "./Button";
@@ -34,7 +34,7 @@ export const SubmitOrderGenerateProofForm: React.FC<SubmitOrderGenerateProofForm
 }) => {
   const [isEmailInputSettingDrag, setIsEmailInputSettingDrag] = useState<boolean>(true);
   
-  const [emailFull, setEmailFull] = useState<string>(localStorage.emailFull || "");
+  const [emailFull, setEmailFull] = useState<string>("");
 
   const [displayMessage, setDisplayMessage] = useState<string>("Generate Proof");
   const [downloadProgress, setDownloadProgress] = useState<number>(0);
@@ -84,20 +84,10 @@ export const SubmitOrderGenerateProofForm: React.FC<SubmitOrderGenerateProofForm
     }
   }, [emailFull, loggedInWalletAddress]);
 
-  // local storage stuff
-  useUpdateEffect(() => {
-    if (value) {
-      if (localStorage.emailFull !== emailFull) {
-        console.info("Wrote email to localStorage");
-        localStorage.emailFull = emailFull;
-      }
-    }
-  }, [value]);
-
   if (error) console.error(error);
   
   const circuitInputs = value || {};
-  console.log("Circuit inputs:", circuitInputs);
+  // console.log("Circuit inputs:", circuitInputs);
 
   const handleEmailInputTypeChanged = (checked: boolean) => {
     setIsEmailInputSettingDrag(checked);
@@ -132,6 +122,7 @@ export const SubmitOrderGenerateProofForm: React.FC<SubmitOrderGenerateProofForm
                 reader.onload = (e) => {
                   if (e.target) {
                     setEmailFull(e.target.result as string);
+                    setIsEmailInputSettingDrag(false);
                   }
                 };
                 reader.readAsText(file);
@@ -149,7 +140,7 @@ export const SubmitOrderGenerateProofForm: React.FC<SubmitOrderGenerateProofForm
         </InputWithTitleContainer>
         <ButtonContainer>
           <Button
-            disabled={emailFull.length === 0 || selectedOrderClaim === undefined}
+            disabled={emailFull.length === 0 || selectedOrderClaim.claimId === undefined}
             onClick={async () => {
               console.log("Generating proof...");
               setDisplayMessage("Generating proof...");

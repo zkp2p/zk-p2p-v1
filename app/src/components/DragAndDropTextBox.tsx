@@ -37,10 +37,8 @@ export const DragAndDropTextBox: React.FC<Props> = ({onFileDrop}) => {
 };
 
 const DragAndDropTextBoxWrapper = styled(Col)`
-	display: flex;
-	flex-direction: column;
-	border-radius: 4px;
 	height: 15vh;
+	border-radius: 4px;
 	align-items: center;
 	justify-content: center;
 	border: 2px dashed #ccc;
