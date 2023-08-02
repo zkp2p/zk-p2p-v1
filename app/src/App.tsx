@@ -1,6 +1,4 @@
 import React from "react";
-import { MainPage } from "./pages/MainPage";
-import "./styles.css";
 import {
   BrowserRouter as Router,
   Route,
@@ -12,10 +10,15 @@ import { useLocation } from "react-use";
 import styled from "styled-components";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 
+import { MainPage } from "./pages/MainPage";
+import { BottomNav } from "./components/BottomNav";
+import "./styles.css";
+
+
 const App = () => {
   return (
     <Router>
-      <div>
+      <div className="app-content">
         <NavSection />
 
         <Routes>
@@ -23,6 +26,11 @@ const App = () => {
           <Route path="/" element={<Navigate to={"/"} replace={true} />} />
           <Route element={<>Not found</>} />
         </Routes>
+
+      </div>
+      
+      <div className="app-footer">
+        <BottomNav />
       </div>
     </Router>
   );
