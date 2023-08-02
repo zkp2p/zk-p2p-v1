@@ -228,14 +228,14 @@ export const MainPage: React.FC<{}> = (props) => {
         <Header>Fiat to Crypto On-Ramp From Venmo</Header>
         <NumberedInputContainer>
           <span style={{ color: 'rgba(255, 255, 255, 0.7)', lineHeight: '1.3'}}>
-            This is an experimental application demonstrating zero knowledge proof technology using a ramp <StyledLink
+            This is an experimental app demonstrating zero knowledge proof technology using a ramp <StyledLink
             urlHyperlink={blockExplorer + rampContractAddress}
-            label={'smart contract'}/>,
-            which performs proof verification and escrow functionality, to allow users to on ramp USD to USDC through Venmo.
-            This project is supported by the PSE Group within the Ethereum Foundation and we are actively <StyledLink
+            label={'smart contract'}/> to verify proof of payment made on Venmo, a popular P2P payment service,
+            and then exchange for USDC. This project is supported by the <StyledLink
+            urlHyperlink={"https://www.appliedzkp.org/projects/zkp2p"}
+            label={'PSE Group'}/> within the Ethereum Foundation and we are actively <StyledLink
             urlHyperlink={"https://github.com/0xSachinK/zk-p2p-onramp"}
-            label={'developing '}/>
-            a second version.
+            label={'developing'}/> the next version with improvements.
           </span>
           <NumberedStep step={1}>
             On-rampers: post an order to the order book for the desired USDC amount (max 20). Wait for a claim to be
