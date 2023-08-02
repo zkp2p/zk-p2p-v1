@@ -17,9 +17,11 @@ export const Button = styled.button`
   width: 100%;
   min-width: 32px;
   transition: all 0.2s ease-in-out;
+  
   &:hover {
     background: #9b8df2;
   }
+
   &:disabled {
     opacity: 0.5;
     cursor: not-allowed;

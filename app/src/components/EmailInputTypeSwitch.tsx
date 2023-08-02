@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Switch } from '@mui/material';
 import styled from 'styled-components';
 
@@ -14,12 +14,18 @@ export const EmailInputTypeSwitch: React.FC<EmailInputTypeSwitchProps> = ({
   isLightMode,
   onSwitchChange,
 }) => {
+  const [checked, setChecked] = useState(() => {
+    const saved = localStorage.getItem('proofEmailVersion');
+    return saved !== null ? JSON.parse(saved) : inputTypeChecked;
+  });
+
   useEffect(() => {
-    localStorage.setItem('proofEmailVersion', String(inputTypeChecked));
-  }, [inputTypeChecked]);
+    localStorage.setItem('proofEmailVersion', JSON.stringify(checked));
+    onSwitchChange(checked);
+  }, [checked]);
 
   const handleSwitchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    onSwitchChange(event.target.checked);
+    setChecked(event.target.checked);
   };
 
   return (
@@ -28,9 +34,9 @@ export const EmailInputTypeSwitch: React.FC<EmailInputTypeSwitchProps> = ({
         Input Mode
       </SwitchLabel>
       <Switch
-        defaultChecked={inputTypeChecked}
+        checked={checked}
         onChange={handleSwitchChange}
-        color={inputTypeChecked ? (!isLightMode ? 'primary' : 'secondary') : 'default'}
+        color={checked ? (!isLightMode ? 'primary' : 'secondary') : 'default'}
       />
     </div>
   )

@@ -12,7 +12,6 @@ import { DragAndDropTextBox } from "./DragAndDropTextBox";
 
 import { downloadProofFiles, generateProof } from "../helpers/zkp";
 import { insert13Before10 } from "../scripts/generate_input";
-// import { packedNBytesToString } from "../helpers/binaryFormat";
 import { OnRampOrder, OnRampOrderClaim } from "../helpers/types";
 
 const generate_input = require("../scripts/generate_input");
@@ -105,24 +104,26 @@ export const SubmitOrderGenerateProofForm: React.FC<SubmitOrderGenerateProofForm
   };
 
   return (
-    <SubmitOrderGenerateProofFormHeaderContainer>
+    <ComponentWrapper>
       <SubHeader>Generate Proof</SubHeader>
-      <SubmitOrderGenerateProofFormBodyContainer>
+      <Body>
         <NumberedStep>
-          Make sure to select one of the claims in the table and generate a proof. Open the Venmo
-          transaction email and select 'Show original' to view the full contents. You can either
+          Select one of the claims in the table above. To generate a proof, open the transaction
+          email from Venmo and select 'Show original' to view the full contents. You can either
           download and drag the .eml file into the box below or paste the contents directly. If this
           is your first time, you will then need to download proving keys. Allot approximately 10
           minutes for proof generation and do not close your browser.
         </NumberedStep>
-        <SubmitOrderGenerateProofFormBodyTitleContainer>
+        <InputWithTitleContainer>
           <HeaderContainer>
-            <Title>{isEmailInputSettingDrag ? 'Drag and Drop .eml' : 'Paste Email'}</Title>
+            <Title>
+              {isEmailInputSettingDrag ? 'Drag and Drop .eml' : 'Paste Email'}
+            </Title>
             <EmailInputTypeSwitch
               inputTypeChecked={isEmailInputSettingDrag}
               isLightMode={false}
               onSwitchChange={handleEmailInputTypeChanged}
-              />
+            />
           </HeaderContainer>
           {isEmailInputSettingDrag ? (
             <DragAndDropTextBox
@@ -145,10 +146,10 @@ export const SubmitOrderGenerateProofForm: React.FC<SubmitOrderGenerateProofForm
               }}
             />
           )}
-        </SubmitOrderGenerateProofFormBodyTitleContainer>
+        </InputWithTitleContainer>
         <ButtonContainer>
           <Button
-            disabled={emailFull.length === 0}                             // TODO: Add back in no selected order claim id check
+            disabled={emailFull.length === 0 || selectedOrderClaim === undefined}
             onClick={async () => {
               console.log("Generating proof...");
               setDisplayMessage("Generating proof...");
@@ -177,10 +178,6 @@ export const SubmitOrderGenerateProofForm: React.FC<SubmitOrderGenerateProofForm
                 return;
               }
               console.log("Generated input:", JSON.stringify(input));
-
-              // Insert input structuring code here
-              // const input = buildInput(pubkey, msghash, sig);
-              // console.log(JSON.stringify(input, (k, v) => (typeof v == "bigint" ? v.toString() : v), 2));
 
               /*
                 Download proving files
@@ -214,15 +211,6 @@ export const SubmitOrderGenerateProofForm: React.FC<SubmitOrderGenerateProofForm
                 Set proof
               */
               setSubmitOrderProof(JSON.stringify(proof));
-
-              /*
-                Retrieve public signals
-              */
-              // let kek = publicSignals.map((x: string) => BigInt(x));
-              // let soln = packedNBytesToString(kek.slice(0, 12));
-              // let soln2 = packedNBytesToString(kek.slice(12, 147));
-              // let soln3 = packedNBytesToString(kek.slice(147, 150));
-              // setPublicSignals(`From: ${soln}\nTo: ${soln2}\nUsername: ${soln3}`);
               
               /*
                 Set public signals
@@ -260,21 +248,21 @@ export const SubmitOrderGenerateProofForm: React.FC<SubmitOrderGenerateProofForm
             )}
             <TimerDisplay timers={stopwatch} />
           </ProcessStatus>
-      </SubmitOrderGenerateProofFormBodyContainer>
-    </SubmitOrderGenerateProofFormHeaderContainer>
+      </Body>
+    </ComponentWrapper>
   );
 };
 
-const SubmitOrderGenerateProofFormHeaderContainer = styled.div`
+const ComponentWrapper = styled.div`
   width: 100%;
   gap: 1rem;
 `;
 
-const SubmitOrderGenerateProofFormBodyContainer = styled(Col)`
+const Body = styled(Col)`
   gap: 2rem;
 `;
 
-const SubmitOrderGenerateProofFormBodyTitleContainer = styled(Col)`
+const InputWithTitleContainer = styled(Col)`
   gap: 0rem;
 `;
 
