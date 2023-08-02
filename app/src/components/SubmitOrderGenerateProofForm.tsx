@@ -32,7 +32,10 @@ export const SubmitOrderGenerateProofForm: React.FC<SubmitOrderGenerateProofForm
   setSubmitOrderProof,
   setSubmitOrderPublicSignals
 }) => {
-  const [isEmailInputSettingDrag, setIsEmailInputSettingDrag] = useState<boolean>(true);
+  const storedValue = localStorage.getItem('isEmailInputPreferenceDrag');
+  const [isEmailInputSettingDrag, setIsEmailInputSettingDrag] = useState<boolean>(
+      storedValue !== null ? JSON.parse(storedValue) : true
+  );
   
   const [emailFull, setEmailFull] = useState<string>("");
 
@@ -90,7 +93,11 @@ export const SubmitOrderGenerateProofForm: React.FC<SubmitOrderGenerateProofForm
   // console.log("Circuit inputs:", circuitInputs);
 
   const handleEmailInputTypeChanged = (checked: boolean) => {
+    // Update state maintained in parent component
     setIsEmailInputSettingDrag(checked);
+
+    // Store preference in local storage
+    localStorage.setItem('isEmailInputPreferenceDrag', JSON.stringify(checked));
   };
 
   return (
@@ -110,8 +117,7 @@ export const SubmitOrderGenerateProofForm: React.FC<SubmitOrderGenerateProofForm
               {isEmailInputSettingDrag ? 'Drag and Drop .eml' : 'Paste Email'}
             </Title>
             <EmailInputTypeSwitch
-              inputTypeChecked={isEmailInputSettingDrag}
-              isLightMode={false}
+              switchChecked={isEmailInputSettingDrag}
               onSwitchChange={handleEmailInputTypeChanged}
             />
           </HeaderContainer>
