@@ -211,8 +211,8 @@ export const SubmitOrderClaimsForm: React.FC<SubmitOrderClaimsFormProps> = ({
       <SubHeader>Select Claim</SubHeader>
       <SubmitOrderClaimsFormBodyContainer>
         <NumberedStep>
-          Complete one of the claims below by sending the requested amount to the Venmo handle
-          (click the link to view the handle). Make sure you have e-mail receipts
+          Complete one of the claims below by sending the requested amount to the Venmo
+          handle (click the link to view the handle). Make sure you have e-mail receipts
           enabled on Venmo before sending the payment.
         </NumberedStep>
         <SubmitOrderClaimsFormTableAndButtonContainer>

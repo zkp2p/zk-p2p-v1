@@ -225,38 +225,28 @@ export const MainPage: React.FC<{}> = (props) => {
     <Container>
       {showBrowserWarning && <TopBanner message={"ZK P2P On-Ramp only works on Chrome or Chromium-based browsers."} />}
       <div className="title">
-        <Header>ZK P2P On-Ramp From Venmo</Header>
+        <Header>Fiat to Crypto On-Ramp From Venmo</Header>
         <NumberedInputContainer>
           <span style={{ color: 'rgba(255, 255, 255, 0.7)', lineHeight: '1.3'}}>
-            This is an experimental application demonstrating zero knowledge proof technology. The ramp
-            (<StyledLink
-              urlHyperlink={blockExplorer + rampContractAddress}
-              label={'smart contract'}/>),
-            which performs proof verification and escrow functionality, and its associated fake USDC
-            (<StyledLink
-              urlHyperlink={blockExplorer + usdcContractAddress}
-              label={'usdc'}/>)
-            asset, both live on Goerli / Manta Testnets and will require Goerli ETH / Manta BIT to test.
-            We are actively
-            <StyledLink
-              urlHyperlink={"https://github.com/0xSachinK/zk-p2p-onramp"}
-              label={' developing '}/>
-            and improving this.
+            This is an experimental application demonstrating zero knowledge proof technology using a ramp <StyledLink
+            urlHyperlink={blockExplorer + rampContractAddress}
+            label={'smart contract'}/>,
+            which performs proof verification and escrow functionality, to allow users to on ramp USD to USDC through Venmo.
+            This project is supported by the PSE Group within the Ethereum Foundation and we are actively <StyledLink
+            urlHyperlink={"https://github.com/0xSachinK/zk-p2p-onramp"}
+            label={'developing '}/>
+            a second version.
           </span>
           <NumberedStep step={1}>
-            On-rampers: the flow will require two transactions. First, you will post orders to the
-            on-chain order book. Then, when claims for the order are submitted by off-rampers,
-            you will choose a claim to complete on Venmo, generate a proof with the confirmation
-            email, and then submit the proof on chain to unlock the USDC.
+            On-rampers: post an order to the order book for the desired USDC amount (max 20). Wait for a claim to be
+            submitted by an off-ramper, and then send the requested fiat amount on Venmo. After receiving a confirmation email
+            from Venmo, you will generate and then submit the proof to receive the USDC.
           </NumberedStep>
           <NumberedStep step={2}>
-            Off-rampers: the flow will require your Venmo Id
-            (<StyledLink
-              urlHyperlink="https://github.com/0xSachinK/zk-p2p-onramp/blob/main/README.md#fetching-venmo-id-instructions"
-              label={'instructions'}/>).
-            Additionally, you will need to mint USDC from the contract directly. We have modified
-            the generic ERC20 to include an externally accessible mint function. You will also need to approve allowance
-            to the smart contract.
+            Off-rampers: the flow will require your numeric <StyledLink
+            urlHyperlink="https://github.com/0xSachinK/zk-p2p-onramp/blob/main/README.md#fetching-venmo-id-instructions"
+            label={'Venmo ID'}/> and some USDC. You will also need to approve allowance to the ramp smart contract above.
+            Submitting a claim escrows the USDC amount which can be clawed back if the claim is not completed by the on-ramper.
           </NumberedStep>
         </NumberedInputContainer>
       </div>

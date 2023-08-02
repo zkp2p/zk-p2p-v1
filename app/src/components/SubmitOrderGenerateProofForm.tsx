@@ -109,10 +109,11 @@ export const SubmitOrderGenerateProofForm: React.FC<SubmitOrderGenerateProofForm
       <SubHeader>Generate Proof</SubHeader>
       <SubmitOrderGenerateProofFormBodyContainer>
         <NumberedStep>
-          Open the Venmo transaction email and select 'Show original' to view the full contents. To generate
-          the proof, you can either download and drag the .eml file into the box below or paste the contents
-          directly. You will then need to download keys (1.95 GB) if this is your first time generating proofs.
-          Allot approximately 3 minutes for downloading keys and 10 minutes for proof generation. Do not close your browser.
+          Make sure to select one of the claims in the table and generate a proof. Open the Venmo
+          transaction email and select 'Show original' to view the full contents. You can either
+          download and drag the .eml file into the box below or paste the contents directly. If this
+          is your first time, you will then need to download proving keys. Allot approximately 10
+          minutes for proof generation and do not close your browser.
         </NumberedStep>
         <SubmitOrderGenerateProofFormBodyTitleContainer>
           <HeaderContainer>

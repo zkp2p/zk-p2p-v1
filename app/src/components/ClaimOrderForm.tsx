@@ -103,21 +103,16 @@ export const ClaimOrderForm: React.FC<ClaimOrderFormProps> = ({
         </SelectedOrderContainer>
         <NumberedInputContainer>
           <NumberedStep>
-            Specify a Venmo ID (not handle, see our
-            <StyledLink
+            Specify a numeric <StyledLink
             urlHyperlink="https://github.com/0xSachinK/zk-p2p-onramp/blob/main/README.md#fetching-venmo-id-instructions"
-            label={' guide'}/> on retrieving your ID)
-            to receive USD at and a required USD amount to receive. Your Venmo ID will be encrypted.
-            Submitting this transaction will escrow {senderRequestedAmountDisplay} USDC for the
-            on-ramper. If this is your first time, you will need to mint
-            <StyledLink
-              urlHyperlink={usdcExplorerLink}
-              label={' USDC '}/>
-            and approve spending to the ramp
-            (<StyledLink
+            label={'Venmo ID'}/> to receive USD at and a USD amount to receive. Your
+            Venmo ID will be encrypted. Submitting this transaction will escrow {senderRequestedAmountDisplay}
+            USDC. You will need to approve spending to the ramp <StyledLink
               urlHyperlink={rampExplorerLink}
-              label={'smart contract'}/>).
-            Make sure to approve the correct amount with the appropriate decimals (6).
+              label={'smart contract'}/>.
+            If you are on Goerli, you will need to mint <StyledLink
+              urlHyperlink={usdcExplorerLink}
+              label={'fake USDC'}/>.
           </NumberedStep>
         </NumberedInputContainer>
         <InputsContainer>

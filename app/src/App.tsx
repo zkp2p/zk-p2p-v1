@@ -42,7 +42,7 @@ const NavSection: React.FC = () => {
   return (
     <Nav>
       <Logo className={pathname === "/" ? "current_page" : "off"} to={"/"}>
-        ZK-P2P-On-Ramp
+        ZKP2P
       </Logo>
       <div
         style={{
@@ -58,7 +58,6 @@ const NavSection: React.FC = () => {
 };
 
 const Logo = styled(Link)`
-  text-transform: uppercase;
   letter-spacing: 0.04em;
   color: #fff;
   text-decoration: none;
