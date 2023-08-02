@@ -42,7 +42,6 @@ export const ClaimOrderForm: React.FC<ClaimOrderFormProps> = ({
 
   const [encryptedVenmoId, setEncryptedVenmoId] = useState<string>('');
   const [hashedVenmoId, setHashedVenmoId] = useState<string>('');
-  const [requestedAmount, setRequestedAmount] = useState<number>(0);
 
   const { chain } = useNetwork();
 
@@ -62,13 +61,16 @@ export const ClaimOrderForm: React.FC<ClaimOrderFormProps> = ({
       hashedVenmoId,
       selectedOrder.orderId,
       '0x' + encryptedVenmoId,
-      formatAmountsForTransactionParameter(requestedAmount)
+      formatAmountsForTransactionParameter(requestedUSDAmountInput)
 
     ],
     onError: (error: { message: any }) => {
       console.error(error.message);
     },
   });
+
+  console.log('writeClaimOrderConfig');
+  console.log(writeClaimOrderConfig);
 
   const {
     isLoading: isWriteClaimOrderLoading,
@@ -81,8 +83,25 @@ export const ClaimOrderForm: React.FC<ClaimOrderFormProps> = ({
 
   useEffect(() => {
     setRequestedUSDAmountInput(0);
-    setRequestedAmount(0);
   }, [selectedOrder]);
+
+  useEffect(() => {
+    // create an async function inside the effect
+    const updateVenmoId = async () => {
+      if(venmoIdInput && venmoIdInput.length > 15) {
+        const encryptedVenmoId = await encryptMessage(venmoIdInput, selectedOrder.onRamperEncryptPublicKey);
+        setEncryptedVenmoId(encryptedVenmoId);
+  
+        const hashedVenmoId = await generateVenmoIdHash(venmoIdInput);
+        setHashedVenmoId(hashedVenmoId);
+  
+        // Persist venmo id input so user doesn't have to paste it again in the future
+        localStorage.setItem(persistedVenmoIdKey, venmoIdInput);
+      }
+    }
+  
+    updateVenmoId();
+  }, [venmoIdInput]);
 
   /*
     Component
@@ -136,22 +155,6 @@ export const ClaimOrderForm: React.FC<ClaimOrderFormProps> = ({
         <Button
           disabled={isWriteClaimOrderLoading}
           onClick={async () => {
-            // Sign venmo id with encrypting key from the order
-            const encryptedVenmoId = await encryptMessage(venmoIdInput, selectedOrder.onRamperEncryptPublicKey);
-            setEncryptedVenmoId(encryptedVenmoId);
-            // console.log(encryptedVenmoId);
-
-            // Generate hash of the venmo id
-            const hashedVenmoId = await generateVenmoIdHash(venmoIdInput);
-            setHashedVenmoId(hashedVenmoId);
-            // console.log(hashedVenmoId);
-
-            // Set the requested USD amount
-            setRequestedAmount(requestedUSDAmountInput);
-
-            // Persist venmo id input so user doesn't have to paste it again in the future
-            localStorage.setItem(persistedVenmoIdKey, venmoIdInput);
-
             writeClaimOrder?.();
           }}
           >
