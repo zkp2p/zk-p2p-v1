@@ -5,7 +5,6 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 import { Verifier } from "./Verifier.sol";
-import "hardhat/console.sol";
 
 
 contract Ramp is Verifier, Ownable {
