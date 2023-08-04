@@ -7,7 +7,7 @@ ZKP2P (V1) is a trustless fiat to crypto onramp that can is built on top of Venm
 
 
 ## Usage
-The easiest way to get started is by watching our [Demo video](https://drive.google.com/file/d/1CaPoVMrZUEuvsFhXLLI9D1wUXevqSwkT/view) where we go through the application flow for both the on-ramper and the off-ramper.
+The easiest way to get started is by watching our [Demo video](https://drive.google.com/file/d/1CaPoVMrZUEuvsFhXLLI9D1wUXevqSwkT/view?usp=drive_link) where we go through the application flow for both the on-ramper and the off-ramper.
 
 On-rampers will:
 * Begin by posting an order to the order book for the desired USDC amount (max 20). The order will appear in the order table when mined
