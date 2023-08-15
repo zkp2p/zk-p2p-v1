@@ -231,7 +231,9 @@ export const MainPage: React.FC<{}> = (props) => {
             This is an experimental app demonstrating zero knowledge proof technology using a ramp <StyledLink
             urlHyperlink={blockExplorer + rampContractAddress}
             label={'smart contract'}/> to verify proof of payment made on Venmo, a popular P2P payment service,
-            and then exchange for USDC. This project is supported by the <StyledLink
+            and then exchange for USDC. See our <StyledLink 
+            urlHyperlink={"https://drive.google.com/file/d/1BmTyeAfsi4K9iuZQ-G6YBGv5SqysUHj5/view?usp=sharing"}
+            label={"demo video"}/> for a quick walkthrough. This project is supported by the <StyledLink
             urlHyperlink={"https://www.appliedzkp.org/projects/zkp2p"}
             label={'PSE Group'}/> within the Ethereum Foundation and we are actively <StyledLink
             urlHyperlink={"https://github.com/0xSachinK/zk-p2p-onramp"}
